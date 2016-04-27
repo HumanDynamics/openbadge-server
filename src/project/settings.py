@@ -1,0 +1,235 @@
+"""
+Django settings for this project.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/1.7/topics/settings/
+
+For the full list of settings and their values, see
+https://docs.djangoproject.com/en/1.7/ref/settings/
+"""
+
+import datetime
+import os
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)),"..")
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'RWGJ*A)48m04)*G$08mq3f04fJ*$42g80g42)*G$@G$@J*m0824g'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
+
+ALLOWED_HOSTS = ['openbadge.media.mit.edu']
+
+
+# Application definition
+
+INSTALLED_APPS = (
+    'pipeline',
+    'grappelli',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_expiring_authtoken',
+    'openbadge',
+)
+
+MIDDLEWARE_CLASSES = (
+    'project.middleware.ExceptionLoggingMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+)
+
+ROOT_URLCONF = 'project.urls'
+
+WSGI_APPLICATION = 'project.wsgi.application'
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.core.context_processors.request",
+    "django.contrib.auth.context_processors.auth",
+    "django.template.context_processors.debug",
+    "django.template.context_processors.i18n",
+    "django.template.context_processors.media",
+    "django.template.context_processors.static",
+    "django.template.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+)
+TEMPLATE_DEBUG = True
+
+TEMPLATE_LOADERS = (
+                    'django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',
+                    )
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': (os.path.join(BASE_DIR,"templates-admin"),),
+        'OPTIONS': {
+            'context_processors': TEMPLATE_CONTEXT_PROCESSORS,
+            'debug': TEMPLATE_DEBUG,
+            'loaders': TEMPLATE_LOADERS,
+        },
+    },
+    {
+        'BACKEND': 'project.jinja2backend.Jinja2Backend',
+        'DIRS': (os.path.join(BASE_DIR,"templates"),),
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'environment': 'project.jinjaenvironment.environment',
+            'context_processors': TEMPLATE_CONTEXT_PROCESSORS,
+            'extensions': ['pipeline.templatetags.ext.PipelineExtension'],
+        },
+
+    },
+]
+
+# Database
+# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'openbadge', # storyscape_social
+        # The following settings are not used with sqlite3:
+        'USER': 'openbadge',
+        'PASSWORD': 'jsdsdgSNG~- dbkaf343~~ iafAGDIOe933 IGgfsonapqlmxvn098395 dgjk',
+        'HOST': '', # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': '', # Set to empty string for default.
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=INNODB',
+        }
+    }
+}
+
+# Internationalization
+# https://docs.djangoproject.com/en/1.7/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_L10N = True
+
+USE_TZ = True
+
+
+
+AUTH_USER_MODEL = 'openbadge.OpenBadgeUser'
+
+AUTHENTICATION_BACKENDS = (
+    'openbadge.models.UserBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt': "%d/%b/%Y %H:%M:%S"
+        },
+    },
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'django.utils.log.NullHandler',
+        },
+        'logfile': {
+            'level': 'DEBUG',
+            'class': 'project.logger.GroupWriteRotatingFileHandler',
+            'filename': "/var/log/django/django.log",
+            'maxBytes': 50000,
+            'backupCount': 200,
+            'formatter': 'standard',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['logfile'],
+            'propagate': True,
+            'level': 'WARN',
+        }
+    }
+}
+
+if DEBUG:
+    # make all loggers use the console.
+    for logger in LOGGING['loggers']:
+        LOGGING['loggers'][logger]['handlers'] += ['console']
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'pipeline.finders.PipelineFinder',
+)
+STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "../staticfiles")
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "../media")
+
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
+PIPELINE_CSS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
+PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
+PIPELINE_YUI_BINARY = '/usr/bin/yui-compressor'
+PIPELINE_LESS_BINARY = '/usr/local/bin/lessc'
+
+PIPELINE_COMPILERS = (
+  'pipeline.compilers.less.LessCompiler',
+)
+
+PIPELINE_JS = {
+  'scripts': {
+    'source_filenames': (
+    ),
+    'output_filename': 'js/script.js',
+  },
+}
+
+PIPELINE_CSS = {
+  'less': {
+    'source_filenames': (
+        "less/reset.css",
+    ),
+    'output_filename': 'css/style.css',
+  },
+}
+
+APP_KEY = "$*)J#(KD#()#Fj80qf80jq4f*)JFQ$"
+
+EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_expiring_authtoken.authentication.ExpiringTokenAuthentication',
+    )
+}

@@ -1,0 +1,10 @@
+Django==1.8.4
+Fabric==1.10.2
+django-grappelli==2.7.1
+simplejson==3.8.0
+MarkupSafe==0.23
+Jinja2==2.8
+django-pipeline==1.5.4
+djangorestframework==3.2.3
+djangorestframework-expiring-authtoken==0.1.1
+pytz==2015.7

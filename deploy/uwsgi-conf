@@ -1,0 +1,14 @@
+# uWSGI - manage uWSGI application server                                                                                                                                                                
+# from http://jawher.me/2012/03/16/multiple-python-apps-with-nginx-uwsgi-emperor-upstart/                                                                                                                                                                                                
+
+description     "uWSGI Emperor"
+
+start on (filesystem and net-device-up IFACE=lo)
+stop on runlevel [!2345]
+
+respawn
+
+env LOGTO=/var/log/uwsgi.log
+env BINPATH=/usr/bin/uwsgi
+
+exec $BINPATH --emperor /opt/DjangoOpenBadge/deploy/vassals --uid 33 --gid 33 --umask 0002 --logto $LOGTO

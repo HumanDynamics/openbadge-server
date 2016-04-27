@@ -1,0 +1,13 @@
+<uwsgi>
+    <plugins>python</plugins>
+    <master>true</master>
+    <processes>5</processes>
+    <vaccum>true</vaccum>
+    <chmod-socket>666</chmod-socket>
+    <socket>/tmp/uwsgi.django.socket</socket>
+    <umask>0002</umask>
+    <uid>www-data</uid>
+    <gid>www-data</gid>
+    <pythonpath>/opt/DjangoOpenBadge/src/</pythonpath>
+    <module>project.wsgi</module>
+</uwsgi>
