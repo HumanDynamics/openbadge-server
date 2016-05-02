@@ -23,10 +23,10 @@ class BaseModel(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
-    def generate_key(self):
+    def generate_key(self, length=10):
         if not self.key:
             for _ in range(10):
-                key = key_generator(10)
+                key = key_generator(length)
                 if not type(self).objects.filter(key=key).count():
                     self.key = key
                     break
@@ -72,7 +72,14 @@ def fix_email(cls):
 
 
 
+class OverwriteStorage(FileSystemStorage):
 
+    def get_available_name(self, name):
+
+        # If the filename already exists, remove it as if it was a true file system
+        if self.exists(name):
+            os.remove(os.path.join(settings.MEDIA_ROOT, name))
+        return name
 
 
 
@@ -87,6 +94,9 @@ class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
 class StudyGroup(BaseModel):
     name = models.CharField(max_length=64, blank=True)
     show_widget = models.BooleanField(blank=True)
+
+    def generate_key(self):
+        return super(StudyGroup, self).generate_key(length=5)
 
     def to_dict(self):
         return dict(key=self.key,
@@ -108,13 +118,20 @@ class StudyMember(BaseModel):
                     )
 
 
+def upload_to(self, filename):
+    return "/".join(('logs', self.group.key, self.uuid + os.path.splitext(filename)[1]))
+
+
 class Meeting(BaseModel):
+    uuid = models.CharField(max_length=64, db_index=True, unique=True)
     group = models.ForeignKey(StudyGroup)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     moderator = models.ForeignKey(StudyMember)
     type = models.CharField(max_length=32)
     description = models.TextField(blank=True)
-
+    members = models.TextField(default="[]", blank=True)
+    is_complete = models.BooleanField(default=False, blank=True)
+    log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
 
 

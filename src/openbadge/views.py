@@ -1,6 +1,7 @@
 import simplejson, pytz, StringIO
 import datetime, random, math
 from decimal import Decimal
+from dateutil.parser import parse as parse_date
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -13,7 +14,7 @@ from django.shortcuts import get_object_or_404
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from .decorators import app_view
-from .models import StudyGroup, StudyMember
+from .models import StudyGroup, StudyMember, Meeting
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -48,6 +49,35 @@ def render_to(template):
 @app_view
 @api_view(['POST'])
 def log_data(request):
+
+    log_file = request.FILES.get("file")
+    meeting_uuid = request.POST.get("uuid")
+    moderator_key = request.POST.get("moderator")
+    members = request.POST.get("members")
+    group_key = request.POST.get("group")
+    start_time = parse_date(request.POST.get("startTime"))
+    end_time = parse_date(request.POST.get("endTime"))
+    meeting_type = request.POST.get("type")
+    meeting_description = request.POST.get("description")
+    is_complete = request.POST.get("isComplete")
+
+    try:
+        meeting = Meeting.objects.select_related('moderator', 'group').get(group__key=group_key, uuid=meeting_uuid)
+    except Meeting.DoesNotExist:
+        meeting = Meeting()
+        group = StudyGroup.objects.get(key=group_key)
+        meeting.group = group
+        meeting.uuid = meeting_uuid
+
+    meeting.log_file = log_file
+    meeting.moderator = StudyMember.objects.get(key=moderator_key)
+    meeting.members = members
+    meeting.start_time = start_time
+    meeting.type = meeting_type
+    meeting.description = meeting_description
+    meeting.end_time = end_time
+    meeting.is_complete = is_complete
+    meeting.save()
 
     return json_response(success=True)
 
