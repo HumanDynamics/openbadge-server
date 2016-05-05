@@ -142,9 +142,9 @@ def _get_configure_db_commands(root_password):
     return commands
 
 
-def configure_local_db():
+def configure_local_db(root_password=""):
 
-    for command in _get_configure_db_commands(""):
+    for command in _get_configure_db_commands(root_password):
         local(command)
 
     print "MySQL configured successfully!"

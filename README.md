@@ -17,18 +17,23 @@ With that created, you'll want to CD to a different directory and then back to t
 
 First thing is to install the required libraries:
 
+    In Ubuntu, first run: sudo apt-get install build-essential libssl-dev libffi-dev python-dev; pip install pycrypto
     pip install -r requirements.txt
 
 You then will need to install MySQL Python, which isn't included in the requirements because the production server needs to not have it:
 
+    In Ubuntu, first run: sudo apt-get install python-mysqldb libmysqlclient-dev
     pip install MySQL-python
 
 From here on out you'll need to set up your MySQL database:
 
     fab -f deploy/fabric/deploy.py configure_local_db
+    or, if you have a root passwod set for mySQL, fab -f deploy/fabric/deploy.py configure_local_db:root_password=YOU_PASSWORD
 
 With that in place, you can now set up the database tables. You can use the shortcut provided in .env:
 
+    sudo mkdir /var/log/django
+    sudo chmod 777 -R  /var/log/django
     migrate
 
 You'll also want to create your super user. There's currently no shortcut for this:
