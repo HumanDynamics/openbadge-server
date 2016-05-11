@@ -104,6 +104,9 @@ class StudyGroup(BaseModel):
                     show_widget=self.show_widget,
                     members=[member.to_dict() for member in self.members.all()])
 
+    def __unicode__(self):
+        return self.name
+
 
 class StudyMember(BaseModel):
     name = models.CharField(max_length=64)
@@ -117,6 +120,9 @@ class StudyMember(BaseModel):
                     badge=self.badge,
                     )
 
+    def __unicode__(self):
+        return self.name
+
 
 def upload_to(self, filename):
     return "/".join(('logs', self.group.key, self.uuid + os.path.splitext(filename)[1]))
@@ -127,11 +133,13 @@ class Meeting(BaseModel):
     group = models.ForeignKey(StudyGroup)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    moderator = models.ForeignKey(StudyMember)
+    moderator = models.ForeignKey(StudyMember, null=True, blank=True)
     type = models.CharField(max_length=32)
     description = models.TextField(blank=True)
     members = models.TextField(default="[]", blank=True)
     is_complete = models.BooleanField(default=False, blank=True)
     log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
 
+    def __unicode__(self):
+        return unicode(self.group) + "|" + str(self.start_time)
 

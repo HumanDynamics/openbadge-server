@@ -59,7 +59,7 @@ def log_data(request):
     end_time = parse_date(request.POST.get("endTime"))
     meeting_type = request.POST.get("type")
     meeting_description = request.POST.get("description")
-    is_complete = request.POST.get("isComplete")
+    is_complete = request.POST.get("isComplete") == 'true'
 
     try:
         meeting = Meeting.objects.select_related('moderator', 'group').get(group__key=group_key, uuid=meeting_uuid)
@@ -70,7 +70,13 @@ def log_data(request):
         meeting.uuid = meeting_uuid
 
     meeting.log_file = log_file
-    meeting.moderator = StudyMember.objects.get(key=moderator_key)
+    try:
+        if moderator_key:
+            meeting.moderator = StudyMember.objects.get(key=moderator_key)
+        else:
+            meeting.moderator = None
+    except Exception, e:
+        pass
     meeting.members = members
     meeting.start_time = start_time
     meeting.type = meeting_type
