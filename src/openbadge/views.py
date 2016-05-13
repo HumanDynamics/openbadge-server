@@ -57,9 +57,11 @@ def log_data(request):
     group_key = request.POST.get("group")
     start_time = parse_date(request.POST.get("startTime"))
     end_time = parse_date(request.POST.get("endTime"))
+    meeting_location = request.POST.get("location")
     meeting_type = request.POST.get("type")
     meeting_description = request.POST.get("description")
     is_complete = request.POST.get("isComplete") == 'true'
+    show_visualization = request.POST.get("showVisualization") == 'true'
 
     try:
         meeting = Meeting.objects.select_related('moderator', 'group').get(group__key=group_key, uuid=meeting_uuid)
@@ -80,10 +82,14 @@ def log_data(request):
     meeting.members = members
     meeting.start_time = start_time
     meeting.type = meeting_type
+    meeting.location = meeting_location
     meeting.description = meeting_description
     meeting.end_time = end_time
     meeting.is_complete = is_complete
+    meeting.show_visualization = show_visualization
     meeting.save()
+
+
 
     return json_response(success=True)
 
@@ -96,7 +102,7 @@ def get_group(request, group_key):
         raise Http404()
 
     try:
-        group = StudyGroup.objects.prefetch_related("members").get(key=group_key)
+        group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
     except StudyGroup.DoesNotExist:
         raise Http404()
 

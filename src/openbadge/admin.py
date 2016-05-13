@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import admin as auth_admin
 from django import forms
 
-import fields, csv, zipfile, os, uuid, errno
-import simplejson
+import fields, csv, zipfile, os, uuid, errno, datetime
+import simplejson, pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 
@@ -16,7 +16,7 @@ from django.db.models import Count, Case, When, IntegerField, Sum
 from django.conf import settings
 from django import utils
 
-from .models import OpenBadgeUser, StudyGroup, StudyMember, Meeting
+from .models import OpenBadgeUser, StudyGroup, StudyMember, Meeting, VisualizationRange
 
 
 def register(model):
@@ -49,27 +49,40 @@ class StudyMemberInline(admin.TabularInline):
     extra = 3
 
 
+class VisualizationRangeInline(admin.TabularInline):
+    model = VisualizationRange
+    extra = 3
+
+
 @register(StudyGroup)
 class StudyGroupAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'members_list', 'show_widget',)
-    list_editable = ('show_widget',)
-    list_filter = ('name', 'show_widget')
-    inlines = (StudyMemberInline,)
+    list_display = ('name', 'key', 'members_list', 'visualization_enabled',)
+    list_filter = ('name', )
+    inlines = (StudyMemberInline, VisualizationRangeInline,)
     actions_on_top = True
 
     def get_queryset(self, request):
-        return StudyGroup.objects.prefetch_related("members")
+        return StudyGroup.objects.prefetch_related("members", "visualization_ranges")
 
     def members_list(self, inst):
         return ", ".join([member.name for member in inst.members.all()])
     members_list.admin_order_field = 'members_list'
 
+    def visualization_enabled(self, inst):
+        now = datetime.datetime.utcnow()
+        now = now.replace(tzinfo=pytz.utc)
+        for r in inst.visualization_ranges.all():
+            if r.start <= now and r.end >= now:
+                return True
+        return False
+    visualization_enabled.admin_order_field = 'visualization_enabled'
+    visualization_enabled.boolean = True
 
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('group', 'start_time', 'end_time',)
+    list_display = ('uuid', 'group', 'start_time', 'end_time', 'moderator', 'type', 'location', 'show_visualization', 'is_complete')
     actions_on_top = True
 
 

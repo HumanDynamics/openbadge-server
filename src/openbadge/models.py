@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth import models as auth_models
 from django.db.models import Q, Sum
 
-import string, random, os, math
+import string, random, os, math, datetime, pytz
 
 from .fields import SerializedDataField
 
@@ -93,7 +93,6 @@ class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
 
 class StudyGroup(BaseModel):
     name = models.CharField(max_length=64, blank=True)
-    show_widget = models.BooleanField(blank=True)
 
     def generate_key(self):
         return super(StudyGroup, self).generate_key(length=5)
@@ -101,11 +100,26 @@ class StudyGroup(BaseModel):
     def to_dict(self):
         return dict(key=self.key,
                     name=self.name,
-                    show_widget=self.show_widget,
+                    visualization_ranges=[r.to_dict() for r in self.visualization_ranges.all()],
                     members=[member.to_dict() for member in self.members.all()])
 
     def __unicode__(self):
         return self.name
+
+
+def _to_timestamp(dt):
+    return (dt - datetime.datetime(1970, 1, 1).replace(tzinfo=pytz.UTC)).total_seconds()
+
+
+class VisualizationRange(models.Model):
+    group = models.ForeignKey(StudyGroup, related_name="visualization_ranges")
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+
+    def to_dict(self):
+        return dict(start=_to_timestamp(self.start),
+                    end=_to_timestamp(self.end),
+                    )
 
 
 class StudyMember(BaseModel):
@@ -135,9 +149,11 @@ class Meeting(BaseModel):
     end_time = models.DateTimeField()
     moderator = models.ForeignKey(StudyMember, null=True, blank=True)
     type = models.CharField(max_length=32)
+    location = models.CharField(max_length=32)
     description = models.TextField(blank=True)
     members = models.TextField(default="[]", blank=True)
     is_complete = models.BooleanField(default=False, blank=True)
+    show_visualization = models.BooleanField(default=False, blank=True)
     log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
 
     def __unicode__(self):
