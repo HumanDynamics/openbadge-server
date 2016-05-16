@@ -1,21 +1,17 @@
 from fabric.api import run, cd, sudo, get, put, env, local
-import time, re
-import tempfile
 
 from project import settings
-
-import pipes
+import passwords
 
 import os
 FILE_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
-USERNAME = "deploy"
-USER_PASSWORD = "ohhitherehowareyoudoingiamwellthankyou"
-GIT_PROJECT_NAME = "DjangoOpenBadge"
-MYSQL_ROOT_PASSWORD = 'fdsFDSHSDF442542nljrgjnl224tlnrGGSNJR#23'
+USERNAME = passwords.LINUX_USERNAME
+USER_PASSWORD = passwords.LINUX_PASSWORD
+GIT_PROJECT_NAME = passwords.GIT_PROJECT_NAME
+MYSQL_ROOT_PASSWORD = passwords.MYSQL_ROOT_PASSWORD
 
 env.user = USERNAME
-# env.use_ssh_config = True
 env.password = USER_PASSWORD
 env.key_filename = 'deploy/fabric/keys/sshkey'
 
@@ -24,7 +20,11 @@ CODE_HOME = SETUP_DIRECTORY + GIT_PROJECT_NAME + "/"
 
 DIRECTORIES_TO_CREATE = ()
 
-GITHUB_SSH_URL = 'git@github.mit.edu:AffectiveComputing/{0}.git'.format(GIT_PROJECT_NAME)
+GITHUB_SSH_URL = passwords.GITHUB_SSH_URL
+
+
+def test():
+    sudo("ls")
 
 
 def deploy():
@@ -58,6 +58,7 @@ def setup_server():
     # get the programs we'll need
     sudo('apt-get -y install python-setuptools git nginx uwsgi uwsgi-plugin-python mysql-server python-mysqldb')
     sudo('apt-get -y install python-pip python-dev build-essential')
+    sudo('apt-get -y install libffi-dev libssl-dev libxml2-dev libxslt1-dev')
     sudo('apt-get -y install yui-compressor')
     sudo('apt-get -y build-dep python-imaging') # required for Pillow
     sudo('apt-get -y install libjpeg62 libjpeg62-dev') # required for Pillow
@@ -67,23 +68,17 @@ def setup_server():
 
     # get code
     sudo('mkdir -p ' + SETUP_DIRECTORY)
-    sudo('chown deploy:www-data ' + SETUP_DIRECTORY)
+    sudo('chown {0}:www-data '.format(USERNAME) + SETUP_DIRECTORY)
     for d in DIRECTORIES_TO_CREATE:
         sudo('mkdir -p ' + d)
-        sudo('chown deploy:www-data ' + d)
+        sudo('chown {0}:www-data '.format(USERNAME) + d)
         sudo('chmod g+w ' + d)
 
     with cd(SETUP_DIRECTORY):
-        # TODO: create deploy git user, and set up their auth
-        run('git config --global user.name "Deploy"')
-        sudo('mkdir -p /home/{0}/.ssh/'.format(USERNAME))
-        _put_key_file('github_rsa')
-        _put_key_file('github_rsa.pub')
 
         for command in _get_configure_db_commands(MYSQL_ROOT_PASSWORD):
             run(command)
 
-        run('find "github.mit.edu" ~/.ssh/config 1>nul || echo -e "Host github.mit.edu\n    User git\n    IdentityFile ~/.ssh/github_rsa" > ~/.ssh/config')
         run('[ -d {0} ] || git clone '.format(GIT_PROJECT_NAME) + GITHUB_SSH_URL)
     
         put('{0}/nginx-default-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/nginx/sites-enabled/default', use_sudo=True)
@@ -102,6 +97,8 @@ def setup_server():
     sudo('chmod g+w /var/log/django/')
     sudo('service nginx restart')
 
+    put_passwords_file()
+
     deploy_crontab()
 
     deploy()
@@ -116,6 +113,10 @@ def tail_log():
     with cd(CODE_HOME):
 
         sudo("tail -n100 /var/log/django/django.log", user="www-data")
+
+def put_passwords_file():
+    passwords_path = os.path.join(FILE_DIRECTORY, '..', '..', 'passwords.py')
+    put(passwords_path, "/opt")
 
 
 def _put_key_file(localkeyname):

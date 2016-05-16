@@ -8,6 +8,6 @@
     <umask>0002</umask>
     <uid>www-data</uid>
     <gid>www-data</gid>
-    <pythonpath>/opt/DjangoOpenBadge/src/</pythonpath>
+    <pythonpath>/opt/OpenBadge-Server/src/:/opt/OpenBadge-Server/</pythonpath>
     <module>project.wsgi</module>
 </uwsgi>

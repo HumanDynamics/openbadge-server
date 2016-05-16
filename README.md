@@ -54,12 +54,28 @@ At that point all you need to deploy the code to production is to run the comman
 
     fab -f deploy/fabric/deploy.py -H {HOSTNAME} deploy
 
+
 ## Production Server Setup
 ----------------
 
-Like Deployment, you'll need the four SSH keys before you can do this. To configure a production server, first set up the user we user to SSH in from here on out:
+If the repository is public, you will not need to create a Github access token. Otherwise, if it is private, follow [the instructions here](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) to get a Personal Access Key.
+
+If the project has already been set up with SSH keys, be sure to get them from someone. Just put the keys in the deploy/fabric/keys/ directory. If you don't have any keys there, they will be created automatically when you create a deploy user.
+
+Ensure you have a `passwords.py` file located on the root of this project's directory, and that it has the proper usernames and passwords in it. It should have the exact variables and format of `src/project/passwords.py.template`, only the passwords and usernames should be filled in.
+
+
+Now that we have the correct files, create a deploy user on your server:
 
     fab -f deploy/fabric/create_deploy_user.py -H {{ YOUR USERNAME HERE }}@{{ YOUR HOSTNAME HERE }} create
+    
+Or, if you are using an SSHConfig HostName alias, just use this:
+
+    fab -f deploy/fabric/create_deploy_user.py -H {{ HOSTNAME }} create
+
+To make sure it worked, run this command to test that the user was created:
+
+    fab -f deploy/fabric/deploy.py -H {{ YOUR HOSTNAME HERE }} test
 
 Then just run the command:
 
@@ -67,8 +83,14 @@ Then just run the command:
 
 This command is safe to run on a server that's already been set up, though you should avoid it if possible.
 
+After that, you just need to configure Django.
+
+    fab -f deploy/fabric/deploy.py -H {{ YOUR HOSTNAME HERE }} create_superuser
+    
+Now you're all set and you should be able to log in to your admin console on your server!
+
 
 ## Notes
 ---------------
 
-TBD
+If you use autoenv, there are many shortcut aliases included to make your life simpler. They change too often to put them in the README, but check out the .env file to see what they are.

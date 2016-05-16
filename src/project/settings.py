@@ -11,21 +11,23 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import datetime
 import os
 
+import passwords
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)),"..")
+BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'RWGJ*A)48m04)*G$08mq3f04fJ*$42g80g42)*G$@G$@J*m0824g'
+SECRET_KEY = passwords.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 
-ALLOWED_HOSTS = ['openbadge.media.mit.edu']
+ALLOWED_HOSTS = passwords.ALLOWED_HOSTS
 
 
 # Application definition
@@ -80,7 +82,7 @@ TEMPLATE_LOADERS = (
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': (os.path.join(BASE_DIR,"templates-admin"),),
+        'DIRS': (os.path.join(BASE_DIR, "templates-admin"),),
         'OPTIONS': {
             'context_processors': TEMPLATE_CONTEXT_PROCESSORS,
             'debug': TEMPLATE_DEBUG,
@@ -89,7 +91,7 @@ TEMPLATES = [
     },
     {
         'BACKEND': 'project.jinja2backend.Jinja2Backend',
-        'DIRS': (os.path.join(BASE_DIR,"templates"),),
+        'DIRS': (os.path.join(BASE_DIR, "templates"),),
         'APP_DIRS': True,
         'OPTIONS': {
             'environment': 'project.jinjaenvironment.environment',
@@ -106,10 +108,10 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'openbadge', # storyscape_social
+        'NAME': passwords.MYSQL_DB,
         # The following settings are not used with sqlite3:
-        'USER': 'openbadge',
-        'PASSWORD': 'jsdsdgSNG~- dbkaf343~~ iafAGDIOe933 IGgfsonapqlmxvn098395 dgjk',
+        'USER': passwords.MYSQL_USER,
+        'PASSWORD': passwords.MYSQL_PASSWORD,
         'HOST': '', # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '', # Set to empty string for default.
         'OPTIONS': {
@@ -224,7 +226,7 @@ PIPELINE_CSS = {
   },
 }
 
-APP_KEY = "$*)J#(KD#()#Fj80qf80jq4f*)JFQ$"
+APP_KEY = passwords.APP_KEY
 
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
 

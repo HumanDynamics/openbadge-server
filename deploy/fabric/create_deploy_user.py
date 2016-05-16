@@ -5,8 +5,10 @@ FILE_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 from deploy import USERNAME, USER_PASSWORD
 
+env.use_ssh_config = True
 env.user = None
 env.password = None
+env.key_filename = None
 
 HOSTS_FILE = "/home/{0}/.hosts".format(USERNAME)
 
@@ -21,19 +23,21 @@ def create():
     sudo("adduser {0} sudo".format(USERNAME))
     add_key(create_ssh_key())
     sudo('if ! cat {1} | grep "Match User {0}"; then echo "\nMatch User {0}\nPasswordAuthentication no" >> {1}; fi;'.format(USERNAME, "/etc/ssh/sshd_config"))
+    BASH_PROFILE = "/home/"+USERNAME+"/.profile"
+    sudo("touch " + BASH_PROFILE)
+    sudo('if ! cat {1} | grep "#Add password"; then printf \'\n\n\n#Add password to pythonpath\nexport PYTHONPATH=$PYTHONPATH:/opt/\' >> {1}; fi;'.format(USERNAME, BASH_PROFILE))
+    sudo("chown {0}:{0} {1}".format(USERNAME, BASH_PROFILE))
+
     sudo("service ssh restart")
 
 def create_ssh_key(keypath=SSH_KEY_PATH):
-    local("mkdir -p {0}/keys").format(FILE_DIRECTORY)
+    local("mkdir -p {0}/keys".format(FILE_DIRECTORY))
     if not os.path.isfile(keypath):
         local("ssh-keygen -b 2048 -t rsa -f {0} -q -N \"\"".format(keypath))
 
         print "Created SSH Key at: " + keypath
 
     return keypath + ".pub"
-
-def create_deploy_key():
-    return create_ssh_key("{0}/keys/github_rsa".format(FILE_DIRECTORY))
 
 def _get_public_key(key_file):
 

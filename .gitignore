@@ -9,6 +9,8 @@ github_rsa*
 .idea/
 staticfiles/
 localsettings.py
+passwords.py
+openbadge_keys.pem
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

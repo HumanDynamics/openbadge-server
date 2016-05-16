@@ -11,4 +11,4 @@ respawn
 env LOGTO=/var/log/uwsgi.log
 env BINPATH=/usr/bin/uwsgi
 
-exec $BINPATH --emperor /opt/DjangoOpenBadge/deploy/vassals --uid 33 --gid 33 --umask 0002 --logto $LOGTO
+exec $BINPATH --emperor /opt/OpenBadge-Server/deploy/vassals --uid 33 --gid 33 --umask 0002 --logto $LOGTO

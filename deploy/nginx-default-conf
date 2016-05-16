@@ -33,8 +33,8 @@ server {
     location / {
          include uwsgi_params;
          uwsgi_pass django;
-         uwsgi_param UWSGI_PYHOME /opt/DjangoOpenBadge/src/;
-         uwsgi_param UWSGI_CHIDIR /opt/DjangoOpenBadge/src/;
+         uwsgi_param UWSGI_PYHOME /opt/OpenBadge-Server/src/;
+         uwsgi_param UWSGI_CHIDIR /opt/OpenBadge-Server/src/;
          uwsgi_param UWSGI_SCRIPT project.wsgi;
      }
 
