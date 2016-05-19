@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth import models as auth_models
 from django.db.models import Q, Sum
 
-import string, random, os, math, datetime, pytz
+import string, random, os, math, datetime, pytz, simplejson
 
 from .fields import SerializedDataField
 
@@ -92,7 +92,7 @@ class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
 
 
 class StudyGroup(BaseModel):
-    name = models.CharField(max_length=64, blank=True)
+    name = models.CharField(max_length=64, unique=True)
 
     def generate_key(self):
         return super(StudyGroup, self).generate_key(length=5)
@@ -124,7 +124,7 @@ class VisualizationRange(models.Model):
 
 class StudyMember(BaseModel):
     name = models.CharField(max_length=64)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     badge = models.CharField(max_length=64)
     group = models.ForeignKey(StudyGroup, related_name="members")
 
@@ -144,7 +144,7 @@ def upload_to(self, filename):
 
 class Meeting(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
-    group = models.ForeignKey(StudyGroup)
+    group = models.ForeignKey(StudyGroup, related_name="meetings")
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     moderator = models.ForeignKey(StudyMember, null=True, blank=True)
@@ -158,4 +158,38 @@ class Meeting(BaseModel):
 
     def __unicode__(self):
         return unicode(self.group) + "|" + str(self.start_time)
+
+    def get_chunks(self):
+        chunks = []
+
+        f = self.log_file
+
+        f.readline()  # the first line will be info about the meeting, all subsequent lines are chunks
+
+        for line in f.readlines():
+            try:
+                chunk = simplejson.loads(line)
+                chunks.append(chunk)
+            except Exception:
+                pass
+
+        f.seek(0)
+        return chunks
+
+    def get_last_sample_time(self):
+
+        chunks = self.get_chunks()
+
+        if not chunks:
+            return self.start_time
+
+        chunk = chunks[-1]
+
+        start_timestamp = chunk['timestamp']
+        sample_duration = chunk['sampleDelay'] / 1000.0
+        num_samples = len(chunk['samples'])
+
+        end_timestamp = start_timestamp + sample_duration * num_samples
+
+        return datetime.datetime.fromtimestamp(end_timestamp)
 

@@ -15,6 +15,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from .decorators import app_view
 from .models import StudyGroup, StudyMember, Meeting
+import analysis
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -46,22 +47,29 @@ def render_to(template):
     return decorator
 
 
+
 @app_view
 @api_view(['POST'])
 def log_data(request):
 
     log_file = request.FILES.get("file")
-    meeting_uuid = request.POST.get("uuid")
-    moderator_key = request.POST.get("moderator")
-    members = request.POST.get("members")
-    group_key = request.POST.get("group")
-    start_time = parse_date(request.POST.get("startTime"))
-    end_time = parse_date(request.POST.get("endTime"))
-    meeting_location = request.POST.get("location")
-    meeting_type = request.POST.get("type")
-    meeting_description = request.POST.get("description")
+
+    meeting_info = simplejson.loads(log_file.readline())
+    log_file.seek(0)
+
+    meeting_uuid = meeting_info["uuid"]
+    moderator_key = meeting_info["moderator"]
+    members = meeting_info["members"]
+    group_key = meeting_info["group"]
+    start_time = parse_date(meeting_info["startTime"])
+    meeting_location = meeting_info["location"]
+    meeting_type = meeting_info["type"]
+    meeting_description = meeting_info["description"]
+    show_visualization = meeting_info["showVisualization"]
+
     is_complete = request.POST.get("isComplete") == 'true'
-    show_visualization = request.POST.get("showVisualization") == 'true'
+    end_time_string = request.POST.get("endTime")
+    end_time = parse_date(end_time_string) if end_time_string else None
 
     try:
         meeting = Meeting.objects.select_related('moderator', 'group').get(group__key=group_key, uuid=meeting_uuid)
@@ -79,17 +87,19 @@ def log_data(request):
             meeting.moderator = None
     except Exception, e:
         pass
-    meeting.members = members
+
+    meeting.members = simplejson.dumps(members)
     meeting.start_time = start_time
     meeting.type = meeting_type
     meeting.location = meeting_location
     meeting.description = meeting_description
-    meeting.end_time = end_time
+    meeting.end_time = end_time if end_time else meeting.get_last_sample_time()
     meeting.is_complete = is_complete
     meeting.show_visualization = show_visualization
     meeting.save()
 
-
+    if meeting.is_complete:
+        analysis.post_meeting_analysis(meeting)
 
     return json_response(success=True)
 
@@ -107,3 +117,20 @@ def get_group(request, group_key):
         raise Http404()
 
     return json_response(success=True, group=group.to_dict())
+
+
+@app_view
+@api_view(['GET'])
+def get_finished_meetings(request, group_key):
+
+    if not group_key:
+        raise Http404()
+
+    try:
+        group = StudyGroup.objects.prefetch_related("meetings").get(key=group_key)
+    except StudyGroup.DoesNotExist:
+        raise Http404()
+
+    finished_meetings = [meeting.uuid for meeting in group.meetings.filter(is_complete=True).all()]
+
+    return json_response(success=True, finished_meetings=finished_meetings)

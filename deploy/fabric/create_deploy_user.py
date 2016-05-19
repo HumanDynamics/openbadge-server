@@ -57,6 +57,8 @@ def add_key(filename, username=USERNAME):
         "mkdir -p {0};".format(ssh_home),
         "chown {0} {1};".format(username, ssh_home),
         "chmod 700 {0};".format(ssh_home),
+        "mkdir -p {0};".format(auth_keys),
+        "chown {0} {1};".format(username, auth_keys),
         'if ! cat {1} | grep "ssh-rsa"; then echo "{0}" >> {1}; fi;'.format(key_content, auth_keys),
         "chmod 644 {0};".format(auth_keys)
     )

@@ -90,6 +90,36 @@ After that, you just need to configure Django.
 Now you're all set and you should be able to log in to your admin console on your server!
 
 
+## Custom Commands
+---------------
+
+# Sending Weekly Report Emails
+
+First `cd` into the project directory.
+
+To send the email for all groups, run this command:
+
+    python src/manage.py weeklyemail
+
+To send it to one or more specific groups, run this instead:
+
+    python src/manage.py weeklyemail --group_id {group_key_1} {group_key_2} ...
+    
+# Importing users from a CSV file
+
+The file must have a header row, and the columns must be:
+
+    email, group, name, badge
+    {email1}, {group1}, {name1}, {badge1}
+    {email2}, {group2}, {name2}, {badge2}
+    {email3}, {group3}, {name3}, {badge3}
+    ...
+
+To run it, `cd` into the project directory, then run this command:
+
+    python src/manage.py importcsv --filename={FILENAME OF CSV}
+
+
 ## Notes
 ---------------
 
