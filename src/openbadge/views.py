@@ -98,7 +98,7 @@ def log_data(request):
     meeting.show_visualization = show_visualization
     meeting.save()
 
-    if meeting.is_complete:
+    if meeting.is_complete and False:  # disabled for now
         analysis.post_meeting_analysis(meeting)
 
     return json_response(success=True)
@@ -109,12 +109,12 @@ def log_data(request):
 def get_group(request, group_key):
 
     if not group_key:
-        raise Http404()
+        return json_response(success=False)
 
     try:
         group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
     except StudyGroup.DoesNotExist:
-        raise Http404()
+        return json_response(success=False)
 
     return json_response(success=True, group=group.to_dict())
 
