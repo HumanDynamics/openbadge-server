@@ -21,7 +21,7 @@ def post_meeting_analysis(meeting):
         return
 
     member_ids = simplejson.loads(meeting.members)
-    members = meeting.group.members.filter(id__in=member_ids).all()
+    members = meeting.group.members.filter(key__in=member_ids).all()
     recipients = [member.email for member in members]
 
 
@@ -30,11 +30,11 @@ def post_meeting_analysis(meeting):
 
     #TODO: do analysis
     chunks = meeting.get_chunks()
-    total_samples = sum([sum(chunk["samples"] for chunk in chunks)])
-    analysis_results = dict(total_samples=total_samples, start_time=start_time)
+    total_samples = sum([sum(chunk["samples"]) for chunk in chunks])
+    analysis_results = dict(total_samples=total_samples)
 
     template = loader.get_template("email/end_meeting_email.html")
-    body = template.render(dict(meeting=meeting, analysis_results=analysis_results))
+    body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time))
 
     for recipient in recipients:
         send_email(GMAIL_USERNAME, GMAIL_PASSWORD, recipient, "OpenBadge Post-Meeting Analysis", body)
