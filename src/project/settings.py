@@ -235,3 +235,6 @@ REST_FRAMEWORK = {
         'rest_framework_expiring_authtoken.authentication.ExpiringTokenAuthentication',
     )
 }
+
+# Survery and report options
+SEND_POST_MEETING_SURVEY = True

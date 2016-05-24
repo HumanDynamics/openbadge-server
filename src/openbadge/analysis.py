@@ -16,10 +16,6 @@ from django.conf import settings
 
 
 def post_meeting_analysis(meeting):
-
-    if settings.DEBUG:
-        return
-
     member_ids = simplejson.loads(meeting.members)
     members = meeting.group.members.filter(key__in=member_ids).all()
     recipients = [member.email for member in members]

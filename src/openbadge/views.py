@@ -16,6 +16,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from .decorators import app_view
 from .models import StudyGroup, StudyMember, Meeting
 import analysis
+from django.conf import settings
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -98,7 +99,7 @@ def log_data(request):
     meeting.show_visualization = show_visualization
     meeting.save()
 
-    if meeting.is_complete and False:  # disabled for now
+    if meeting.is_complete and settings.SEND_POST_MEETING_SURVEY:
         analysis.post_meeting_analysis(meeting)
 
     return json_response(success=True)
