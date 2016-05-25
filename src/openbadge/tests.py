@@ -35,16 +35,12 @@ class APITest(TestCase):
     def test_group_created(self):
         group = StudyGroup.objects.get(name="Oren group")
         members = group.members.all()
-        print("The group is :",group)
+        self.assertEqual(group.name,"Oren group")
         names = [member.name for member in members]
-        print("Member names :",names)
         meetings = meetings = group.meetings.all()
-        print("Meetings: ",meetings)
-        print("Meeting members: ", meetings[0].members)
 
     def test_group_send_survey(self):
         group = StudyGroup.objects.get(name="Oren group")
         meetings = group.meetings.all()
         meeting = meetings[0]
-
         analysis.post_meeting_analysis(meeting)
