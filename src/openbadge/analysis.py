@@ -13,7 +13,7 @@ from django.template import loader
 
 from .models import StudyGroup, StudyMember
 from django.conf import settings
-
+import urllib
 
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
@@ -32,11 +32,10 @@ def post_meeting_analysis(meeting):
     template = loader.get_template("email/end_meeting_email.html")
 
     for member in members:
-        #
-        #member.key
-        #meeting.uuid
+        f = {'memberKey': member.key, 'meetingUUID' : meeting.uuid, 'meetingStartTime' : start_time.strftime('%-I:%M %p, %B %-d, %Y')}
+        url = settings.POST_MEETING_SURVEY_URL+'?'+urllib.urlencode(f);
         body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member=member \
-                                    ,survey_url=settings.POST_MEETING_SURVEY_URL))
+                                    ,survey_url=url))
         send_email(GMAIL_USERNAME, GMAIL_PASSWORD, member.email, "OpenBadge Post-Meeting Analysis", body)
         time.sleep(.3)
 
