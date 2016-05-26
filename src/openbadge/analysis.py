@@ -13,13 +13,9 @@ from django.template import loader
 
 from .models import StudyGroup, StudyMember
 from django.conf import settings
-
+import urllib
 
 def post_meeting_analysis(meeting):
-
-    if settings.DEBUG:
-        return
-
     member_ids = simplejson.loads(meeting.members)
     members = meeting.group.members.filter(key__in=member_ids).all()
     recipients = [member.email for member in members]
@@ -34,10 +30,13 @@ def post_meeting_analysis(meeting):
     analysis_results = dict(total_samples=total_samples)
 
     template = loader.get_template("email/end_meeting_email.html")
-    body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time))
 
-    for recipient in recipients:
-        send_email(GMAIL_USERNAME, GMAIL_PASSWORD, recipient, "OpenBadge Post-Meeting Analysis", body)
+    for member in members:
+        f = {'memberKey': member.key, 'meetingUUID' : meeting.uuid, 'meetingStartTime' : start_time.strftime('%-I:%M %p, %B %-d, %Y')}
+        url = settings.POST_MEETING_SURVEY_URL+'?'+urllib.urlencode(f);
+        body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member=member \
+                                    ,survey_url=url))
+        send_email(GMAIL_USERNAME, GMAIL_PASSWORD, member.email, "OpenBadge Post-Meeting Analysis", body)
         time.sleep(.3)
 
 

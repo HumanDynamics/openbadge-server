@@ -2,6 +2,8 @@ from .settings import * #@UnusedWildImport
 
 DEBUG = True
 
+SEND_POST_MEETING_SURVEY = True
+
 PIPELINE_LESS_BINARY = "/Users/craig/.node/bin/lessc"
 PIPELINE_YUI_BINARY = '/usr/local/bin/yuicompressor'
 

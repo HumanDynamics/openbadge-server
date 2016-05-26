@@ -235,3 +235,7 @@ REST_FRAMEWORK = {
         'rest_framework_expiring_authtoken.authentication.ExpiringTokenAuthentication',
     )
 }
+
+# Survery and report options
+SEND_POST_MEETING_SURVEY = True
+POST_MEETING_SURVEY_URL = "https://mit.co1.qualtrics.com/jfe/form/SV_0MR67T0jZVKamwJ"
