@@ -32,7 +32,11 @@ def post_meeting_analysis(meeting):
     template = loader.get_template("email/end_meeting_email.html")
 
     for member in members:
-        body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member_key=member.key))
+        #
+        #member.key
+        #meeting.uuid
+        body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member=member \
+                                    ,survey_url=settings.POST_MEETING_SURVEY_URL))
         send_email(GMAIL_USERNAME, GMAIL_PASSWORD, member.email, "OpenBadge Post-Meeting Analysis", body)
         time.sleep(.3)
 

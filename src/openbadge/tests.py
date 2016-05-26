@@ -26,10 +26,20 @@ class APITest(TestCase):
         memberKeys = [member1.key,member2.key]
         meetingMembers = simplejson.dumps(memberKeys)
 
+        # Generate a dummy logfile
+        LOG_FILE_TEXT = """logloglog
+        loglogloglog
+        loglogloglog"""
+
+        LOG_FILE_NAME = settings.MEDIA_ROOT+'/logs/test_file.txt';
+        text_file = open(LOG_FILE_NAME, "w")
+        text_file.write(LOG_FILE_TEXT)
+        text_file.close()
+
         Meeting.objects.create(\
             group = group, uuid="fakeid",type="fake_type",location="fake_location",description="fake description"\
             ,is_complete=True,show_visualization=True,start_time=datetime.datetime.now(),end_time=datetime.datetime.now()\
-            ,members=meetingMembers,log_file="logs/5YTKC/5YTKC_1464127859263.txt"
+            ,members=meetingMembers,log_file=LOG_FILE_NAME
             )
 
     def test_group_created(self):
