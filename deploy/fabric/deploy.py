@@ -99,7 +99,7 @@ def setup_server():
 
     put_passwords_file()
 
-    deploy_crontab()
+    # deploy_crontab()
 
     deploy()
 

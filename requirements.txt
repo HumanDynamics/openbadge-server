@@ -9,3 +9,4 @@ djangorestframework==3.2.3
 djangorestframework-expiring-authtoken==0.1.1
 pytz==2015.7
 python-dateutil==2.5.3
+boto==2.40.0
