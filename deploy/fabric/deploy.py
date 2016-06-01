@@ -67,6 +67,8 @@ def setup_server():
     sudo('apt-get -y install nodejs-legacy node-less')
 
     sudo('pip install uwsgi')
+    sudo('pip install cryptography')
+    sudo('pip install pycrypto')
 
     # get code
     sudo('mkdir -p ' + SETUP_DIRECTORY)

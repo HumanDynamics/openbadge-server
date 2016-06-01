@@ -5,7 +5,7 @@ After=syslog.target
 [Service]
 User=www-data
 Group=www-data
-ExecStart=/usr/local/bin/uwsgi --emperor /opt/OpenBadge-Server/deploy/vassals/
+ExecStart=/usr/local/bin/uwsgi --enable-threads --emperor /opt/OpenBadge-Server/deploy/vassals/
 Restart=always
 KillSignal=SIGQUIT
 Type=notify
