@@ -56,7 +56,7 @@ def setup_server():
     sudo("debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_again password {0}'".format(MYSQL_ROOT_PASSWORD))
 
     # get the programs we'll need
-    sudo('apt-get -y install python-setuptools git nginx uwsgi uwsgi-plugin-python mysql-server python-mysqldb')
+    sudo('apt-get -y install python-setuptools git nginx mysql-server python-mysqldb')
     sudo('apt-get -y install python-pip python-dev build-essential')
     sudo('apt-get -y install libffi-dev libssl-dev libxml2-dev libxslt1-dev')
     sudo('apt-get -y install yui-compressor')
@@ -65,6 +65,8 @@ def setup_server():
     sudo('apt-get -y install  npm')
     sudo('npm install less -g')
     sudo('apt-get -y install nodejs-legacy node-less')
+
+    sudo('pip install uwsgi')
 
     # get code
     sudo('mkdir -p ' + SETUP_DIRECTORY)
@@ -83,7 +85,7 @@ def setup_server():
     
         put('{0}/nginx-default-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/nginx/sites-enabled/default', use_sudo=True)
         put('{0}/nginx-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/nginx/nginx.conf', use_sudo=True)
-        put('{0}/uwsgi-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/init/uwsgi.conf', use_sudo=True)
+        put('{0}/uwsgi-systemd'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/systemd/system/uwsgi.service', use_sudo=True)
 
     sudo('mkdir -p /opt/staticfiles')
     sudo('chown www-data:www-data /opt/staticfiles')
