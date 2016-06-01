@@ -115,7 +115,8 @@ DATABASES = {
         'HOST': '', # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '', # Set to empty string for default.
         'OPTIONS': {
-            'init_command': 'SET storage_engine=INNODB',
+            #'init_command': 'SET storage_engine=INNODB',
+            'init_command': 'SET default_storage_engine=INNODB',
         }
     }
 }
