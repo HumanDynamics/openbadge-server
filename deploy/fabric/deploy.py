@@ -87,6 +87,8 @@ def setup_server():
         put('{0}/nginx-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/nginx/nginx.conf', use_sudo=True)
         put('{0}/uwsgi-systemd'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/systemd/system/uwsgi.service', use_sudo=True)
 
+        sudo('systemctl daemon-reload')
+
     sudo('mkdir -p /opt/staticfiles')
     sudo('chown www-data:www-data /opt/staticfiles')
     sudo('mkdir -p /opt/media')

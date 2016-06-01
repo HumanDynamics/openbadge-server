@@ -11,6 +11,10 @@ SRC_DIRECTORY = os.path.join(FILE_DIRECTORY, "../../src/")
 if SRC_DIRECTORY not in sys.path:
     sys.path.append(SRC_DIRECTORY)
 
+# for the passwords file
+if "/opt/" not in sys.path:
+    sys.path.append("/opt/")
+
 try:
     from project import localsettings as settings
 except:

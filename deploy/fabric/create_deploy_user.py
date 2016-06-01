@@ -27,6 +27,10 @@ def create():
     sudo("touch " + BASH_PROFILE)
     sudo('if ! cat {1} | grep "#Add password"; then printf \'\n\n\n#Add password to pythonpath\nexport PYTHONPATH=$PYTHONPATH:/opt/\' >> {1}; fi;'.format(USERNAME, BASH_PROFILE))
     sudo("chown {0}:{0} {1}".format(USERNAME, BASH_PROFILE))
+    BASH_PROFILE = "/home/"+USERNAME+"/.bash_profile"
+    sudo("touch " + BASH_PROFILE)
+    sudo('if ! cat {1} | grep "#Add password"; then printf \'\n\n\n#Add password to pythonpath\nexport PYTHONPATH=$PYTHONPATH:/opt/\' >> {1}; fi;'.format(USERNAME, BASH_PROFILE))
+    sudo("chown {0}:{0} {1}".format(USERNAME, BASH_PROFILE))
 
     sudo("service ssh restart")
 
