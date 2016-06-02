@@ -88,8 +88,9 @@ def setup_server():
         put('{0}/nginx-default-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/nginx/sites-enabled/default', use_sudo=True)
         put('{0}/nginx-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/nginx/nginx.conf', use_sudo=True)
         put('{0}/uwsgi-systemd'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/systemd/system/uwsgi.service', use_sudo=True)
+        put('{0}/uwsgi-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/init/uwsgi.conf', use_sudo=True)
 
-        sudo('systemctl daemon-reload')
+        sudo('[ -d `command -v systemctl` ] || systemctl daemon-reload') # run systemctl only if it exists
 
     sudo('mkdir -p /opt/staticfiles')
     sudo('chown www-data:www-data /opt/staticfiles')
