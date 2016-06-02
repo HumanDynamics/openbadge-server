@@ -66,6 +66,8 @@ def setup_server():
     sudo('npm install less -g')
     sudo('apt-get -y install nodejs-legacy node-less')
 
+    sudo('apt-get -y remove uwsgi') # not sure why it's even there on some servers
+
     sudo('pip install uwsgi')
     sudo('pip install cryptography')
     sudo('pip install pycrypto')
