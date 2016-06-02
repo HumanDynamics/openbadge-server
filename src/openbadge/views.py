@@ -70,6 +70,7 @@ def log_data(request):
 
     is_complete = request.POST.get("isComplete") == 'true'
     end_time_string = request.POST.get("endTime")
+    ending_method = request.POST.get("endingMethod", "")
     end_time = parse_date(end_time_string) if end_time_string else None
 
     try:
@@ -97,6 +98,7 @@ def log_data(request):
     meeting.end_time = end_time if end_time else meeting.get_last_sample_time()
     meeting.is_complete = is_complete
     meeting.show_visualization = show_visualization
+    meeting.ending_method = ending_method
     meeting.save()
 
     if meeting.is_complete and settings.SEND_POST_MEETING_SURVEY:

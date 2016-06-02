@@ -155,6 +155,7 @@ class Meeting(BaseModel):
     is_complete = models.BooleanField(default=False, blank=True)
     show_visualization = models.BooleanField(default=False, blank=True)
     log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
+    ending_method = models.CharField(max_length=16, blank=True)
 
     def __unicode__(self):
         return unicode(self.group) + "|" + str(self.start_time)
