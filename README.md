@@ -120,6 +120,61 @@ To run it, `cd` into the project directory, then run this command:
     python src/manage.py importcsv --filename={FILENAME OF CSV}
 
 
+## Backing up a Server's Database
+---------------
+
+There is a backup and restoration script that can be used to back up the database and media to S3, and then restore it in the same or a different location.
+
+If the crontab file is deployed to a server it will automatically backup every night. If not, you'll have to run backups manually.
+
+To manually run a backup on a server, SSH into the server then run the command:
+
+    sudo -u www-data fab -f /opt/OpenBadge-Server/deploy/fabric/db_backup.py backup_db
+    
+Then it'll be backed up! To double check it all, you can run this command:
+
+    sudo -u www-data fab -f /opt/OpenBadge-Server/deploy/fabric/db_restore.py list_backups
+
+
+## Overwriting a Server's Database from a Backup
+---------------
+
+## WARNING: DO NOT RUN THIS ON PRODUCTION!
+
+Are you on production? Don't run this. Are you not on production? You probably don't want to run this!
+
+When you do this, this will overwrite all your media and all your database, replacing them with those of a backup. Seriously. It will be gone forever.
+
+If you really must continue, here's how:
+
+First off, as a safety concern, the restoration script **will not work with settings.DEBUG = True**. So your first step is to set `DEBUG = False` in settings.py.
+
+With that done, get the name of a backup with this command:
+
+    sudo -u www-data fab -f /opt/OpenBadge-Server/deploy/fabric/db_restore.py list_backups
+
+It will give results like this:
+
+    S3 Bucket Contents:
+    -----------
+    tmp/dump.2016-05-27.10-02.sql.enc
+    tmp/dump.2016-06-01.22-27.sql.enc
+    tmp/dump.2016-06-02.19-45.sql.enc
+    tmp/media.2016-05-27.10-02.tar.gz.enc
+    tmp/media.2016-06-01.22-27.tar.gz.enc
+    tmp/media.2016-06-02.19-45.tar.gz.enc
+
+Find a datestring from one of those backups. The datestring in this case could be `2016-06-02.19-45` or `2016-06-01.22-27`
+
+With that datestring, run this command:
+
+    sudo -u www-data fab -f /opt/OpenBadge-Server/deploy/fabric/db_restore.py restore_db:datestring={{DATESTRING}}
+
+It will ask for you to confirm a couple times, then do the restoration.
+
+Finally, **Be sure you turn DEBUG = False** on again in settings.py.
+
+
 ## Notes
 ---------------
 
