@@ -7,7 +7,7 @@ server {
      listen   80;
      charset utf-8;
      server_name openbadge.media.mit.edu;
-     client_max_body_size 5M;
+     client_max_body_size 15M;
      
      # return 301 https://$server_name$request_uri;
      
