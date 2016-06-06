@@ -18,7 +18,7 @@ class APITest(TestCase):
         StudyGroup.objects.create(name="Oren group")
         group = StudyGroup.objects.get(name="Oren group")
 
-        StudyMember.objects.create(name="Oren Lederman", email = "badgeA@or3n.com", badge="AA:AA:AA:AA", group = group)
+        StudyMember.objects.create(name="Oren Lederman", email = "orenled@mit.edu", badge="AA:AA:AA:AA", group = group)
         StudyMember.objects.create(name="Alice", email="badgeB@or3n.com", badge="AA:AA:AA:AA", group=group)
         member1 = StudyMember.objects.get(name="Oren Lederman")
         member2 = StudyMember.objects.get(name="Alice")
