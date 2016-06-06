@@ -8,7 +8,7 @@ from django.db import transaction
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
-from .models import StudyGroup, StudyMember, Meeting
+from .models import StudyGroup, StudyMember, Meeting, VisualizationRange
 import analysis
 
 class APITest(TestCase):
@@ -26,6 +26,10 @@ class APITest(TestCase):
         memberKeys = [member1.key,member2.key]
         meetingMembers = simplejson.dumps(memberKeys)
 
+        VisualizationRange.objects.create(group=group,start=datetime.datetime.now(),end=datetime.datetime.now())
+
+
+        # Generate a meeting
         # Generate a dummy logfile
         LOG_FILE_TEXT = """logloglog
         loglogloglog

@@ -11,7 +11,7 @@ import passwords
 
 from django.template import loader
 
-from .models import StudyGroup, StudyMember
+from .models import StudyGroup, StudyMember, VisualizationRange
 from django.conf import settings
 import urllib
 
@@ -110,9 +110,11 @@ def load_users_from_csv(filename):
             if row['email'] not in members.keys():
 
                 # create a new group for the member if we don't have one already
+                print(row)
                 if row['group'] not in groups.keys():
                     group = StudyGroup(name=row['group'])
                     group.save()
+
                     groups[group.name] = group
                     num_new_groups += 1
 
@@ -128,3 +130,19 @@ def load_users_from_csv(filename):
 
     return num_new_members, num_new_groups
 
+def set_visualization_ranges(group_key):
+    eastern = pytz.timezone('US/Eastern')
+
+    #group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
+    group = StudyGroup.objects.get(key=group_key)
+    print(group)
+
+    v1 = VisualizationRange.objects.create(group=group, start=datetime.datetime.now(eastern),end=datetime.datetime.now(eastern))
+    v1.save()
+
+    print(group.visualization_ranges.all())
+    for a in group.visualization_ranges.all():
+        print(a.start,a.end)
+    print(group.name)
+    print(group.members.all())
+    return 1
