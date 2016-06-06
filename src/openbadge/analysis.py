@@ -36,7 +36,7 @@ def post_meeting_analysis(meeting):
         url = settings.POST_MEETING_SURVEY_URL+'?'+urllib.urlencode(f);
         body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member=member \
                                     ,survey_url=url))
-        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, member.email, "OpenBadge Post-Meeting Analysis", body)
+        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, member.email, "RoundTable Group Meeting Survey | "+start_time.strftime('%B %-d, %Y at %-I:%M %p'), body)
         time.sleep(.3)
 
 
