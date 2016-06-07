@@ -90,7 +90,7 @@ def send_email(user, pwd, recipient, subject, body):
         print "failed to send mail"
 
 
-def load_users_from_csv(filename):
+def load_users_from_csv(filename,ranges_filename=None):
     '''
     Assumes a CSV with a header row and has the columns:
     email, group, name, badge
@@ -114,7 +114,9 @@ def load_users_from_csv(filename):
                 if row['group'] not in groups.keys():
                     group = StudyGroup(name=row['group'])
                     group.save()
-
+                    print("Created new group {}".format(group.key))
+                    if ranges_filename:
+                        set_visualization_ranges(group.key,ranges_filename)
                     groups[group.name] = group
                     num_new_groups += 1
 
@@ -141,6 +143,13 @@ def set_visualization_ranges(group_key,filename):
     group = StudyGroup.objects.get(key=group_key)
     print(group)
 
+    print("Removing existing ranges:")
+    vrs = VisualizationRange.objects.filter(group=group)
+    for a in vrs:
+        print(a.to_dict())
+        a.delete()
+
+    print("Adding ranges:")
     num_new_vr = 0
     with open(filename) as csvfile:
         reader = csv.DictReader(csvfile)
@@ -154,4 +163,5 @@ def set_visualization_ranges(group_key,filename):
     print(group.visualization_ranges.all())
     for a in group.visualization_ranges.all():
         print(a.start,a.end)
+
     return num_new_vr

@@ -7,9 +7,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--filename', nargs=1, type=str)
+        parser.add_argument('--ranges_filename', nargs=1, type=str)
 
     def handle(self, *args, **options):
         filename = options["filename"][0]
-        num_members, num_groups = load_users_from_csv(filename)
+        if options["ranges_filename"]:
+            ranges_filename = options["ranges_filename"][0]
+
+        num_members, num_groups = load_users_from_csv(filename,ranges_filename)
 
         self.stdout.write("Imported {0} new members and {1} new groups successfully!".format(num_members, num_groups))
