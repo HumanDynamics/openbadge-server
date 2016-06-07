@@ -130,19 +130,28 @@ def load_users_from_csv(filename):
 
     return num_new_members, num_new_groups
 
-def set_visualization_ranges(group_key):
-    eastern = pytz.timezone('US/Eastern')
 
-    #group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
+def set_visualization_ranges(group_key,filename):
+    '''
+    Assumes a CSV with a header row and has the columns:
+    start,end
+    where the dates are in this format - 2016-06-07 16:37:12
+    Note - time is in UTC time
+    '''
     group = StudyGroup.objects.get(key=group_key)
     print(group)
 
-    v1 = VisualizationRange.objects.create(group=group, start=datetime.datetime.now(eastern),end=datetime.datetime.now(eastern))
-    v1.save()
+    num_new_vr = 0
+    with open(filename) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            startTime =  datetime.datetime.strptime(row['start'], "%Y-%m-%d %H:%M:%S")
+            endtime =  datetime.datetime.strptime(row['end'], "%Y-%m-%d %H:%M:%S")
+            vr = VisualizationRange.objects.create(group=group, start=startTime,end=endtime)
+            vr.save()
+            num_new_vr += 1
 
     print(group.visualization_ranges.all())
     for a in group.visualization_ranges.all():
         print(a.start,a.end)
-    print(group.name)
-    print(group.members.all())
-    return 1
+    return num_new_vr
