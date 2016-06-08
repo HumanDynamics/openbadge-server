@@ -147,7 +147,7 @@ When you do this, this will overwrite all your media and all your database, repl
 
 If you really must continue, here's how:
 
-First off, as a safety concern, the restoration script **will not work with settings.DEBUG = True**. So your first step is to set `DEBUG = False` in settings.py.
+First off, as a safety concern, the restoration script **will not work with settings.DEBUG = False**. So your first step is to set `DEBUG = True` in settings.py.
 
 With that done, get the name of a backup with this command:
 
