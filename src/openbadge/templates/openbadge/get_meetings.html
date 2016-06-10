@@ -1,0 +1,25 @@
+{% load extras %}
+
+<h1>{{ heading }}</h1>
+<table>
+<tr>
+  <th>Date</th>
+  <th>Total # of Meetings</th>
+  <th>Total Duration (hours)</th>
+  <th>Meetings</th>
+</tr>
+{% for date, info in dates.items %}
+<tr>
+  <td>{{ date }}</td>
+  <td>{{ info.total }}</td>
+  <td>{{ info.duration }}</td>
+  <td>
+    {% for meeting in info.meetings %}
+    
+    <a href="{% url 'openbadge:get_meeting' meeting %}">{{ meeting }}</a><br>
+    {% endfor %}
+</td>
+</td></tr>
+{% endfor %}
+</table>
+</ul>

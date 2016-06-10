@@ -1,0 +1,55 @@
+{% load extras %}
+
+<h1>Group Name: {{ info.name }}</h1>
+<table>
+{% for key, value in info.items %}
+
+{% if key == "members" %}
+<tr><td>{{ key }}</td><td>
+  {% for member in value %}
+  {{ member.name }},
+  {% endfor %}
+</td></tr>
+{% else %}
+    <tr>
+      <td>{{ key }}</td>
+      <td>{{ value }}</td>
+    </tr>
+{% endif %}
+
+{% endfor %}
+
+{% if info.members %}
+</table>
+<h2>Members</h2>
+<table>
+  <tr>
+    {% for key, value in info.members.0.items %}
+    <th>{{ key }}</th>
+    {% endfor %}
+  </tr>
+{% for member in info.members %}
+<tr>
+  {% for key, value in member.items %}
+    <td>{{ value }}</td>
+  {% endfor %}
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+</table>
+<h2>Meetings</h2>
+<table>
+{% if meetings %}
+{% for meeting in meetings %}
+<tr>
+<a href="{% url 'openbadge:get_meeting' meeting.uuid %}">{{ meeting.start_time|utc_to_eastern }}</a><br>
+</tr>
+{% endfor %}
+{% else %}
+NO MEETINGS
+{% endif %}
+</table>
+
+</ul>

@@ -2,6 +2,7 @@ import simplejson, pytz, StringIO
 import datetime, random, math
 from decimal import Decimal
 from dateutil.parser import parse as parse_date
+from pytz import timezone
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -17,6 +18,10 @@ from .decorators import app_view
 from .models import StudyGroup, StudyMember, Meeting
 import analysis
 from django.conf import settings
+
+
+from django.contrib.auth.decorators import user_passes_test
+
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -46,7 +51,6 @@ def render_to(template):
             return out
         return wrapper
     return decorator
-
 
 
 @app_view
@@ -107,23 +111,36 @@ def log_data(request):
     return json_response(success=True)
 
 
-@app_view
-@api_view(['GET'])
+def make_dates_dict(all_meetings):
+    dates = {}
+    #all meetings for a date
+    for meeting in all_meetings:
+        d = meeting.start_time.date()
+        meetings = []
+        current_info = dates.get(str(d),{})
+        current_info['meetings'] = current_info.get('meetings',[]) + [meeting.uuid]
+        #total duration of meetings for a date
+        duration = (meeting.end_time - meeting.start_time)
+        current_info['duration'] = current_info.get('duration',0) + duration.total_seconds()/3600 #hours
+        #total number of meetings in for a date
+        current_info['total'] = current_info.get('total',0) + 1
+        dates[str(d)] = current_info
+    return dates
+
+
+@user_passes_test(lambda u: u.is_superuser)
 def get_group(request, group_key):
-
-    if not group_key:
-        return json_response(success=False)
-
     try:
         group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
+        meetings = [meeting for meeting in group.meetings.all()]
+        meetings_based_on_dates = make_dates_dict(meetings)
+        members = [member for member in group.members.all()]
+        return render(request, 'openbadge/get_group.html', {'info':group.to_dict(), 'members': members, 'meetings': meetings, 'meetings_based_on_dates': meetings_based_on_dates})
     except StudyGroup.DoesNotExist:
-        return json_response(success=False)
-
-    return json_response(success=True, group=group.to_dict())
+        return HttpResponse("no group found with Group Key")
 
 
-@app_view
-@api_view(['GET'])
+@user_passes_test(lambda u: u.is_superuser)
 def get_finished_meetings(request, group_key):
 
     if not group_key:
@@ -134,6 +151,40 @@ def get_finished_meetings(request, group_key):
     except StudyGroup.DoesNotExist:
         raise Http404()
 
-    finished_meetings = [meeting.uuid for meeting in group.meetings.filter(is_complete=True).all()]
+    finished_meetings = [meeting for meeting in group.meetings.filter(is_complete=True).all()]
+    return render(request, 'openbadge/get_meetings.html', {'heading': "Finished Meetings for Group "+group.name, 'dates': make_dates_dict(finished_meetings)})
+    
 
-    return json_response(success=True, finished_meetings=finished_meetings)
+@user_passes_test(lambda u: u.is_superuser)
+def get_meetings(request):
+    all_meetings = Meeting.objects.all()#.order_by('start_time') doesn't work..
+    return render(request, 'openbadge/get_meetings.html', {'heading': "All Meetings by Date", 'dates': make_dates_dict(all_meetings)})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def get_groups(request):
+    groups = StudyGroup.objects.all()
+    return render(request, 'openbadge/get_groups.html', {'groups': groups})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def get_meeting(request, uuid):
+    try:
+        meeting = Meeting.objects.get(uuid=uuid)
+        info = {}
+        info['uuid'] = uuid
+        info['group'] = meeting.group.name
+        info['members'] = meeting.members
+        info['start_time'] = str(meeting.start_time)
+        info['end_time'] = str(meeting.end_time)
+        info['duration'] = str(meeting.end_time - meeting.start_time)
+        info['moderator'] = meeting.moderator.name
+        info['type'] = meeting.type
+        info['location'] = meeting.location
+        info['description'] = meeting.description
+        info['is_complete'] = meeting.is_complete
+        info['show_visualization'] = meeting.show_visualization
+        info['ending_method'] = meeting.ending_method
+        return render(request, 'openbadge/get_meeting.html', {'info':info})
+    except Meeting.DoesNotExist:
+        return HttpResponse("can't find meeting with UUID")

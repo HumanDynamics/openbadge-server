@@ -1,0 +1,26 @@
+{% load extras %}
+
+<h1>All Groups</h1>
+<table>
+<tr>
+  <th>Group Name</th>
+  <th>Total # of Meetings</th>
+  <th>Total Duration (hours)</th>
+  <th>Meetings</th>
+</tr>
+{% for group in groups %}
+<tr>
+  <td>
+    <a href="{% url 'openbadge:get_group' group.key %}">{{ group.name }}</a><br>
+  </td>
+  <td>{{ group.meetings.all|length }}</td>
+  <td>{{ group.meetings.all|total_duration }}</td>
+  <td>
+    {% for meeting in group.meetings.all %}
+    <a href="{% url 'openbadge:get_meeting' meeting.uuid %}">{{ meeting.start_time|utc_to_eastern }}</a><br> 
+    {% endfor %}
+</td>
+</td></tr>
+{% endfor %}
+</table>
+</ul>
