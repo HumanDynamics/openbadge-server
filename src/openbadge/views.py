@@ -35,7 +35,6 @@ from django.contrib.auth.decorators import user_passes_test
 from datetime import timedelta
 
 
-BASE = os.path.dirname(os.path.abspath(__file__))
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def json_response(**kwargs):
@@ -511,7 +510,7 @@ def data_process(request):
             plt.tight_layout()
             mpld3.fig_to_html(fig_type)
 
-            plt.savefig(os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_type_meeting_count.png"))
+            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_type_meeting_count.png"))
             plt.gcf().clear()
             
             ax2 = dict_plotdata['location_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
@@ -522,7 +521,7 @@ def data_process(request):
             plt.xlabel('')
             plt.tight_layout()
             mpld3.fig_to_html(fig_loc)
-            plt.savefig(os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_location_meeting_count.png"))
+            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_location_meeting_count.png"))
             plt.gcf().clear()
 	
             ax3 = dict_plotdata['daily_meeting_time'].plot(kind='bar',rot=45,figsize=(scale*2.5, scale*1.5))
@@ -532,7 +531,7 @@ def data_process(request):
             plt.ylabel('Total meeting duration (minutes)',fontsize=y_fontsize)
             plt.xlabel('Date', fontsize=x_fontsize)
             plt.tight_layout()
-            plt.savefig(os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_daily_meeting_time.png"))
+            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_daily_meeting_time.png"))
             plt.gcf().clear()
 	
             ax5 = dict_plotdata['daily_turns_rate'].plot(kind='bar',rot=45,figsize=(scale*2.5,scale*1.5))
@@ -542,7 +541,7 @@ def data_process(request):
             plt.xlabel('Date', fontsize=x_fontsize)
             plt.tight_layout()
             mpld3.fig_to_html(fig_turns_count)
-            plt.savefig(os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_daily_turns_rate.png"))
+            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_daily_turns_rate.png"))
             plt.gcf().clear()
             
             minorLocator = HourLocator()
@@ -554,7 +553,7 @@ def data_process(request):
             plt.xlabel('Time', fontsize=x_fontsize)
             plt.tight_layout()
             mpld3.fig_to_html(fig_meet_turns)
-            plt.savefig(os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_longest_meeting_turns.png"))
+            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_longest_meeting_turns.png"))
             plt.gcf().clear()
 
             dict_plotdata_min = {}
@@ -566,6 +565,7 @@ def data_process(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def report(request, group_name):
+    #return HttpResponse(settings.BASE_DIR)
     #data_process()
     with open(os.path.join(BASE, 'dict_plotdata/'+group_name+'_dict_plotdata.txt'),'r') as result_file:
         dict_string = result_file.read()
@@ -578,7 +578,7 @@ def report(request, group_name):
     info['group_name'] = dict_plotdata['group_name']
     for image in images:
         #info[image] = os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_"+image+".png")
-        info[image] = dict_plotdata['group_name']+"_"+image+".png"
+        info[image] = "img/"+dict_plotdata['group_name']+"_"+image+".png"
     for key in aggregate_keys:
         info[key] = str(dict_plotdata[key])
         
