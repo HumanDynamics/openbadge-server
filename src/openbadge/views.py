@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from .decorators import app_view
-from .models import StudyGroup, StudyMember, Meeting
+from .models import StudyGroup, StudyMember, Meeting, DictPlotData
 import analysis
 from django.conf import settings
 
@@ -123,22 +123,6 @@ def log_data(request):
     return json_response(success=True)
 
 
-def make_dates_dict(all_meetings):
-    dates = {}
-    #all meetings for a date
-    for meeting in all_meetings:
-        d = meeting.start_time.date()
-        meetings = []
-        current_info = dates.get(str(d),{})
-        current_info['meetings'] = current_info.get('meetings',[]) + [meeting.uuid]
-        #total_duration_of_meetings for a date
-        duration = (meeting.end_time - meeting.start_time)
-        current_info['duration'] = current_info.get('duration',0) + duration.total_seconds()/3600 #hours
-        #total number of meetings in for a date
-        current_info['total'] = current_info.get('total',0) + 1
-        dates[str(d)] = current_info
-    return dates
-
 def str_to_utc(time):
     time_format = "%Y-%m-%d"
     if isinstance(time, str):
@@ -159,74 +143,6 @@ def get_meeting_date(start_date, end_date):
         date = date.date()
         meetings = meetings + [meeting for meeting in Meeting.objects.filter(start_time__startswith=date)]
     return meetings
-    ##############################
-
-@user_passes_test(lambda u: u.is_superuser)
-def get_group(request, group_key):
-    try:
-        group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
-        meetings = [meeting for meeting in group.meetings.all()]
-        meetings_based_on_dates = make_dates_dict(meetings)
-        members = [member for member in group.members.all()]
-        return render(request, 'openbadge/get_group.html', {'info':group.to_dict(), 'members': members, 'meetings': meetings, 'meetings_based_on_dates': meetings_based_on_dates})
-    except StudyGroup.DoesNotExist:
-        return HttpResponse("no group found with Group Key")
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def get_finished_meetings(request, group_key):
-
-    if not group_key:
-        raise Http404()
-
-    try:
-        group = StudyGroup.objects.prefetch_related("meetings").get(key=group_key)
-    except StudyGroup.DoesNotExist:
-        raise Http404()
-
-    finished_meetings = [meeting for meeting in group.meetings.filter(is_complete=True).all()]
-    return render(request, 'openbadge/get_meetings.html', {'heading': "Finished Meetings for Group "+group.name, 'dates': make_dates_dict(finished_meetings)})
-    
-
-@user_passes_test(lambda u: u.is_superuser)
-def get_meetings(request):
-    all_meetings = Meeting.objects.all()#.order_by('start_time') doesn't work..
-    return render(request, 'openbadge/get_meetings.html', {'heading': "All Meetings by Date", 'dates': make_dates_dict(all_meetings)})
-
-'''
-def report(request):
-    meetings = get_meeting_date2("2016-06-13","2016-06-15")
-    
-    return render(request, 'openbadge/report2.html', {'meetings':meetings})
-'''
-
-@user_passes_test(lambda u: u.is_superuser)
-def get_groups(request):
-    groups = StudyGroup.objects.all()
-    return render(request, 'openbadge/get_groups.html', {'groups': groups})
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def get_meeting(request, uuid):
-    try:
-        meeting = Meeting.objects.get(uuid=uuid)
-        info = {}
-        info['uuid'] = uuid
-        info['group'] = meeting.group.name
-        info['members'] = meeting.members
-        info['start_time'] = str(meeting.start_time)
-        info['end_time'] = str(meeting.end_time)
-        info['duration'] = str(meeting.end_time - meeting.start_time)
-        info['moderator'] = meeting.moderator.name
-        info['type'] = meeting.type
-        info['location'] = meeting.location
-        info['description'] = meeting.description
-        info['is_complete'] = meeting.is_complete
-        info['show_visualization'] = meeting.show_visualization
-        info['ending_method'] = meeting.ending_method
-        return render(request, 'openbadge/get_meeting.html', {'info':info})
-    except Meeting.DoesNotExist:
-        return HttpResponse("can't find meeting with UUID")
 
 def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
     with open(input_file_name,'r') as input_file:
@@ -299,6 +215,10 @@ def is_speaking(df_meeting,sampleDelay = 50):
     df_power = df_energy.apply(lambda x:pd.rolling_mean(x, window=int(frame_size/sampleDelay), min_periods=1))
     df_is_speech = df_power > avg_speech_power_threshold
     #df_is_speech.plot(kind='area',subplots=True);plt.show()
+    df_max_power = df_power.apply(np.max,axis=1)
+    df_is_winner = df_power.apply(lambda x:x==df_max_power) #Find the badge with the highest power reading at every sample interval and declare it to be the main speaker
+    #The assumption here is that there is only one speaker at any given time
+    df_is_speech = df_is_speech & df_is_winner
     return df_is_speech
 
 def get_all_segments(x_series):
@@ -393,15 +313,15 @@ def get_speaking_series(df_meeting,sampleDelay = 50):
     
     return df_stitched
 
-@user_passes_test(lambda u: u.is_superuser)
-def data_process(request):
+
+def data_process(start_date, end_date):
+
 	scale = 3.0
 	x_fontsize =10
 	y_fontsize =10 
 	title_fontsize = 14
         ######NEED TO ADD START_DATE AND END_DATE ARGS#########
-        start_date = "2016-06-13"
-        end_date = "2016-06-15"
+        idx = pd.date_range(start_date,end_date)
 	
 	groups_meeting_data = {} # This will be a list of data frames
 	input_file_names = [meeting.log_file.path for meeting in get_meeting_date(start_date, end_date)]
@@ -472,18 +392,24 @@ def data_process(request):
 	    dict_plotdata['total_speaking_time'] = np.sum(dict_plotdata['daily_speaking_time']['totalSpeakingTime'])
 	    
 	    print "\nTotal duration of meetings (in minutes) by day"
-	    dict_plotdata['daily_meeting_time'] = group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalMeetingTime": np.sum})
+	    dict_plotdata['daily_meeting_time'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
 	    dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
 	    print dict_plotdata['daily_meeting_time']
 	    
-	    dict_plotdata['total_duration_of_meetings'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime'])
-	    dict_plotdata['avg_speaking_time'] = dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings']
+	    dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime'])
+            dict_plotdata['total duration of meetings'] = str(dict_plotdata['total_duration_of_meetings_min']//60) + " Hr " + str(dict_plotdata['total_duration_of_meetings_min']%60) + " Min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(dict_plotdata['total_duration_of_meetings_min']) + " Min"
+	    dict_plotdata['avg_speaking_time'] = dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min']
 
 	    print "\nTotal number of turns taken by day"
 	    print "\n",group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalTurns": np.sum})#.to_dict(orient='split')
-	    dict_plotdata['daily_turns_count'] = group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalTurns": np.sum})#.to_dict(orient='split')
+	    dict_plotdata['daily_turns_count'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalTurns": np.sum})#.to_dict(orient='split')
 	    dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_count']['totalTurns'].divide(dict_plotdata['daily_meeting_time']['totalMeetingTime']) #per minute
 	    
+            dict_plotdata['daily_meeting_time'] = dict_plotdata['daily_meeting_time'].reindex(idx, fill_value=0)
+            print dict_plotdata['daily_meeting_time']
+            dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_rate'].reindex(idx, fill_value=0)
+            print dict_plotdata['daily_turns_rate']
+
 	    print "Number of turns taken per minute for the longest group meeting this week"
 	    longest_meeting = group_data.loc[group_data['totalMeetingTime'].argmax()]['uuid']
 	    group_meeting_data = groups_meeting_data[group_name]
@@ -510,7 +436,7 @@ def data_process(request):
             plt.tight_layout()
             mpld3.fig_to_html(fig_type)
 
-            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_type_meeting_count.png"))
+            plt.savefig(settings.MEDIA_ROOT + "/img/"+dict_plotdata['group_name']+"_type_meeting_count.png")
             plt.gcf().clear()
             
             ax2 = dict_plotdata['location_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
@@ -521,31 +447,35 @@ def data_process(request):
             plt.xlabel('')
             plt.tight_layout()
             mpld3.fig_to_html(fig_loc)
-            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_location_meeting_count.png"))
+            plt.savefig(settings.MEDIA_ROOT + "/img/"+dict_plotdata['group_name']+"_location_meeting_count.png")
             plt.gcf().clear()
 	
-            ax3 = dict_plotdata['daily_meeting_time'].plot(kind='bar',rot=45,figsize=(scale*2.5, scale*1.5))
-            fig_meet_time = ax3.get_figure()
-            mpld3.fig_to_html(fig_meet_time)
-            #plt.title('Meeting duration by day',fontsize=title_fontsize)
+            fig_meet_time, ax3 = plt.subplots(figsize=(scale*2.5, scale*1.5))
+            ax3.xaxis.set_major_locator(DayLocator())
+            ax3.xaxis.set_major_formatter(DateFormatter('%A'))
+            ax3.bar(dict_plotdata['daily_meeting_time'].index, dict_plotdata['daily_meeting_time']['totalMeetingTime'],align="center")
+            fig_meet_time.autofmt_xdate()
             plt.ylabel('Total meeting duration (minutes)',fontsize=y_fontsize)
-            plt.xlabel('Date', fontsize=x_fontsize)
+            plt.xlabel('Day', fontsize=x_fontsize)
             plt.tight_layout()
-            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_daily_meeting_time.png"))
+            plt.savefig(settings.MEDIA_ROOT + "/img/"+dict_plotdata['group_name']+"_daily_meeting_time.png")
             plt.gcf().clear()
 	
-            ax5 = dict_plotdata['daily_turns_rate'].plot(kind='bar',rot=45,figsize=(scale*2.5,scale*1.5))
-            fig_turns_count = ax5.get_figure()
+            fig_turns_count, ax5 = plt.subplots(figsize=(scale*2.5, scale*1.5))
+            ax5.xaxis.set_major_locator(DayLocator())
+            ax5.xaxis.set_major_formatter(DateFormatter('%A'))
+            ax5.bar(dict_plotdata['daily_turns_rate'].index, dict_plotdata['daily_turns_rate'],align="center")
+            fig_meet_time.autofmt_xdate()
             #plt.title('Number of turns by day',fontsize=title_fontsize)
             plt.ylabel('Number of turns taken per hour',fontsize=y_fontsize)
-            plt.xlabel('Date', fontsize=x_fontsize)
+            plt.xlabel('Day', fontsize=x_fontsize)
             plt.tight_layout()
             mpld3.fig_to_html(fig_turns_count)
-            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_daily_turns_rate.png"))
+            plt.savefig(settings.MEDIA_ROOT + "/img/"+dict_plotdata['group_name']+"_daily_turns_rate.png")
             plt.gcf().clear()
             
             minorLocator = HourLocator()
-            ax4 = dict_plotdata['longest_meeting_turns'].resample('S').interpolate(method='cubic').plot(figsize=(scale*5,scale))#
+            ax4 = dict_plotdata['longest_meeting_turns'].resample('S').interpolate(method='cubic').clip(lower=0.0).plot(figsize=(scale*5,scale*2))#
             ax4.xaxis.set_minor_locator(minorLocator)
             fig_meet_turns = ax4.get_figure()
             #plt.title('Number of turns per minute in the longest meeting',fontsize=title_fontsize)
@@ -553,33 +483,31 @@ def data_process(request):
             plt.xlabel('Time', fontsize=x_fontsize)
             plt.tight_layout()
             mpld3.fig_to_html(fig_meet_turns)
-            plt.savefig(os.path.join(settings.BASE_DIR, "img/"+dict_plotdata['group_name']+"_longest_meeting_turns.png"))
+            plt.savefig(settings.MEDIA_ROOT + "/img/"+dict_plotdata['group_name']+"_longest_meeting_turns.png")
             plt.gcf().clear()
 
-            dict_plotdata_min = {}
-            for key in ['total_meeting_count','total_duration_of_meetings','avg_speaking_time','longest_meeting_date','group_name']:
-                dict_plotdata_min[key] = dict_plotdata[key]
-            with open(os.path.join(BASE, 'dict_plotdata/'+dict_plotdata['group_name']+'_dict_plotdata.txt'),'w') as output_file:
-                output_file.write(json.dumps(dict_plotdata_min))
+            DictPlotData.objects.filter(group_name=dict_plotdata['group_name']).delete()
+            DictPlotData.objects.create(start_date=start_date,
+                                        end_date=end_date,
+                                        total_meeting_count=dict_plotdata['total_meeting_count'],
+                                        total_duration_of_meetings=dict_plotdata['total_duration_of_meetings_min'],
+                                        avg_speaking_time=dict_plotdata['avg_speaking_time'],
+                                        longest_meeting_date=dict_plotdata['longest_meeting_date'],
+                                        group_name=dict_plotdata['group_name'])
         return HttpResponse("Successfully generated plots.")
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def report(request, group_name):
-    #return HttpResponse(settings.BASE_DIR)
-    #data_process()
-    with open(os.path.join(BASE, 'dict_plotdata/'+group_name+'_dict_plotdata.txt'),'r') as result_file:
-        dict_string = result_file.read()
-    dict_plotdata = json.loads(dict_string)
-    
+    dict_plotdata = DictPlotData.objects.get(group_name=group_name).to_dict()
+    group = StudyGroup.objects.get(key=group_name)
+    name = group.name
     images = ['location_meeting_count','type_meeting_count','daily_meeting_time','daily_turns_rate','longest_meeting_turns']
-    aggregate_keys = ['total_meeting_count','total_duration_of_meetings','avg_speaking_time','longest_meeting_date']
-
-    info = {}
-    info['group_name'] = dict_plotdata['group_name']
+    paths = {}
+    dict_plotdata['start_date'] = pd.to_datetime(dict_plotdata['start_date'],format="%Y-%m-%d").strftime("%A, %B %d")
+    dict_plotdata['end_date'] = pd.to_datetime(dict_plotdata['end_date'],format="%Y-%m-%d").strftime("%A, %B %d")
+    dict_plotdata['longest_meeting_date'] = pd.to_datetime(dict_plotdata['longest_meeting_date'],format="%A %Y-%m-%d").strftime("%A, %B %d")
     for image in images:
-        #info[image] = os.path.join(BASE, "img/"+dict_plotdata['group_name']+"_"+image+".png")
-        info[image] = "img/"+dict_plotdata['group_name']+"_"+image+".png"
-    for key in aggregate_keys:
-        info[key] = str(dict_plotdata[key])
-        
-    return render(request, 'openbadge/report_template3.html', {'info': info})
+        paths[image] = "img/"+group_name+"_"+image+".png"
+
+    return render(request, 'openbadge/report_template.html', {'paths':paths , 'info':dict_plotdata, 'name':name})

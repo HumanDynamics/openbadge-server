@@ -49,13 +49,13 @@
 
     <div class="container-fluid">
       
-      <h1>Meeting Report for Study Group {{group_name}}</h1>
+      <h1>Meeting Report for Study Group {{name}}</h1>
       
       <div class="row">
 	<div class="col-sm-12" id="aggregrate_weekly_num">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Summary for the Week</h3>
+	      <h3>Summary from {{info.start_date}} to {{info.end_date}}</h3>
 	    </div>
 	    <div class="chart-stage">
 
@@ -92,8 +92,8 @@
 	      <h3>Meetings by Location</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{MEDIA_URL}}{{info.location_meeting_count}}">
-	      {{MEDIA_URL}}{{info.location_meeting_count}}
+	      <img src="{{MEDIA_URL}}{{paths.location_meeting_count}}">
+	      {{MEDIA_URL}}{{paths.location_meeting_count}}
 	    </div>
 	    <div class="chart-notes">
 	      Description
@@ -107,7 +107,7 @@
 	      <h3>Meetings by Type</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{info.type_meeting_count}}">
+	      <img src="{{MEDIA_URL}}{{paths.type_meeting_count}}">
 	    </div>
 	    <div class="chart-notes">
 	      Description
@@ -125,7 +125,7 @@
 	      <h3>Meeting duration by day</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{info.daily_meeting_time}}">
+	      <img src="{{MEDIA_URL}}{{paths.daily_meeting_time}}">
 	    </div>
 	    <div class="chart-notes">
 	      Description
@@ -140,10 +140,10 @@
 	<div class="col-sm-12" id="bar2">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Number of turns by day</h3>
+	      <h3>Average Number of Turns per Hour</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{info.daily_turns_rate}}">
+	      <img src="{{MEDIA_URL}}{{paths.daily_turns_rate}}">
 	    </div>
 	    <div class="chart-notes">
 	      Description
@@ -157,10 +157,10 @@
 	<div class="col-sm-12" id="aggregate_daily_plot">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Number of turns per minute for the longest meeting of the week on {{longest_meeting_date}}</h3>
+	      <h3>Number of turns per minute for the longest meeting of the week on {{info.longest_meeting_date}}</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{info.longest_meeting_turns}}">
+	      <img src="{{MEDIA_URL}}{{paths.longest_meeting_turns}}">
 	    </div>
 	    <div class="chart-notes">
 	      Description
