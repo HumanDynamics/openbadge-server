@@ -1,0 +1,180 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{group_name}}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="http://keen.github.io/dashboards/assets/css/keen-dashboards.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <style>
+      
+      /* Set black background color, white text and some padding */
+      footer {
+      background-color: white;
+      color: black;
+      padding: 15px;
+      }
+      img {
+      max-width:100%;
+      max-height:100%;
+      }
+      .keen-metric { 
+      background: steelblue; 
+      border-radius: 4px; 
+      color: #fff; 
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+      padding: 10px 0;
+      margin: 10px; 
+      text-align: center;
+      }
+      .keen-metric-value { 
+      display: block; 
+      font-size: 84px; 
+      font-weight: 700; 
+      line-height: 84px; 
+      }
+      .keen-metric-title { 
+      display: block; 
+      font-size: 24px; 
+      font-weight: 200; 
+      }
+    </style>
+  </head>
+
+  <body class="application">
+
+    <div class="container-fluid">
+      
+      <h1>Meeting Report for Study Group {{group_name}}</h1>
+      
+      <div class="row">
+	<div class="col-sm-12" id="aggregrate_weekly_num">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Summary for the Week</h3>
+	    </div>
+	    <div class="chart-stage">
+
+	      <div class="keen-widget keen-metric">
+    		<span class="keen-metric-value">{{info.total_meeting_count}}</span>
+   		<span class="keen-metric-title">total meeting count</span>
+  	      </div>
+
+
+	      <div class="keen-widget keen-metric">
+    		<span class="keen-metric-value">{{info.total_duration_of_meetings}}</span>
+   		<span class="keen-metric-title">total duration of meetings (in minutes)</span>
+  	      </div>
+
+
+	      <div class="keen-widget keen-metric">
+    		<span class="keen-metric-value">{{info.avg_speaking_time}}</span>
+   		<span class="keen-metric-title">avgerage speaking time per hour (in minutes)</span>
+  	      </div>
+
+	    </div>
+	    <div class="chart-notes">
+	      Description/Notes
+	    </div>
+	  </div>
+	</div>
+      </div>
+      
+      <div class="row">
+
+	<div class="col-sm-6" id="location">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Meetings by Location</h3>
+	    </div>
+	    <div class="chart-stage">
+	      <img src="{{MEDIA_URL}}{{info.location_meeting_count}}">
+	      {{MEDIA_URL}}{{info.location_meeting_count}}
+	    </div>
+	    <div class="chart-notes">
+	      Description
+	    </div>
+	  </div>
+	</div>
+
+	<div class="col-sm-6" id="type">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Meetings by Type</h3>
+	    </div>
+	    <div class="chart-stage">
+	      <img src="{{info.type_meeting_count}}">
+	    </div>
+	    <div class="chart-notes">
+	      Description
+	    </div>
+	  </div>
+	</div>
+	
+      </div>
+
+      <div class="row" id="aggregrate_weekly_bar">
+
+	<div class="col-sm-12" id="bar1">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Meeting duration by day</h3>
+	    </div>
+	    <div class="chart-stage">
+	      <img src="{{info.daily_meeting_time}}">
+	    </div>
+	    <div class="chart-notes">
+	      Description
+	    </div>
+	  </div>
+	</div>
+
+      </div>
+
+      <div class="row" id="aggregrate_weekly_bar">
+
+	<div class="col-sm-12" id="bar2">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Number of turns by day</h3>
+	    </div>
+	    <div class="chart-stage">
+	      <img src="{{info.daily_turns_rate}}">
+	    </div>
+	    <div class="chart-notes">
+	      Description
+	    </div>
+	  </div>
+	</div>
+
+      </div>
+
+      <div class="row">
+	<div class="col-sm-12" id="aggregate_daily_plot">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Number of turns per minute for the longest meeting of the week on {{longest_meeting_date}}</h3>
+	    </div>
+	    <div class="chart-stage">
+	      <img src="{{info.longest_meeting_turns}}">
+	    </div>
+	    <div class="chart-notes">
+	      Description
+	    </div>
+	  </div>
+	</div>
+      </div>
+
+    </div>
+
+    <footer>
+      Thank you for your participation! :)
+    </footer>
+  </body>
+
+</html>
+

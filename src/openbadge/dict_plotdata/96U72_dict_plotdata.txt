@@ -1,0 +1,1 @@
+{"group_name": "96U72", "total_duration_of_meetings": 228, "longest_meeting_date": "Tuesday 2016-06-07", "avg_speaking_time": 21, "total_meeting_count": 2}

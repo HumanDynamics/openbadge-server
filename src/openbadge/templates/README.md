@@ -1,5 +1,11 @@
 # Views
 
+## External Report
+* {{ hostname }}/report/96U72
+
+## Generate Plots+Charts
+* {{ hostname }}/data_process
+
 ## Tentative Internal Reports
 * {{ hostname }}/get_groups/
 * {{ hostname }}/get_group/<group_key>/
@@ -19,3 +25,5 @@
 
 ### Superuser-Only
 Add `@user_passes_test(lambda u: u.is_superuser)` to the top of the view
+
+Notes: Images in external report don't work yet, and charts+data still in wrong directory.
