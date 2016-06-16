@@ -5,7 +5,12 @@ To generate charts for the external reports for all meetings within a specified 
 
 `python src/manage.py generateplots --week_num={POSITIVE NUMBER}`
 
-Reports for each group can be viewed through _{{hostname}}/weekly_group_report/<group_key>/<week_num>_ (admin access only)
+Reports for each group can be viewed through `{{hostname}}/weekly_group_report/<group_key>/<week_num>` (admin access only)
+
+## Email Weekly Reports to a Group
+To send an email containing the weekly report to a group, `cd` into the project directory, then run this command:
+
+`python src/manage.py send_weekly_email --week_num {POSITIVE NUMBER} --group_key {GROUP_KEY}`
 
 # Views
 

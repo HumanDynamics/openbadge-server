@@ -24,6 +24,9 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
 
+#from django.contrib.sites.models import Site
+
+
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
     members = meeting.group.members.filter(key__in=member_ids).all()
@@ -58,7 +61,7 @@ def send_post_meeting_survey(meeting,member):
                "RoundTable Group Meeting Survey | " + start_time.strftime('%B %-d, %Y at %-I:%M %p'), body, body_plain)
 
 
-def send_weekly_email(group):
+def send_weekly_email(group, week_num):
 
     members = group.members.all()
     recipients = [member.email for member in members]
@@ -72,13 +75,21 @@ def send_weekly_email(group):
         chunks = meeting.get_chunks()
     analysis_results = dict(total_meetings=len(meetings))
 
+    '''
+    current_site = Site.objects.get_current()
+    current_site.domain
+    print(current_site)
+    '''
+    ###########CHANGE URL TO INCLUDE ACTUAL HOST#####################
+    url = "http://127.0.0.1:8000/weekly_group_report/"+group.key+"/"+week_num
+ 
     template = loader.get_template("email/weekly_report_email.html")
-    body = template.render(dict(group=group, analysis_results=analysis_results))
+    body = template.render(dict(group=group, week_num=week_num, url=url))
 
     for recipient in recipients:
         send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "OpenBadge Weekly Analysis", body)
         time.sleep(.3)
-
+   
 
 # https://docs.python.org/2/library/email-examples.html
 def send_email(user, pwd, recipient, subject, body, body_plain = None):

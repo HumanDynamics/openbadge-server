@@ -110,10 +110,14 @@ def log_data(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def weekly_group_report(request, group_key, week_num):
-    group = StudyGroup.objects.get(key=group_key)
-    name = group.name
 
-    info = WeeklyGroupReport.objects.get(group_key=group_key, week_num=week_num).to_dict()
+    try:
+        info = WeeklyGroupReport.objects.get(group_key=group_key, week_num=week_num).to_dict()
+        group = StudyGroup.objects.get(key=group_key)
+        name = group.name
+    except WeeklyGroupReport.DoesNotExist:
+        return render(request, 'openbadge/report_template.html', {'exist':False, 'key':group_key, 'week_num':week_num})
+
     info['start_date'] = datetime.datetime.strptime(info['start_date'],"%Y-%m-%d").strftime("%A, %B %d")
     info['end_date'] = datetime.datetime.strptime(info['end_date'],"%Y-%m-%d").strftime("%A, %B %d")
     info['longest_meeting_date'] = datetime.datetime.strptime(info['longest_meeting_date'],"%A %Y-%m-%d").strftime("%A, %B %d")
@@ -123,4 +127,4 @@ def weekly_group_report(request, group_key, week_num):
     for image in images:
         paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num +"_"+image+".png"
 
-    return render(request, 'openbadge/report_template.html', {'paths':paths , 'info':info, 'name':name, 'week_num':week_num})
+    return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':week_num})

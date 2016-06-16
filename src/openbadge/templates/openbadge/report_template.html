@@ -3,7 +3,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    {% if exist %}
     <title>Meeting Report for Study Group {{name}} - Week {{week_num}}</title>
+    {% else %}
+    <title>No Meeting Report Available</title>
+    {% endif %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
@@ -45,6 +49,8 @@
 
   <body class="application">
 
+    {% if exist %}
+
     <div class="container-fluid">
 
       <h1>Meeting Report for Study Group {{name}} - Week {{week_num}}</h1>
@@ -59,24 +65,24 @@
 
 	      <div class="keen-widget keen-metric">
     		<span class="keen-metric-value">{{info.total_meeting_count}}</span>
-   		<span class="keen-metric-title">total meeting count</span>
+   		<span class="keen-metric-title">Total meeting count</span>
   	      </div>
 
 
 	      <div class="keen-widget keen-metric">
-    		<span class="keen-metric-value">{{info.total_duration_of_meetings}}</span>
-   		<span class="keen-metric-title">total duration of meetings (in minutes)</span>
+    		<span class="keen-metric-value">{{info.total_duration_of_meetings}} min</span>
+   		<span class="keen-metric-title">Total duration of meetings</span>
   	      </div>
 
 
 	      <div class="keen-widget keen-metric">
-    		<span class="keen-metric-value">{{info.avg_speaking_time}}</span>
-   		<span class="keen-metric-title">avgerage speaking time per hour (in minutes)</span>
+    		<span class="keen-metric-value">{{info.avg_speaking_time}} min</span>
+   		<span class="keen-metric-title">Average speaking time per hour</span>
   	      </div>
 
 	    </div>
 	    <div class="chart-notes">
-	      Description/Notes
+	      <!--Description/Notes-->
 	    </div>
 	  </div>
 	</div>
@@ -91,10 +97,9 @@
 	    </div>
 	    <div class="chart-stage">
 	      <img src="{{MEDIA_URL}}{{paths.location_meeting_count}}">
-	      {{MEDIA_URL}}{{paths.location_meeting_count}}
 	    </div>
 	    <div class="chart-notes">
-	      Description
+	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -108,7 +113,7 @@
 	      <img src="{{MEDIA_URL}}{{paths.type_meeting_count}}">
 	    </div>
 	    <div class="chart-notes">
-	      Description
+	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -120,13 +125,13 @@
 	<div class="col-sm-12" id="bar1">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Meeting duration by day</h3>
+	      <h3>Meeting Duration by Day</h3>
 	    </div>
 	    <div class="chart-stage">
 	      <img src="{{MEDIA_URL}}{{paths.daily_meeting_time}}">
 	    </div>
 	    <div class="chart-notes">
-	      Description
+	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -144,7 +149,7 @@
 	      <img src="{{MEDIA_URL}}{{paths.daily_turns_rate}}">
 	    </div>
 	    <div class="chart-notes">
-	      Description
+	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -161,7 +166,7 @@
 	      <img src="{{MEDIA_URL}}{{paths.longest_meeting_turns}}">
 	    </div>
 	    <div class="chart-notes">
-	      Description
+	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -173,6 +178,13 @@
       Thank you for your participation! :)
     </footer>
     <br>
+
+    {% else %}
+
+    <h3>No Meeting Report Available for Study Group Key {{key}} - Week {{week_num}}</h3>
+
+    {% endif %}
+
   </body>
 
 </html>
