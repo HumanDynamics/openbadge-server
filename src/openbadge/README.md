@@ -5,7 +5,7 @@ TODO: add media_lab_logo.png to media/img directory in production server
 ## Generate Charts
 To generate charts for the external reports for all meetings for a specified group within a specified week (starting from Mon June 13, 2016, e.g. Week 2: Mon 2016-06-20 to Sun 2016-06-26), `cd` into the project directory, then run this command:
 
-`python src/manage.py generateplots --week_num={POSITIVE NUMBER} --group_key={GROUP KEY}`
+`python src/manage.py generatecharts --week_num={POSITIVE NUMBER} --group_key={GROUP KEY}`
 
 To generate charts for all meetings for ALL groups, leave out `--group_key={GROUP KEY}`
 
