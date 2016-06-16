@@ -3,16 +3,14 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>{{group_name}}</title>
+    <title>Meeting Report for Study Group {{name}} - Week {{week_num}}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="http://keen.github.io/dashboards/assets/css/keen-dashboards.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <style>
-      
-      /* Set black background color, white text and some padding */
+    <style>      
       footer {
       background-color: white;
       color: black;
@@ -48,14 +46,14 @@
   <body class="application">
 
     <div class="container-fluid">
-      
-      <h1>Meeting Report for Study Group {{name}}</h1>
+
+      <h1>Meeting Report for Study Group {{name}} - Week {{week_num}}</h1>
       
       <div class="row">
 	<div class="col-sm-12" id="aggregrate_weekly_num">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Summary from {{info.start_date}} to {{info.end_date}}</h3>
+	      <h3>Summary for Week {{week_num}}: {{info.start_date}} to {{info.end_date}}</h3>
 	    </div>
 	    <div class="chart-stage">
 
@@ -174,6 +172,7 @@
     <footer>
       Thank you for your participation! :)
     </footer>
+    <br>
   </body>
 
 </html>

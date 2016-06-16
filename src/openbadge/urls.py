@@ -7,7 +7,7 @@ from django.views.generic.base import TemplateView
 urlpatterns = [
     url(r'^log_data/$', views.log_data, name='log_data'),
 
-    url(r'^report/(?P<group_name>\w+)/$', views.report, name='report'),
+    url(r'^weekly_group_report/(?P<group_key>\w+)/(?P<week_num>[0-9]+)$', views.weekly_group_report, name='weekly_group_report'),
 
 ]
 urlpatterns += static( settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

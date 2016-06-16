@@ -1,11 +1,11 @@
 # External Reports
 
-## Generate Plots+Charts
-To generate plots and charts for the external reports for all meetings within a range of dates, `cd` into the project directory, then run this command:
+## Generate Charts
+To generate charts for the external reports for all meetings within a specified week (starting from Mon June 13, 2016, e.g. Week 2: Mon 2016-06-20 to Sun 2016-06-26), `cd` into the project directory, then run this command:
 
-`python src/manage.py generateplots --start_date={YYYY-MM-DD} --end_date={YYYY-MM-DD}`
+`python src/manage.py generateplots --week_num={POSITIVE NUMBER}`
 
-Reports for each group can be viewed through _{{hostname}}/report/<group_key>_
+Reports for each group can be viewed through _{{hostname}}/weekly_group_report/<group_key>/<week_num>_ (admin access only)
 
 # Views
 

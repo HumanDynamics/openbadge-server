@@ -194,8 +194,9 @@ class Meeting(BaseModel):
 
         return datetime.datetime.fromtimestamp(end_timestamp)
 
-class DictPlotData(models.Model):
-    group_name = models.CharField(max_length=32)
+class WeeklyGroupReport(models.Model):
+    group_key = models.CharField(max_length=32)
+    week_num = models.CharField(max_length=32, default="none")    
     total_duration_of_meetings = models.CharField(max_length=32)
     longest_meeting_date = models.CharField(max_length=32)
     avg_speaking_time = models.CharField(max_length=32)
@@ -204,7 +205,8 @@ class DictPlotData(models.Model):
     end_date = models.CharField(max_length=32, default="none")
 
     def to_dict(self):
-        return dict(group_name=self.group_name,
+        return dict(group_key=self.group_key,
+                    week_num=self.week_num,
                     total_duration_of_meetings=self.total_duration_of_meetings,
                     longest_meeting_date=self.longest_meeting_date,
                     avg_speaking_time=self.avg_speaking_time,

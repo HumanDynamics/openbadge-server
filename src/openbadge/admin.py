@@ -16,7 +16,7 @@ from django.db.models import Count, Case, When, IntegerField, Sum
 from django.conf import settings
 from django import utils
 
-from .models import OpenBadgeUser, StudyGroup, StudyMember, Meeting, VisualizationRange, DictPlotData
+from .models import OpenBadgeUser, StudyGroup, StudyMember, Meeting, VisualizationRange, WeeklyGroupReport
 
 
 def register(model):
@@ -107,8 +107,8 @@ class MeetingAdmin(admin.ModelAdmin):
     def duration(self, inst):
         return (inst.end_time - inst.start_time).total_seconds()/3600
 
-@register(DictPlotData)
-class DictPlotData(admin.ModelAdmin):
-    readonly_fields = ('group_name','start_date','end_date','total_meeting_count','total_duration_of_meetings','avg_speaking_time','longest_meeting_date',)
-    list_display = ('group_name','start_date','end_date','total_meeting_count','total_duration_of_meetings','avg_speaking_time','longest_meeting_date')
-    list_filter = ('group_name', )
+@register(WeeklyGroupReport)
+class WeeklyGroupReportAdmin(admin.ModelAdmin):
+    readonly_fields = ('group_key','week_num','start_date','end_date','total_meeting_count','total_duration_of_meetings','avg_speaking_time','longest_meeting_date',)
+    list_display = ('group_key','week_num','start_date','end_date','total_meeting_count','total_duration_of_meetings','avg_speaking_time','longest_meeting_date')
+    list_filter = ('group_key', )
