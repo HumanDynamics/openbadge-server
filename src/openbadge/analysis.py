@@ -18,29 +18,36 @@ import urllib
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
     members = meeting.group.members.filter(key__in=member_ids).all()
-    recipients = [member.email for member in members]
-
-
-    eastern = pytz.timezone('US/Eastern')
-    start_time = meeting.start_time.astimezone(eastern)
+    #recipients = [member.email for member in members]
 
     #TODO: do analysis
-    chunks = meeting.get_chunks()
-    total_samples = sum([sum(chunk["samples"]) for chunk in chunks])
-    analysis_results = dict(total_samples=total_samples)
+    #chunks = meeting.get_chunks()
+    #total_samples = sum([sum(chunk["samples"]) for chunk in chunks])
+    #analysis_results = dict(total_samples=total_samples)
+
+
+    for member in members:
+        send_post_meeting_survey(meeting,member)
+        time.sleep(.5)
+
+
+def send_post_meeting_survey(meeting,member):
+    eastern = pytz.timezone('US/Eastern')
+    start_time = meeting.start_time.astimezone(eastern)
 
     template = loader.get_template("email/end_meeting_email.html")
     template_plain = loader.get_template("email/end_meeting_email_plain.html")
 
-    for member in members:
-        f = {'memberKey': member.key, 'meetingUUID' : meeting.uuid, 'meetingStartTime' : start_time.strftime('%-I:%M %p, %B %-d, %Y')}
-        url = settings.POST_MEETING_SURVEY_URL+'?'+urllib.urlencode(f);
-        body = template.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member=member \
-                                    ,survey_url=url))
-        body_plain = template_plain.render(dict(meeting=meeting, analysis_results=analysis_results, start_time=start_time, member=member \
-                                    ,survey_url=url))
-        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, member.email, "RoundTable Group Meeting Survey | "+start_time.strftime('%B %-d, %Y at %-I:%M %p'), body, body_plain)
-        time.sleep(.8)
+    f = {'memberKey': member.key, 'meetingUUID': meeting.uuid,
+         'meetingStartTime': start_time.strftime('%-I:%M %p, %B %-d, %Y')}
+    url = settings.POST_MEETING_SURVEY_URL + '?' + urllib.urlencode(f);
+
+    body = template.render(dict(meeting=meeting,  start_time=start_time, member=member, survey_url=url))
+    body_plain = template_plain.render(dict(meeting=meeting, start_time=start_time, member=member, survey_url=url))
+
+    send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, member.email,
+               "RoundTable Group Meeting Survey | " + start_time.strftime('%B %-d, %Y at %-I:%M %p'), body, body_plain)
+
 
 def send_weekly_email(group):
 
