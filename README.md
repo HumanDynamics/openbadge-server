@@ -115,9 +115,33 @@ The file must have a header row, and the columns must be:
     {email3}, {group3}, {name3}, {badge3}
     ...
 
+Optionally, you can also set the visualization ranges for the groups bu providing an additional CSV file. The file
+must include a header row, and follow the structure below:
+    start,end
+    {start1},{end1}
+
+where the dates are in UTC timezone, and in the following structure: 2016-06-07 16:37:12
+
 To run it, `cd` into the project directory, then run this command:
 
-    python src/manage.py importcsv --filename={FILENAME OF CSV}
+    python src/manage.py importcsv --filename={FILENAME OF CSV} --ranges_filename={FILENAME of visualization rages}
+
+# Setting visualization ranges
+
+Similarly to the previous command, you can override the visualization ranges for a given group.
+
+To run it, `cd` into the project directory, then run this command:
+
+    python src/manage.py set_visualization_ranges --group_key={group key} --filename={FILENAME of visualization rages}
+
+
+# Re-sending post-meeting email
+
+Occasionally, users complain that they have not received the end-of-meeting email. You can resend this email using the following command.
+
+To run it, `cd` into the project directory, then run this command:
+
+    python src/manage.py resend_meeting_email --meeting_uuid {meeting_uuid} --member_key {member_key}
 
 
 ## Backing up a Server's Database
