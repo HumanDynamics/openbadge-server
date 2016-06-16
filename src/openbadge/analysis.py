@@ -24,8 +24,10 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
 
-#from django.contrib.sites.models import Site
+import time
 
+#from django.contrib.sites.models import Site
+from django.contrib.sites.shortcuts import get_current_site
 
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
@@ -75,13 +77,21 @@ def send_weekly_email(group, week_num):
         chunks = meeting.get_chunks()
     analysis_results = dict(total_meetings=len(meetings))
 
+    ###########CHANGE URL TO INCLUDE ACTUAL HOST#####################
     '''
     current_site = Site.objects.get_current()
     current_site.domain
     print(current_site)
     '''
-    ###########CHANGE URL TO INCLUDE ACTUAL HOST#####################
-    url = "http://127.0.0.1:8000/weekly_group_report/"+group.key+"/"+week_num
+
+    #request = None
+    #print(settings.SITE_ID)
+    #full_url = ''.join(['http://', get_current_site(request).domain, obj.get_absolute_url()])
+    #print (full_url)
+    #return
+
+    #url = "http://127.0.0.1:8000/weekly_group_report/"+group.key+"/"+week_num
+    url = "http://" + settings.SITE_ID + "/"+group.key+"/"+week_num
  
     template = loader.get_template("email/weekly_report_email.html")
     body = template.render(dict(group=group, week_num=week_num, url=url))
@@ -228,6 +238,27 @@ def get_meetings_date(start_date, end_date):
         meetings = meetings + [meeting for meeting in Meeting.objects.filter(start_time__startswith=date)]
     return meetings
 
+
+
+def get_meetings_date_group(start_date, end_date, group_key):
+    dates = []
+    start_date = str_to_utc(start_date)
+    end_date = str_to_utc(end_date)
+    def daterange(start_date, end_date):
+        for n in range(int ((end_date - start_date).days)):
+            yield start_date + datetime.timedelta(n)
+    meetings = []
+    group = StudyGroup.objects.get(key=group_key)
+    for date in daterange(start_date, end_date):
+        date = date.date()
+        meetings = meetings + [meeting for meeting in Meeting.objects.filter(start_time__startswith=date, group=group)]
+    return meetings
+
+
+
+
+
+
 def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
 
     with open(input_file_name,'r') as input_file:
@@ -288,91 +319,71 @@ def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
             df_sample_data.metadata = meeting_metadata
             return df_sample_data
 
-def is_speaking(df_meeting,sampleDelay = 50):
+##########NEW
 
+def is_speaking(df_meeting,sampleDelay = 50):
     frame_size = 1000 #milliseconds
     median_window = 2*60*1000 #milliseconds
+    median_window = int(median_window/sampleDelay)
+    power_window = int(frame_size/sampleDelay)
     clipping_value = 120 #Maximum value of volume above which the signal is assumed to have non-speech external noise
+    df_meeting = df_meeting.clip(upper=clipping_value)
     avg_speech_power_threshold = 42
     #Calculate the rolling median and subtract this value from the volume
-    df_median = df_meeting.apply(lambda x:pd.rolling_median(x, window=int(median_window/sampleDelay), min_periods=1))
+    df_median = df_meeting.apply(lambda x:x.rolling(min_periods=1,window=median_window,center=False).median())
     df_normalized = df_meeting - df_median
     #Calculate power and apply avg speech power threshold
     df_energy = df_normalized.apply(np.square)
-    df_power = df_energy.apply(lambda x:pd.rolling_mean(x, window=int(frame_size/sampleDelay), min_periods=1))
+    df_power = df_energy.apply(lambda x:x.rolling(window=power_window, min_periods=1,center=False).mean())
     df_is_speech = df_power > avg_speech_power_threshold
     #df_is_speech.plot(kind='area',subplots=True);plt.show()
     df_max_power = df_power.apply(np.max,axis=1)
     df_is_winner = df_power.apply(lambda x:x==df_max_power) #Find the badge with the highest power reading at every sample interval and declare it to be the main speaker
     #The assumption here is that there is only one speaker at any given time
-    df_is_speech = df_is_speech & df_is_winner
 
+    df_is_speech = df_is_speech & df_is_winner
     return df_is_speech
 
-def get_all_segments(x_series):
-
-    #Given a time series store the length, starting and stopping indices of segments having the same value throughout
-    #In the case of a boolean series find all the continuous True segments and false segments
-
+def fill_boolean_segments(x_series,min_length,value):
+    #Given a boolean series fill in all value (True or False) sequences less than length min_length with their inverse
     total_samples = len(x_series)
+    not_value = not value
     i=0
-    segments= []
-    current_segment = {'length':0,'start':0,'start_time':x_series.index[0]}
-
+    length=0
+    start=0
     while(i<total_samples):
         current_value = x_series[i]
         if(i==0):
-            current_segment['value'] = current_value
             previous_value = current_value
-            
+
         if((previous_value != current_value) or (i==total_samples-1)):
-            current_segment['stop'] = i
-            current_segment['stop_time'] = x_series.index[i]
-            segments.append(copy.deepcopy(current_segment))
-            current_segment = {'length':1,'start':i,'start_time':x_series.index[i],'value':current_value}
+            stop = i
+            if(length<min_length and previous_value==value):
+                x_series[start:stop] = not_value
+            length=1
+            start=i
         else:
-            current_segment['length']+=1
+            length+=1
         i=i+1
         previous_value = current_value
 
-    return pd.DataFrame(segments)        
+
 
 def get_stitched(df_is_speech,min_talk_length=2000,min_gap_size=500,sampleDelay = 50):
-
     min_talk_length_samples = int(min_talk_length/sampleDelay)
     min_gap_size_samples = int(min_gap_size/sampleDelay)
-    
     df_is_gap = df_is_speech.copy()
-    #df_is_gap = df_is_gap.apply(lambda x:x and False)
-    
+
     for member in df_is_speech.columns.values:
-        df_is_gap[member] = True # Initialise all values to True
-        
-        #First find all the gaps greater than or equal to min_gap_size (milliseconds)
-        #Set the corresponding samples to False in df_is_gap
-        all_segments = get_all_segments(df_is_speech[member])
-        filtered_rows = ~(all_segments['value']) & (all_segments['length']>=min_gap_size_samples)
-        all_segments = all_segments[filtered_rows]
-        #mark large gaps with a false
-        for index, row in all_segments.iterrows():
-            start = row['start']
-            stop = row['stop']
-            df_is_gap[member][start:stop] = False
-            
-        #Then find all the segments which are less than min_talk_length (milliseconds and remove them)
-        all_segments = get_all_segments(df_is_gap[member])
-        filtered_rows = (all_segments['value']) & (all_segments['length']<min_talk_length_samples)
-        all_segments = all_segments[filtered_rows]
-        #mark small speaking segments with a false
-        for index, row in all_segments.iterrows():
-            start = row['start']
-            stop = row['stop']
-            df_is_gap[member][start:stop] = False
-            
+        #First fill all the gaps less than min_gap_size (milliseconds)
+        #Set the corresponding samples to True in df_is_gap
+        fill_boolean_segments(df_is_gap[member],min_gap_size_samples,False)
+        #Then find all the True segments which are less than min_talk_length (milliseconds) and invert them
+        fill_boolean_segments(df_is_gap[member],min_talk_length_samples,True)
+
     return df_is_gap
 
 def get_speaking_stats(df_meeting,sampleDelay = 50):
-
     #This function uses the data from a meeting to return 
     ####a.the number of turns per speaker per minute
     ####b.the total speaking time
@@ -380,37 +391,38 @@ def get_speaking_stats(df_meeting,sampleDelay = 50):
     #Use stitching function
     #Expected input: A dataframe with a datetime index and one column per badge. 
     #Each column contains a time-series of absolute value speech volume samples
-
     df_is_speech = is_speaking(df_meeting)
+    #df_is_speech.plot(kind='area',subplots=True);plt.show()
     df_stitched = get_stitched(df_is_speech)
+    #df_stitched.plot(kind='area',subplots=True);plt.show()
     all_stats=[]
-
     for member in df_stitched.columns.values:
         current_member = {}
         current_member['member'] = member
-        all_segments = get_all_segments(df_stitched[member])
-        filtered_rows = all_segments['value'] == True
-        all_segments = all_segments[filtered_rows]
-        current_member['totalTurns'] = len(all_segments)
-        current_member['totalSpeakingTime'] = np.sum(all_segments['stop_time']-all_segments['start_time']) if len(all_segments)>0 else datetime.timedelta(0)
+        current_member['totalTurns'] = len([ sum( 1 for _ in group ) for key, group in itertools.groupby(df_stitched[member]) if key ])
+        #print sum(df_stitched[member])*sampleDelay
+        current_member['totalSpeakingTime'] = datetime.timedelta(milliseconds=sum(df_stitched[member])*sampleDelay) #if len(all_segments)>0 else datetime.timedelta(0)
+        #current_member['total_speaking_time'] = np.sum(all_segments['length'])*sampleDelay
         all_stats.append(current_member)
-        
     return all_stats
 
 def get_speaking_series(df_meeting,sampleDelay = 50):
-
     def custom_resampler(array_like):
         return len([ sum( 1 for _ in group ) for key, group in itertools.groupby(array_like) if key ])
 
     df_is_speech = is_speaking(df_meeting)
+    #df_is_speech.plot(kind='area',subplots=True);plt.show()
     df_stitched = get_stitched(df_is_speech)
+    #df_stitched.plot(kind='area',subplots=True);plt.show()
     df_stitched = df_stitched.resample('1T').apply(custom_resampler)
-    
+
     return df_stitched
 
-#def data_process(start_date, end_date):
-def data_process(week_num):
 
+def data_process(week_num, group_key=None):
+
+        print("Start: "+str(time.time()))
+    
 	scale = 3.0
 	x_fontsize =10
 	y_fontsize =10 
@@ -419,16 +431,20 @@ def data_process(week_num):
         idx = pd.date_range(start_date,end_date)
 	
 	groups_meeting_data = {} # This will be a list of data frames
-	input_file_names = [meeting.log_file.path for meeting in get_meetings_date(start_date, end_date)]
-                
-                
+        if group_key:
+            input_file_names = [meeting.log_file.path for meeting in get_meetings_date_group(start_date, end_date, group_key)]
+        else:
+            input_file_names = [meeting.log_file.path for meeting in get_meetings_date(start_date, end_date)]
+
         for input_file_name in input_file_names:
 	    group = input_file_name.split("/")[-2].split("_")[0]
 	    if(not group in groups_meeting_data):
 	        groups_meeting_data[group] = []
 	    df_meeting = sample2data(input_file_name)
 	    groups_meeting_data[group].append(df_meeting)
-            
+
+        print("2: "+str(time.time()))
+        i = 0
 	
         df_metadata = pd.DataFrame()
 	for group in groups_meeting_data:
@@ -456,6 +472,11 @@ def data_process(week_num):
 	        df_metadata = df_metadata.append(pd.DataFrame(members_stats))
 	    df_metadata = df_metadata.reset_index()
 	    del df_metadata['index']
+
+            i += 1
+            print ("2." + str(i) + ": Group " + group + " " +str(time.time()))
+
+        i = 0
 	
 	df_groups = df_metadata.groupby('group')
 	datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
@@ -481,9 +502,13 @@ def data_process(week_num):
 	    
 	    #print "\nTotal speaking time (in minutes) by day"
 	    dict_plotdata['daily_speaking_time'] = group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalSpeakingTime": lambda x:sum(x,datetime.timedelta(0))})
+
+            #print("Daily speaking time: "+str(dict_plotdata['daily_speaking_time']))
+
 	    dict_plotdata['daily_speaking_time']['totalSpeakingTime'] = dict_plotdata['daily_speaking_time']['totalSpeakingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
 	    #print dict_plotdata['daily_speaking_time']
 	    
+
 	    dict_plotdata['total_speaking_time'] = np.sum(dict_plotdata['daily_speaking_time']['totalSpeakingTime'])
 	    
 	    #print "\nTotal duration of meetings (in minutes) by day"
@@ -492,8 +517,13 @@ def data_process(week_num):
 	    #print dict_plotdata['daily_meeting_time']
 	    
 	    dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime'])
-            dict_plotdata['total duration of meetings'] = str(dict_plotdata['total_duration_of_meetings_min']//60) + " Hr " + str(dict_plotdata['total_duration_of_meetings_min']%60) + " Min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(dict_plotdata['total_duration_of_meetings_min']) + " Min"
+            dict_plotdata['total_duration_of_meetings'] = str(dict_plotdata['total_duration_of_meetings_min']//60) + " hr " + str(dict_plotdata['total_duration_of_meetings_min']%60) + " min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(dict_plotdata['total_duration_of_meetings_min']) + " min"
+
+            print ("Total Speaking Time: "+str(dict_plotdata['total_speaking_time']))
 	    dict_plotdata['avg_speaking_time'] = dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min']
+            print ("Total duration of meetings: "+str(dict_plotdata['total_duration_of_meetings']))
+            print ("Avg speaking time: "+str(dict_plotdata['avg_speaking_time']))
+##############################################################################
 
 	    #print "\nTotal number of turns taken by day"
 	    #print "\n",group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalTurns": np.sum})#.to_dict(orient='split')
@@ -522,7 +552,12 @@ def data_process(week_num):
 	    #print group_data.groupby('uuid')['member'].count()
 	    dict_plotdata['meeting_member_count'] = group_data.groupby('uuid')['member'].count()
 	    dict_plotdata['avg. member count'] = np.mean(dict_plotdata['meeting_member_count'])
-	
+
+
+            i += 1
+            print("3:"+str(i)+ group + " "+str(time.time()))            
+            
+
             ax1 = dict_plotdata['type_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
             ax1.set_aspect('equal')
             fig_type = ax1.get_figure()
@@ -595,8 +630,10 @@ def data_process(week_num):
                                              start_date=start_date,
                                              end_date=end_date,
                                              total_meeting_count=dict_plotdata['total_meeting_count'],
-                                             total_duration_of_meetings=dict_plotdata['total_duration_of_meetings_min'],
+                                             total_duration_of_meetings=dict_plotdata['total_duration_of_meetings'],
                                              avg_speaking_time=dict_plotdata['avg_speaking_time'],
                                              longest_meeting_date=dict_plotdata['longest_meeting_date']
             )
 
+        
+        print("End: "+str(time.time()))

@@ -26,6 +26,7 @@
       }
       .keen-metric { 
       background: steelblue; 
+      display: block-inline;
       border-radius: 4px; 
       color: #fff; 
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
@@ -35,7 +36,7 @@
       }
       .keen-metric-value { 
       display: block; 
-      font-size: 84px; 
+      font-size: 60px; 
       font-weight: 700; 
       line-height: 84px; 
       }
@@ -49,6 +50,8 @@
 
   <body class="application">
 
+    <img src="{{MEDIA_URL}}img/media_lab_logo.png" alt="" height="100" width="170">
+    
     {% if exist %}
 
     <div class="container-fluid">
@@ -63,22 +66,27 @@
 	    </div>
 	    <div class="chart-stage">
 
+	      <div class="col-sm-4">
 	      <div class="keen-widget keen-metric">
     		<span class="keen-metric-value">{{info.total_meeting_count}}</span>
    		<span class="keen-metric-title">Total meeting count</span>
   	      </div>
+	      </div>
 
-
+	      <div class="col-sm-4">
 	      <div class="keen-widget keen-metric">
-    		<span class="keen-metric-value">{{info.total_duration_of_meetings}} min</span>
+    		<span class="keen-metric-value">{{info.total_duration_of_meetings}}</span>
    		<span class="keen-metric-title">Total duration of meetings</span>
   	      </div>
+	      </div>
 
 
+	      <div class="col-sm-4">
 	      <div class="keen-widget keen-metric">
     		<span class="keen-metric-value">{{info.avg_speaking_time}} min</span>
    		<span class="keen-metric-title">Average speaking time per hour</span>
   	      </div>
+	      </div>
 
 	    </div>
 	    <div class="chart-notes">
@@ -99,7 +107,6 @@
 	      <img src="{{MEDIA_URL}}{{paths.location_meeting_count}}">
 	    </div>
 	    <div class="chart-notes">
-	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -149,7 +156,7 @@
 	      <img src="{{MEDIA_URL}}{{paths.daily_turns_rate}}">
 	    </div>
 	    <div class="chart-notes">
-	      <!--Description-->
+	      
 	    </div>
 	  </div>
 	</div>
