@@ -70,7 +70,7 @@
 
   <body class="application">
 
-    <img src="{{MEDIA_URL}}img/media_lab_logo.png" alt="" height="100" width="170">
+    <img src="/static/img/media_lab_logo.png" alt="" height="100" width="170">
     
     {% if exist %}
 
@@ -121,7 +121,7 @@
 	      <h3>Reported Meeting Locations</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{MEDIA_URL}}{{paths.location_meeting_count}}">
+	      <img src="/media/{{paths.location_meeting_count}}">
 	    </div>
 	  </div>
 	</div>
@@ -132,7 +132,7 @@
 	      <h3>Reported Meeting Types</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{MEDIA_URL}}{{paths.type_meeting_count}}">
+	      <img src="/media/{{paths.type_meeting_count}}">
 	    </div>
 	  </div>
 	</div>
@@ -147,7 +147,7 @@
 	      <h3>Meeting Duration by Day</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{MEDIA_URL}}{{paths.daily_meeting_time}}">
+	      <img src="/media/{{paths.daily_meeting_time}}">
 	    </div>
 	    <div class="chart-notes">
 	      The number of recorded meeting hours, by day. Note that if you did not end the meeting by clicking on the "End Meeting" button, this time might be incorrect.
@@ -165,7 +165,7 @@
 	      <h3>Average Number of Speaking Turns per Hour</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{MEDIA_URL}}{{paths.daily_turns_rate}}">
+	      <img src="/media{{paths.daily_turns_rate}}">
 	    </div>
 	    <div class="chart-notes">
 	      The number of turns is an indicator of the level of engagement for the team. You can use this chart to compare team engagement for every day of the week by comparing the average number of speaking turns per hour.
@@ -182,7 +182,7 @@
 	      <h3>Number of turns per minute. Displayed for this week's longest meeting ({{info.longest_meeting_date}}).</h3>
 	    </div>
 	    <div class="chart-stage">
-	      <img src="{{MEDIA_URL}}{{paths.longest_meeting_turns}}">
+	      <img src="/media/{{paths.longest_meeting_turns}}">
 	    </div>
 	    <div class="chart-notes">
 	      The number of turns is an indicator of the level of engagement for the team. You can use this chart to see how engagement changed over the course of an entire meeting. Try to recall this meeting - when was the team more engaged?
