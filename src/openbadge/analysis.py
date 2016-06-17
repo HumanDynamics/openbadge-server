@@ -68,21 +68,15 @@ def send_weekly_email(group, week_num):
     members = group.members.all()
     recipients = [member.email for member in members]
 
-    start_time = datetime.datetime.now() - datetime.timedelta(days=7)
+    #start_time = datetime.datetime.now() - datetime.timedelta(days=7)
+    #meetings = group.meetings.filter(start_time__gte=start_time)
 
-    meetings = group.meetings.filter(start_time__gte=start_time)
-
-    #TODO: do analysis
-    for meeting in meetings:
-        chunks = meeting.get_chunks()
-    analysis_results = dict(total_meetings=len(meetings))
+    total_hours = 0
+    for meeting in Meeting.objects.all():
+        duration = (meeting.end_time - meeting.start_time).total_seconds()/3600
+        total_hours += duration
 
     ###########CHANGE URL TO INCLUDE ACTUAL HOST#####################
-    '''
-    current_site = Site.objects.get_current()
-    current_site.domain
-    print(current_site)
-    '''
 
     #request = None
     #print(settings.SITE_ID)
@@ -92,12 +86,14 @@ def send_weekly_email(group, week_num):
 
     #url = "http://127.0.0.1:8000/weekly_group_report/"+group.key+"/"+week_num
     url = "http://" + settings.SITE_ID + "/"+group.key+"/"+week_num
- 
+    #settings.SITE_ID returns cynthia.media.mit.edu on my laptop
+    #hopefully, settings.SITE_ID on production server is openbadgeprod.media.mit.edu ... 
+
     template = loader.get_template("email/weekly_report_email.html")
-    body = template.render(dict(group=group, week_num=week_num, url=url))
+    body = template.render(dict(group=group, week_num=week_num, url=url, total_hours=total_hours))
 
     for recipient in recipients:
-        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "OpenBadge Weekly Analysis", body)
+        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "Roundtable Weekly Summary for " +group.name+ " for Week " +week_num, body)
         time.sleep(.3)
    
 
@@ -207,7 +203,7 @@ def get_week_dates(week_num):
 
     #Monday to Sunday, starting from Mon 2016-06-13
     time_format = "%Y-%m-%d"
-    day1 = datetime.datetime.strptime("2016-06-13", time_format)
+    day1 = datetime.datetime.strptime("2016-06-06", time_format)
     start_date = day1 + datetime.timedelta(days = (week_num-1)*7)
     end_date = start_date + datetime.timedelta(days = 6)
     start_date = datetime.datetime.strftime(start_date, time_format) #removes 00:00:00 at the end
@@ -424,8 +420,8 @@ def data_process(week_num, group_key=None):
         print("Start: "+str(time.time()))
     
 	scale = 3.0
-	x_fontsize =10
-	y_fontsize =10 
+	x_fontsize = 10
+	y_fontsize = 10 
 	title_fontsize = 14
         start_date, end_date = get_week_dates(int(week_num))
         idx = pd.date_range(start_date,end_date)
@@ -443,8 +439,8 @@ def data_process(week_num, group_key=None):
 	    df_meeting = sample2data(input_file_name)
 	    groups_meeting_data[group].append(df_meeting)
 
-        print("2: "+str(time.time()))
-        i = 0
+        #print("2: "+str(time.time()))
+        #i = 0
 	
         df_metadata = pd.DataFrame()
 	for group in groups_meeting_data:
@@ -473,12 +469,16 @@ def data_process(week_num, group_key=None):
 	    df_metadata = df_metadata.reset_index()
 	    del df_metadata['index']
 
-            i += 1
-            print ("2." + str(i) + ": Group " + group + " " +str(time.time()))
+            print("Metadata stored for "+group)
 
-        i = 0
+            #i += 1
+            #print ("2." + str(i) + ": Group " + group + " " +str(time.time()))
+
+        #i = 0
 	
 	df_groups = df_metadata.groupby('group')
+        #ERROR#########################################
+
 	datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
 	for group_name,group_data in df_groups:
 	    dict_plotdata = {}
@@ -511,24 +511,28 @@ def data_process(week_num, group_key=None):
 
 	    dict_plotdata['total_speaking_time'] = np.sum(dict_plotdata['daily_speaking_time']['totalSpeakingTime'])
 	    
-	    #print "\nTotal duration of meetings (in minutes) by day"
+	    print "\nTotal duration of meetings (in minutes) by day"
 	    dict_plotdata['daily_meeting_time'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
-	    dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
+	    print dict_plotdata['daily_meeting_time']['totalMeetingTime']
+	    #dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
+	    dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:float(x.days)*24+float(x.seconds)/3600)#.to_dict(orient='split')
+	    print dict_plotdata['daily_meeting_time']['totalMeetingTime']
 	    #print dict_plotdata['daily_meeting_time']
 	    
-	    dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime'])
+	    '''
+            dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime'])
             dict_plotdata['total_duration_of_meetings'] = str(dict_plotdata['total_duration_of_meetings_min']//60) + " hr " + str(dict_plotdata['total_duration_of_meetings_min']%60) + " min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(dict_plotdata['total_duration_of_meetings_min']) + " min"
-
-            print ("Total Speaking Time: "+str(dict_plotdata['total_speaking_time']))
 	    dict_plotdata['avg_speaking_time'] = dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min']
-            print ("Total duration of meetings: "+str(dict_plotdata['total_duration_of_meetings']))
-            print ("Avg speaking time: "+str(dict_plotdata['avg_speaking_time']))
-##############################################################################
+            '''
+
+	    dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime']*60)
+            dict_plotdata['total_duration_of_meetings'] = str(int(dict_plotdata['total_duration_of_meetings_min']//60)) + " hr " + str(int(dict_plotdata['total_duration_of_meetings_min']%60)) + " min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(int(dict_plotdata['total_duration_of_meetings_min'])) + " min"
+	    dict_plotdata['avg_speaking_time'] = int(dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min'])
 
 	    #print "\nTotal number of turns taken by day"
 	    #print "\n",group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalTurns": np.sum})#.to_dict(orient='split')
 	    dict_plotdata['daily_turns_count'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalTurns": np.sum})#.to_dict(orient='split')
-	    dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_count']['totalTurns'].divide(dict_plotdata['daily_meeting_time']['totalMeetingTime']) #per minute
+	    dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_count']['totalTurns'].divide(dict_plotdata['daily_meeting_time']['totalMeetingTime']*60) #per minute
 	    
             dict_plotdata['daily_meeting_time'] = dict_plotdata['daily_meeting_time'].reindex(idx, fill_value=0)
             #print dict_plotdata['daily_meeting_time']
@@ -554,8 +558,9 @@ def data_process(week_num, group_key=None):
 	    dict_plotdata['avg. member count'] = np.mean(dict_plotdata['meeting_member_count'])
 
 
-            i += 1
-            print("3:"+str(i)+ group + " "+str(time.time()))            
+            #i += 1
+            #print("3:"+str(i)+ group + " "+str(time.time()))    
+            print("Data processed for "+group)
             
 
             ax1 = dict_plotdata['type_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
@@ -593,8 +598,8 @@ def data_process(week_num, group_key=None):
             ax3.xaxis.set_major_formatter(DateFormatter('%A'))
             ax3.bar(dict_plotdata['daily_meeting_time'].index, dict_plotdata['daily_meeting_time']['totalMeetingTime'],align="center")
             fig_meet_time.autofmt_xdate()
-            plt.ylabel('Total meeting duration (minutes)',fontsize=y_fontsize)
-            plt.xlabel('Day', fontsize=x_fontsize)
+            plt.ylabel('Total meeting duration (hours)',fontsize=y_fontsize)
+            #plt.xlabel('Day', fontsize=x_fontsize)
             plt.tight_layout()
             plt.savefig(reports_path + "/week_" + week_num + "_daily_meeting_time.png")
             plt.gcf().clear()
@@ -604,9 +609,9 @@ def data_process(week_num, group_key=None):
             ax5.xaxis.set_major_formatter(DateFormatter('%A'))
             ax5.bar(dict_plotdata['daily_turns_rate'].index, dict_plotdata['daily_turns_rate'],align="center")
             fig_meet_time.autofmt_xdate()
-            #plt.title('Number of turns by day',fontsize=title_fontsize)
-            plt.ylabel('Number of turns taken per hour',fontsize=y_fontsize)
-            plt.xlabel('Day', fontsize=x_fontsize)
+            #plt.title('Number of speaking turns by day',fontsize=title_fontsize)
+            plt.ylabel('Average number of speaking turns per hour',fontsize=y_fontsize)
+            #plt.xlabel('Day', fontsize=x_fontsize)
             plt.tight_layout()
             mpld3.fig_to_html(fig_turns_count)
             plt.savefig(reports_path + "/week_" + week_num + "_daily_turns_rate.png")
@@ -617,8 +622,8 @@ def data_process(week_num, group_key=None):
             ax4.xaxis.set_minor_locator(minorLocator)
             fig_meet_turns = ax4.get_figure()
             #plt.title('Number of turns per minute in the longest meeting',fontsize=title_fontsize)
-            plt.ylabel('Average number of turns taken',fontsize=y_fontsize)
-            plt.xlabel('Time', fontsize=x_fontsize)
+            plt.ylabel('Average number of turns taken', fontsize=y_fontsize+2)
+            plt.xlabel('Time', fontsize=x_fontsize+2)
             plt.tight_layout()
             mpld3.fig_to_html(fig_meet_turns)
             plt.savefig(reports_path + "/week_" + week_num + "_longest_meeting_turns.png")
@@ -634,6 +639,7 @@ def data_process(week_num, group_key=None):
                                              avg_speaking_time=dict_plotdata['avg_speaking_time'],
                                              longest_meeting_date=dict_plotdata['longest_meeting_date']
             )
-
+             
+            print("Charts generated for "+group)
         
         print("End: "+str(time.time()))

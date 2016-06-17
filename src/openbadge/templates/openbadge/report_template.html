@@ -4,9 +4,9 @@
 <html lang="en">
   <head>
     {% if exist %}
-    <title>Meeting Report for Study Group {{name}} - Week {{week_num}}</title>
+    <title>Meeting Summary for Study Group {{name}} - Week {{week_num}}</title>
     {% else %}
-    <title>No Meeting Report Available</title>
+    <title>No Meeting Summary Available</title>
     {% endif %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,10 +15,30 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <style>      
+      .fixed-max-width {
+      margin: 0 auto;
+      }
+      body {
+      max-width: 1300px;
+      margin: 0 auto;
+      }
+      .chart-wrapper .chart-title {
+      background: #fbfbfb;
+      }
+      .chart-wrapper .chart-notes {
+      font-size: 18px;
+      }
+      .height {
+      min-height: 250px;
+      }
       footer {
       background-color: white;
       color: black;
       padding: 15px;
+      font-size: 18px;
+      border: 1px solid #e2e2e2;
+      border-radius: 3px;
+      margin-bottom: 10px;
       }
       img {
       max-width:100%;
@@ -54,9 +74,9 @@
     
     {% if exist %}
 
-    <div class="container-fluid">
+    <div class="container-fluid fixed-max-width">
 
-      <h1>Meeting Report for Study Group {{name}} - Week {{week_num}}</h1>
+      <h1>Meeting Summary for {{name}} - Week {{week_num}}</h1>
       
       <div class="row">
 	<div class="col-sm-12" id="aggregrate_weekly_num">
@@ -89,9 +109,6 @@
 	      </div>
 
 	    </div>
-	    <div class="chart-notes">
-	      <!--Description/Notes-->
-	    </div>
 	  </div>
 	</div>
       </div>
@@ -101,12 +118,10 @@
 	<div class="col-sm-6" id="location">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Meetings by Location</h3>
+	      <h3>Reported Meeting Locations</h3>
 	    </div>
 	    <div class="chart-stage">
 	      <img src="{{MEDIA_URL}}{{paths.location_meeting_count}}">
-	    </div>
-	    <div class="chart-notes">
 	    </div>
 	  </div>
 	</div>
@@ -114,13 +129,10 @@
 	<div class="col-sm-6" id="type">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Meetings by Type</h3>
+	      <h3>Reported Meeting Types</h3>
 	    </div>
 	    <div class="chart-stage">
 	      <img src="{{MEDIA_URL}}{{paths.type_meeting_count}}">
-	    </div>
-	    <div class="chart-notes">
-	      <!--Description-->
 	    </div>
 	  </div>
 	</div>
@@ -138,7 +150,7 @@
 	      <img src="{{MEDIA_URL}}{{paths.daily_meeting_time}}">
 	    </div>
 	    <div class="chart-notes">
-	      <!--Description-->
+	      The number of recorded meeting hours(?), by day. Note that if you did not end the meeting by clicking on the "End Meeting" button, this time might be incorrect.
 	    </div>
 	  </div>
 	</div>
@@ -150,13 +162,13 @@
 	<div class="col-sm-12" id="bar2">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Average Number of Turns per Hour</h3>
+	      <h3>Average Number of Speaking Turns per Hour</h3>
 	    </div>
 	    <div class="chart-stage">
 	      <img src="{{MEDIA_URL}}{{paths.daily_turns_rate}}">
 	    </div>
 	    <div class="chart-notes">
-	      
+	      The number of turns is an indicator of the level of engagement for the team. You can use this chart to compare team engagement for every day of the week by comparing the average number of speaking turns per hour.
 	    </div>
 	  </div>
 	</div>
@@ -167,13 +179,13 @@
 	<div class="col-sm-12" id="aggregate_daily_plot">
 	  <div class="chart-wrapper">
 	    <div class="chart-title">
-	      <h3>Number of turns per minute for the longest meeting of the week on {{info.longest_meeting_date}}</h3>
+	      <h3>Number of turns per minute. Displayed for this week's longest meeting ({{info.longest_meeting_date}}).</h3>
 	    </div>
 	    <div class="chart-stage">
 	      <img src="{{MEDIA_URL}}{{paths.longest_meeting_turns}}">
 	    </div>
 	    <div class="chart-notes">
-	      <!--Description-->
+	      The number of turns is an indicator of the level of engagement for the team. You can use this chart to see how engagement changed over the course of an entire meeting. Try to recall this meeting - when was the team more engaged?
 	    </div>
 	  </div>
 	</div>
@@ -182,13 +194,13 @@
     </div>
 
     <footer>
-      Thank you for your participation! :)
+      Please note that this is only a preliminary report. A personalized report of your speaking pattern and a comparison to your teammates and other teams will be shared with you at the beginning of H2. Thank you for your participation.
     </footer>
     <br>
 
     {% else %}
 
-    <h3>No Meeting Report Available for Study Group Key {{key}} - Week {{week_num}}</h3>
+    <h3>No Meeting Summary Available for Study Group Key {{key}} - Week {{week_num}}</h3>
 
     {% endif %}
 
