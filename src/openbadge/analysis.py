@@ -275,7 +275,8 @@ def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
         samples = batch.pop('samples')
         reference_timestamp = batch.pop('timestamp')*1000+batch.pop('timestamp_ms') #reference timestamp in milliseconds
         sampleDelay = batch.pop('sampleDelay')
-        numSamples = batch.pop('numSamples')
+        numSamples = len(samples)
+        #numSamples = batch.pop('numSamples')
         for i in range(numSamples):
             sample = {}
             sample.update(batch)
