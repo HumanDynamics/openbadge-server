@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg') #to handle NO DISPLAY error
+
 import smtplib, os, simplejson, datetime, csv, pytz
 import time
 
@@ -21,7 +24,6 @@ import mpld3, seaborn as sns
 import numpy as np
 import copy
 import itertools
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
 
@@ -29,6 +31,7 @@ import time
 
 #from django.contrib.sites.models import Site
 from django.contrib.sites.shortcuts import get_current_site
+
 
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
@@ -272,7 +275,8 @@ def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
         samples = batch.pop('samples')
         reference_timestamp = batch.pop('timestamp')*1000+batch.pop('timestamp_ms') #reference timestamp in milliseconds
         sampleDelay = batch.pop('sampleDelay')
-        numSamples = batch.pop('numSamples')
+        numSamples = len(samples)
+        #numSamples = batch.pop('numSamples')
         for i in range(numSamples):
             sample = {}
             sample.update(batch)
@@ -281,6 +285,8 @@ def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
             sample_data.append(sample)
 
     df_sample_data = pd.DataFrame(sample_data)
+    if len(sample_data)==0:
+        return None
     df_sample_data['datetime'] = pd.to_datetime(df_sample_data['timestamp'], unit='ms')
     del df_sample_data['timestamp']
 
@@ -428,6 +434,7 @@ def data_process(week_num, group_key=None):
         start_date, end_date = get_week_dates(int(week_num))
         idx = pd.date_range(start_date,end_date)
 	
+        print("Getting log file paths")
 	groups_meeting_data = {} # This will be a list of data frames
         if group_key:
             input_file_names = [meeting.log_file.path for meeting in get_meetings_date_group(start_date, end_date, group_key)]
@@ -439,17 +446,19 @@ def data_process(week_num, group_key=None):
 	    if(not group in groups_meeting_data):
 	        groups_meeting_data[group] = []
 	    df_meeting = sample2data(input_file_name)
-	    groups_meeting_data[group].append(df_meeting)
-
+            if df_meeting is not None:
+                groups_meeting_data[group].append(df_meeting)
         #print("2: "+str(time.time()))
         #i = 0
 	
         df_metadata = pd.DataFrame()
 	for group in groups_meeting_data:
 	    #Do this for each group
+            print(group)
     	    group_meeting_data = groups_meeting_data[group]
 	    for df_meeting in group_meeting_data:
-	        #Do this for each meeting of the group
+                print("UUID: "+df_meeting.metadata['uuid'])
+                #Do this for each meeting of the group
 	        #
 	        ##Store the metadata for the meeting in a dataframe format for easier aggregation and plotting
 	        metadata = {}
@@ -487,6 +496,8 @@ def data_process(week_num, group_key=None):
 
 	datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
 	for group_name,group_data in df_groups:
+            print("dict_plotdata for: ")
+            print(group_name)
 	    dict_plotdata = {}
 	    dict_plotdata['group_name'] = group_name
 	    #print "Meeting report for study group "+group_name
