@@ -441,7 +441,8 @@ def data_process(week_num, group_key=None):
 	    if(not group in groups_meeting_data):
 	        groups_meeting_data[group] = []
 	    df_meeting = sample2data(input_file_name)
-	    groups_meeting_data[group].append(df_meeting)
+            if df_meeting is not None:
+                groups_meeting_data[group].append(df_meeting)
         #print("2: "+str(time.time()))
         #i = 0
 	
