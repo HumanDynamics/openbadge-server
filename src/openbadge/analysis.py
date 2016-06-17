@@ -442,7 +442,6 @@ def data_process(week_num, group_key=None):
 	        groups_meeting_data[group] = []
 	    df_meeting = sample2data(input_file_name)
 	    groups_meeting_data[group].append(df_meeting)
-
         #print("2: "+str(time.time()))
         #i = 0
 	
@@ -452,9 +451,8 @@ def data_process(week_num, group_key=None):
             print(group)
     	    group_meeting_data = groups_meeting_data[group]
 	    for df_meeting in group_meeting_data:
-                print("Storing meta data for meeting: ")
-                print(df_meeting)
-	        #Do this for each meeting of the group
+                print("UUID: "+df_meeting.metadata['uuid'])
+                #Do this for each meeting of the group
 	        #
 	        ##Store the metadata for the meeting in a dataframe format for easier aggregation and plotting
 	        metadata = {}
