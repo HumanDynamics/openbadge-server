@@ -18,6 +18,9 @@ from .models import StudyGroup, StudyMember, Meeting
 import analysis
 from django.conf import settings
 
+from createGraph import individualGraph, aggregateGraph
+from newGraph import overallGraph
+
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def json_response(**kwargs):
@@ -137,3 +140,54 @@ def get_finished_meetings(request, group_key):
     finished_meetings = [meeting.uuid for meeting in group.meetings.filter(is_complete=True).all()]
 
     return json_response(success=True, finished_meetings=finished_meetings)
+''' 
+def internal_report(request, period): 
+	
+	groups = StudyGroup.objects.all().order_by('name')
+	
+	meetings = [{study_group.name:Meeting.objects.filter(is_complete=True,
+			group__name=study_group.name, start_time__gt = datetime.datetime.now()- datetime.timedelta(days=int(period)-1),
+			end_time__lte = datetime.datetime.now()).all().order_by('start_time')}
+			for study_group in groups]
+	
+	metadata = individualGraph(meetings, datetime.datetime.now(), int(period))
+	metadata['period'] = period
+	
+	aggregateGraph(metadata['agg_duration'], metadata['days'])
+		
+	return render(request, 'reports/ireport.html', {'metadata':metadata})
+'''
+
+def internal_report(request):
+	
+	groups = StudyGroup.objects.all().order_by('name')
+	
+	durations = []
+	num_meetings = []
+	names = []
+	
+	dates = [datetime.date(2016,6,13) + datetime.timedelta(days=i) for i in xrange(28)]
+	
+	for s_group in groups:
+		meetings = Meeting.objects.filter(group__key = s_group.key, is_complete=True).all()
+		
+		num_meet_temp = []
+		time_meet_temp = []
+		
+		for current in dates:
+			meets = [meet for meet in meetings
+				if (meet.start_time.year == current.year and
+				meet.start_time.month == current.month and
+				meet.start_time.day == current.day)]
+			
+			num_meet_temp.append(len(meets))
+			times = [entry.end_time - entry.start_time for entry in meets]
+			time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds())/3600.0)
+			
+		num_meetings.append(num_meet_temp)
+		durations.append(time_meet_temp)
+		names.append(s_group.name)
+	
+	metadata = overallGraph(durations, num_meetings, dates, names)
+
+	return render(request, 'reports/ireport.html', {'metadata':metadata})
