@@ -456,7 +456,8 @@ def data_process(week_num, group_key=None):
 	        metadata.update(df_meeting.metadata)
 	        df_meeting=pd.pivot_table(df_meeting.reset_index(),index='datetime',columns='member',values='signal').dropna()
 	        df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
-	        start_time = df_meeting.index[0]
+                #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
+       	        start_time = df_meeting.index[0]
 	        end_time = df_meeting.index[-1]
 	        metadata["startTime"] = start_time
 	        metadata["endTime"] = end_time
@@ -547,8 +548,9 @@ def data_process(week_num, group_key=None):
 	    group_meeting_data = groups_meeting_data[group_name]
 	    for df in group_meeting_data:
 	        if(df.metadata['uuid']==longest_meeting):
-	            df_meeting=pd.pivot_table(df.reset_index(),index='datetime',columns='member',values='signal').dropna()
+	            df_meeting=pd.pivot_table(df.reset_index(),index='datetime',columns='member',values='signal').fillna(value=0)
 	            df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
+                    #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
 	            dict_plotdata['longest_meeting_date'] = pd.to_datetime(str(df_meeting.index.values[0])).strftime('%A %Y-%m-%d')
 	            df_meeting_turns = get_speaking_series(df_meeting)
 	            df_meeting_turns['total'] = df_meeting_turns.sum(axis=1)
@@ -622,9 +624,10 @@ def data_process(week_num, group_key=None):
             plt.savefig(reports_path + "/week_" + week_num + "_daily_turns_rate.png")
             plt.gcf().clear()
             
-            minorLocator = HourLocator()
-            ax4 = dict_plotdata['longest_meeting_turns'].resample('S').interpolate(method='cubic').clip(lower=0.0).plot(figsize=(scale*5,scale*2))#
-            ax4.xaxis.set_minor_locator(minorLocator)
+            #minorLocator = HourLocator() #removed because hours labels didn't show on some graphs
+            ax4 = dict_plotdata['longest_meeting_turns'].resample('S').interpolate(method='linear').rolling(window=60, min_periods=1, center=False).mean().plot(figsize=(scale*5,scale*2))
+            #clip(lower=0.0).plot(figsize=(scale*5,scale*2))#
+            #ax4.xaxis.set_minor_locator(minorLocator)
             fig_meet_turns = ax4.get_figure()
             #plt.title('Number of turns per minute in the longest meeting',fontsize=title_fontsize)
             plt.ylabel('Average number of turns taken', fontsize=y_fontsize+2)
