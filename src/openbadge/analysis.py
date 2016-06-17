@@ -207,7 +207,7 @@ def get_week_dates(week_num):
 
     #Monday to Sunday, starting from Mon 2016-06-13
     time_format = "%Y-%m-%d"
-    day1 = datetime.datetime.strptime("2016-06-13", time_format)
+    day1 = datetime.datetime.strptime("2016-06-06", time_format)
     start_date = day1 + datetime.timedelta(days = (week_num-1)*7)
     end_date = start_date + datetime.timedelta(days = 6)
     start_date = datetime.datetime.strftime(start_date, time_format) #removes 00:00:00 at the end
@@ -434,6 +434,7 @@ def data_process(week_num, group_key=None):
         start_date, end_date = get_week_dates(int(week_num))
         idx = pd.date_range(start_date,end_date)
 	
+        print("Getting log file paths")
 	groups_meeting_data = {} # This will be a list of data frames
         if group_key:
             input_file_names = [meeting.log_file.path for meeting in get_meetings_date_group(start_date, end_date, group_key)]
