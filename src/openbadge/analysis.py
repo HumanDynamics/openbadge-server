@@ -22,6 +22,7 @@ import numpy as np
 import copy
 import itertools
 import matplotlib
+matplotlib.use('Agg') #to handle NO DISPLAY error
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
 
@@ -30,7 +31,6 @@ import time
 #from django.contrib.sites.models import Site
 from django.contrib.sites.shortcuts import get_current_site
 
-matplotlib.use('Agg')
 
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
