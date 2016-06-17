@@ -449,8 +449,11 @@ def data_process(week_num, group_key=None):
         df_metadata = pd.DataFrame()
 	for group in groups_meeting_data:
 	    #Do this for each group
+            print(group)
     	    group_meeting_data = groups_meeting_data[group]
 	    for df_meeting in group_meeting_data:
+                print("Storing meta data for meeting: ")
+                print(df_meeting)
 	        #Do this for each meeting of the group
 	        #
 	        ##Store the metadata for the meeting in a dataframe format for easier aggregation and plotting
@@ -489,6 +492,8 @@ def data_process(week_num, group_key=None):
 
 	datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
 	for group_name,group_data in df_groups:
+            print("dict_plotdata for: ")
+            print(group_name)
 	    dict_plotdata = {}
 	    dict_plotdata['group_name'] = group_name
 	    #print "Meeting report for study group "+group_name
