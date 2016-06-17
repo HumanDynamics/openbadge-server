@@ -476,8 +476,11 @@ def data_process(week_num, group_key=None):
 
         #i = 0
 	
-	df_groups = df_metadata.groupby('group')
-        #ERROR#########################################
+        if 'group' in df_metadata:
+            df_groups = df_metadata.groupby('group')
+        else:
+            print("Error: No meetings occured in Week "+week_num)
+            return
 
 	datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
 	for group_name,group_data in df_groups:
@@ -511,12 +514,10 @@ def data_process(week_num, group_key=None):
 
 	    dict_plotdata['total_speaking_time'] = np.sum(dict_plotdata['daily_speaking_time']['totalSpeakingTime'])
 	    
-	    print "\nTotal duration of meetings (in minutes) by day"
-	    dict_plotdata['daily_meeting_time'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
-	    print dict_plotdata['daily_meeting_time']['totalMeetingTime']
-	    #dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
+            dict_plotdata['daily_meeting_time'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
+            #dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
 	    dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:float(x.days)*24+float(x.seconds)/3600)#.to_dict(orient='split')
-	    print dict_plotdata['daily_meeting_time']['totalMeetingTime']
+	    #print dict_plotdata['daily_meeting_time']['totalMeetingTime']
 	    #print dict_plotdata['daily_meeting_time']
 	    
 	    '''
@@ -643,3 +644,4 @@ def data_process(week_num, group_key=None):
             print("Charts generated for "+group)
         
         print("End: "+str(time.time()))
+        print("Successfully generated charts for all meetings for Week "+week_num+"!")

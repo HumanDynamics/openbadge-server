@@ -16,4 +16,4 @@ class Command(BaseCommand):
         else:
             data_process(week_num)
 
-        self.stdout.write("Successfully generated charts for all meetings for Week {0}!".format(week_num))
+        #self.stdout.write("Successfully generated charts for all meetings for Week {0}!".format(week_num))
