@@ -30,6 +30,8 @@ import time
 #from django.contrib.sites.models import Site
 from django.contrib.sites.shortcuts import get_current_site
 
+matplotlib.use('Agg')
+
 def post_meeting_analysis(meeting):
     member_ids = simplejson.loads(meeting.members)
     members = meeting.group.members.filter(key__in=member_ids).all()
