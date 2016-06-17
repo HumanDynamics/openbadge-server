@@ -21,6 +21,7 @@ import mpld3, seaborn as sns
 import numpy as np
 import copy
 import itertools
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
 
@@ -418,7 +419,8 @@ def get_speaking_series(df_meeting,sampleDelay = 50):
 def data_process(week_num, group_key=None):
 
         print("Start: "+str(time.time()))
-    
+
+        matplotlib.rcParams['font.size'] = 18    
 	scale = 3.0
 	x_fontsize = 10
 	y_fontsize = 10 
@@ -562,13 +564,14 @@ def data_process(week_num, group_key=None):
             #i += 1
             #print("3:"+str(i)+ group + " "+str(time.time()))    
             print("Data processed for "+group)
-            
-
+           
+ 
             ax1 = dict_plotdata['type_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
             ax1.set_aspect('equal')
             fig_type = ax1.get_figure()
             plt.ylabel('')
             plt.xlabel('')
+            plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
             plt.tight_layout()
             mpld3.fig_to_html(fig_type)
 
@@ -589,6 +592,7 @@ def data_process(week_num, group_key=None):
             #plt.title('Meetings by location',fontsize=title_fontsize)
             plt.ylabel('')
             plt.xlabel('')
+            plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
             plt.tight_layout()
             mpld3.fig_to_html(fig_loc)
             plt.savefig(reports_path + "/week_" + week_num + "_location_meeting_count.png")
