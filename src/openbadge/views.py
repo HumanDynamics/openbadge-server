@@ -19,7 +19,7 @@ import analysis
 from django.conf import settings
 
 from createGraph import individualGraph, aggregateGraph
-from newGraph import overallGraph
+from newGraph import groupStatGraph
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -155,7 +155,7 @@ def internal_report(request, period):
 	
 	aggregateGraph(metadata['agg_duration'], metadata['days'])
 		
-	return render(request, 'reports/ireport.html', {'metadata':metadata})
+	return render(request, 'reports/internal_report.html', {'metadata':metadata})
 '''
 
 def internal_report(request):
@@ -188,6 +188,6 @@ def internal_report(request):
 		durations.append(time_meet_temp)
 		names.append(s_group.name)
 	
-	metadata = overallGraph(durations, num_meetings, dates, names)
+	metadata = groupStatGraph(durations, num_meetings, dates, names)
 
-	return render(request, 'reports/ireport.html', {'metadata':metadata})
+	return render(request, 'reports/internal_report.html', {'metadata':metadata})

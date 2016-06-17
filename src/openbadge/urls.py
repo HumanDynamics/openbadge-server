@@ -11,6 +11,6 @@ urlpatterns = [
 
     url(r'^log_data/$', views.log_data, name='log_data'),
     
-    url(r'^ireport/$', views.internal_report, name='internal_report'),    
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    url(r'^internal_report/$', views.internal_report, name='internal_report'),    
+]
 
