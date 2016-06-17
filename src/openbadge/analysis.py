@@ -75,7 +75,7 @@ def send_weekly_email(group, week_num):
     for meeting in Meeting.objects.all():
         duration = (meeting.end_time - meeting.start_time).total_seconds()/3600
         total_hours += duration
-
+    total_hours = int(total_hours)
     ###########CHANGE URL TO INCLUDE ACTUAL HOST#####################
 
     #request = None

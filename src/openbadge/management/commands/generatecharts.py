@@ -6,13 +6,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--week_num', nargs=1, type=str)
-        parser.add_argument('--group_key', nargs=1, type=str)
+        parser.add_argument('--group_keys', nargs='*', type=str)
 
     def handle(self, *args, **options):
         week_num = options["week_num"][0]
-        if options["group_key"]:
-            group_key = options["group_key"][0]
-            data_process(week_num, group_key)
+        if options["group_keys"]:
+            group_keys = options["group_keys"]
+            for group_key in group_keys:
+                data_process(week_num, group_key)
         else:
             data_process(week_num)
 

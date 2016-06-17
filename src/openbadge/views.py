@@ -108,7 +108,7 @@ def log_data(request):
     return json_response(success=True)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def weekly_group_report(request, group_key, week_num):
 
     try:

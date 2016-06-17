@@ -8,19 +8,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--week_num', nargs=1, type=str)
-        parser.add_argument('--group_key', nargs=1, type=str)
+        parser.add_argument('--group_keys', nargs="*", type=str)
 
     def handle(self, *args, **options):
         week_num = options['week_num'][0]
-        group_key = options['group_key'][0]
+        group_keys = options['group_keys']
 
-        # validate existance of group
-        if group_key == "ALL":
-            groups = StudyGroups.objects.all()
-            for group in group:
-                send_weekly_email(group, week_num)
+        if group_keys:
+            groups = StudyGroup.objects.filter(key__in=group_keys).all()
         else:
-            group = StudyGroup.objects.get(key=group_key)
+            groups = StudyGroup.objects.all()
+        
+        for group in groups:
             send_weekly_email(group, week_num)
 
         self.stdout.write("Sent the emails successfully!")
