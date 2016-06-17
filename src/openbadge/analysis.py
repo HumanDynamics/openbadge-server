@@ -204,7 +204,7 @@ def get_week_dates(week_num):
 
     #Monday to Sunday, starting from Mon 2016-06-13
     time_format = "%Y-%m-%d"
-    day1 = datetime.datetime.strptime("2016-06-06", time_format)
+    day1 = datetime.datetime.strptime("2016-06-13", time_format)
     start_date = day1 + datetime.timedelta(days = (week_num-1)*7)
     end_date = start_date + datetime.timedelta(days = 6)
     start_date = datetime.datetime.strftime(start_date, time_format) #removes 00:00:00 at the end
@@ -281,6 +281,8 @@ def sample2data(input_file_name,to_csv=False,datetime_index=True,resample=True):
             sample_data.append(sample)
 
     df_sample_data = pd.DataFrame(sample_data)
+    if len(sample_data)==0:
+        return None
     df_sample_data['datetime'] = pd.to_datetime(df_sample_data['timestamp'], unit='ms')
     del df_sample_data['timestamp']
 
