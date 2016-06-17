@@ -240,7 +240,7 @@ REST_FRAMEWORK = {
 }
 
 # Survery and report options
-SEND_POST_MEETING_SURVEY = True
+SEND_POST_MEETING_SURVEY = False
 POST_MEETING_SURVEY_URL = "https://mit.co1.qualtrics.com/jfe/form/SV_0MR67T0jZVKamwJ"
 
 
