@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg') #to handle NO DISPLAY error
+
 import smtplib, os, simplejson, datetime, csv, pytz
 import time
 
@@ -21,8 +24,6 @@ import mpld3, seaborn as sns
 import numpy as np
 import copy
 import itertools
-import matplotlib
-matplotlib.use('Agg') #to handle NO DISPLAY error
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
 
