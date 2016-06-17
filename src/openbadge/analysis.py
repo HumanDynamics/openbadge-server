@@ -207,7 +207,7 @@ def get_week_dates(week_num):
 
     #Monday to Sunday, starting from Mon 2016-06-13
     time_format = "%Y-%m-%d"
-    day1 = datetime.datetime.strptime("2016-06-06", time_format)
+    day1 = datetime.datetime.strptime("2016-06-13", time_format)
     start_date = day1 + datetime.timedelta(days = (week_num-1)*7)
     end_date = start_date + datetime.timedelta(days = 6)
     start_date = datetime.datetime.strftime(start_date, time_format) #removes 00:00:00 at the end
@@ -441,6 +441,8 @@ def data_process(week_num, group_key=None):
         else:
             input_file_names = [meeting.log_file.path for meeting in get_meetings_date(start_date, end_date)]
 
+        df_metadata = pd.DataFrame()
+
         for input_file_name in input_file_names:
 	    group = input_file_name.split("/")[-2].split("_")[0]
 	    if(not group in groups_meeting_data):
@@ -448,15 +450,7 @@ def data_process(week_num, group_key=None):
 	    df_meeting = sample2data(input_file_name)
             if df_meeting is not None:
                 groups_meeting_data[group].append(df_meeting)
-        #print("2: "+str(time.time()))
-        #i = 0
-	
-        df_metadata = pd.DataFrame()
-	for group in groups_meeting_data:
-	    #Do this for each group
-            print(group)
-    	    group_meeting_data = groups_meeting_data[group]
-	    for df_meeting in group_meeting_data:
+                
                 print("UUID: "+df_meeting.metadata['uuid'])
                 #Do this for each meeting of the group
 	        #
@@ -471,6 +465,7 @@ def data_process(week_num, group_key=None):
 	        metadata["startTime"] = start_time
 	        metadata["endTime"] = end_time
 	        metadata["totalMeetingTime"] = end_time - start_time
+                metadata["file_name"] = input_file_name #for longest meeting
 	        #Calculate number of turns here
 	        members_stats = get_speaking_stats(df_meeting)
 	        del metadata['members']
@@ -478,15 +473,25 @@ def data_process(week_num, group_key=None):
 	            member_stats.update(metadata)
 	        #Calculate speaking time per participant here
 	        df_metadata = df_metadata.append(pd.DataFrame(members_stats))
-	    df_metadata = df_metadata.reset_index()
+                #df_metadata = df_metadata.reset_index()
+                #print df_metadata
+                #return
+        df_metadata = df_metadata.reset_index()
+        '''
+	for group in groups_meeting_data:
+	    #Do this for each group
+            print(group)
+    	    group_meeting_data = groups_meeting_data[group]
+	    #for df_meeting in group_meeting_data:
+	    
+            df_metadata = df_metadata.reset_index()
 	    del df_metadata['index']
 
             print("Metadata stored for "+group)
 
             #i += 1
             #print ("2." + str(i) + ": Group " + group + " " +str(time.time()))
-
-        #i = 0
+        '''
 	
         if 'group' in df_metadata:
             df_groups = df_metadata.groupby('group')
@@ -555,17 +560,18 @@ def data_process(week_num, group_key=None):
             #print dict_plotdata['daily_turns_rate']
 
 	    #print "Number of turns taken per minute for the longest group meeting this week"
-	    longest_meeting = group_data.loc[group_data['totalMeetingTime'].argmax()]['uuid']
+	    longest_meeting = group_data.loc[group_data['totalMeetingTime'].argmax()]['file_name']
+            #print(longest_meeting)
 	    group_meeting_data = groups_meeting_data[group_name]
-	    for df in group_meeting_data:
-	        if(df.metadata['uuid']==longest_meeting):
-	            df_meeting=pd.pivot_table(df.reset_index(),index='datetime',columns='member',values='signal').fillna(value=0)
-	            df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
-                    #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
-	            dict_plotdata['longest_meeting_date'] = pd.to_datetime(str(df_meeting.index.values[0])).strftime('%A %Y-%m-%d')
-	            df_meeting_turns = get_speaking_series(df_meeting)
-	            df_meeting_turns['total'] = df_meeting_turns.sum(axis=1)
-	            break
+            df_meeting = sample2data(longest_meeting)
+
+            df_meeting=pd.pivot_table(df_meeting.reset_index(),index='datetime',columns='member',values='signal').fillna(value=0)
+            df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
+            #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
+            dict_plotdata['longest_meeting_date'] = pd.to_datetime(str(df_meeting.index.values[0])).strftime('%A %Y-%m-%d')
+            df_meeting_turns = get_speaking_series(df_meeting)
+            df_meeting_turns['total'] = df_meeting_turns.sum(axis=1)
+	    
 	    dict_plotdata['longest_meeting_turns'] = df_meeting_turns['total']
 	    
 	    #print "Number of participants per meeting:"
