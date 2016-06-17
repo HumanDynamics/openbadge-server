@@ -2,6 +2,7 @@ import simplejson, pytz, StringIO
 import datetime, random, math
 from decimal import Decimal
 from dateutil.parser import parse as parse_date
+from pytz import timezone
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -14,11 +15,12 @@ from django.shortcuts import get_object_or_404
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from .decorators import app_view
-from .models import StudyGroup, StudyMember, Meeting
+from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport
 import analysis
 from django.conf import settings
 
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+from django.contrib.auth.decorators import user_passes_test
+
 
 def json_response(**kwargs):
     return HttpResponse(simplejson.dumps(kwargs))
@@ -46,7 +48,6 @@ def render_to(template):
             return out
         return wrapper
     return decorator
-
 
 
 @app_view
@@ -107,33 +108,23 @@ def log_data(request):
     return json_response(success=True)
 
 
-@app_view
-@api_view(['GET'])
-def get_group(request, group_key):
-
-    if not group_key:
-        return json_response(success=False)
+#@user_passes_test(lambda u: u.is_superuser)
+def weekly_group_report(request, group_key, week_num):
 
     try:
-        group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
-    except StudyGroup.DoesNotExist:
-        return json_response(success=False)
+        info = WeeklyGroupReport.objects.get(group_key=group_key, week_num=week_num).to_dict()
+        group = StudyGroup.objects.get(key=group_key)
+        name = group.name
+    except WeeklyGroupReport.DoesNotExist:
+        return render(request, 'openbadge/report_template.html', {'exist':False, 'key':group_key, 'week_num':week_num})
 
-    return json_response(success=True, group=group.to_dict())
+    info['start_date'] = datetime.datetime.strptime(info['start_date'],"%Y-%m-%d").strftime("%A, %B %d")
+    info['end_date'] = datetime.datetime.strptime(info['end_date'],"%Y-%m-%d").strftime("%A, %B %d")
+    info['longest_meeting_date'] = datetime.datetime.strptime(info['longest_meeting_date'],"%A %Y-%m-%d").strftime("%A, %B %d")
 
+    images = ['location_meeting_count','type_meeting_count','daily_meeting_time','daily_turns_rate','longest_meeting_turns']
+    paths = {}
+    for image in images:
+        paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num +"_"+image+".png"
 
-@app_view
-@api_view(['GET'])
-def get_finished_meetings(request, group_key):
-
-    if not group_key:
-        raise Http404()
-
-    try:
-        group = StudyGroup.objects.prefetch_related("meetings").get(key=group_key)
-    except StudyGroup.DoesNotExist:
-        raise Http404()
-
-    finished_meetings = [meeting.uuid for meeting in group.meetings.filter(is_complete=True).all()]
-
-    return json_response(success=True, finished_meetings=finished_meetings)
+    return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':week_num})
