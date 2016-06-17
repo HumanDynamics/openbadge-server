@@ -194,3 +194,23 @@ class Meeting(BaseModel):
 
         return datetime.datetime.fromtimestamp(end_timestamp)
 
+class WeeklyGroupReport(models.Model):
+    group_key = models.CharField(max_length=32)
+    week_num = models.CharField(max_length=32, default="none")    
+    total_duration_of_meetings = models.CharField(max_length=32)
+    longest_meeting_date = models.CharField(max_length=32)
+    avg_speaking_time = models.CharField(max_length=32)
+    total_meeting_count = models.CharField(max_length=32)
+    start_date = models.CharField(max_length=32, default="none")
+    end_date = models.CharField(max_length=32, default="none")
+
+    def to_dict(self):
+        return dict(group_key=self.group_key,
+                    week_num=self.week_num,
+                    total_duration_of_meetings=self.total_duration_of_meetings,
+                    longest_meeting_date=self.longest_meeting_date,
+                    avg_speaking_time=self.avg_speaking_time,
+                    total_meeting_count=self.total_meeting_count,
+                    start_date=self.start_date,
+                    end_date=self.end_date
+                    )
