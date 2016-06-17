@@ -473,9 +473,10 @@ def data_process(week_num, group_key=None):
 	            member_stats.update(metadata)
 	        #Calculate speaking time per participant here
 	        df_metadata = df_metadata.append(pd.DataFrame(members_stats))
-                df_metadata = df_metadata.reset_index()
+                #df_metadata = df_metadata.reset_index()
                 print df_metadata
                 #return
+        df_metadata = df_metadata.reset_index()
         '''
 	for group in groups_meeting_data:
 	    #Do this for each group
