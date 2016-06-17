@@ -207,7 +207,7 @@ def get_week_dates(week_num):
 
     #Monday to Sunday, starting from Mon 2016-06-13
     time_format = "%Y-%m-%d"
-    day1 = datetime.datetime.strptime("2016-06-06", time_format)
+    day1 = datetime.datetime.strptime("2016-06-13", time_format)
     start_date = day1 + datetime.timedelta(days = (week_num-1)*7)
     end_date = start_date + datetime.timedelta(days = 6)
     start_date = datetime.datetime.strftime(start_date, time_format) #removes 00:00:00 at the end
@@ -474,7 +474,7 @@ def data_process(week_num, group_key=None):
 	        #Calculate speaking time per participant here
 	        df_metadata = df_metadata.append(pd.DataFrame(members_stats))
                 #df_metadata = df_metadata.reset_index()
-                print df_metadata
+                #print df_metadata
                 #return
         df_metadata = df_metadata.reset_index()
         '''
@@ -561,7 +561,7 @@ def data_process(week_num, group_key=None):
 
 	    #print "Number of turns taken per minute for the longest group meeting this week"
 	    longest_meeting = group_data.loc[group_data['totalMeetingTime'].argmax()]['file_name']
-            print(longest_meeting)
+            #print(longest_meeting)
 	    group_meeting_data = groups_meeting_data[group_name]
             df_meeting = sample2data(longest_meeting)
 
