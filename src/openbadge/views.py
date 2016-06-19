@@ -162,12 +162,12 @@ def internal_report(request):
 		durations.append(time_meet_temp)
 		names.append(s_group.name)
 	
-	graph_path = '/tmp'
+	graph_path = settings.MEDIA_ROOT + '/tmp'
 		
 	try:
-		os.mkdir(settings.MEDIA_ROOT+ graph_path)
+		os.mkdir(graph_path)
 	except OSError:
-		if not os.path.isdir(settings.MEDIA_ROOT+ graph_path):
+		if not os.path.isdir(graph_path):
 			raise
 	
 	metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)

@@ -26,7 +26,7 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
 	ax.xaxis.set_major_formatter(dates.DateFormatter('%a-%b-%d'))
 	
-	pyplot.savefig(settings.MEDIA_ROOT+ graph_path + '/team_meeting_summary_graph.png')
+	pyplot.savefig(graph_path + '/team_meeting_summary_graph.png')
 	pyplot.close()
 	
 	agg_duration = [sum(duration) for duration in zip(*durations)]
@@ -51,7 +51,7 @@ def aggregateGraph(durations, num_meetings, days, graph_path):
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
 	ax.xaxis.set_major_formatter(dates.DateFormatter('%a-%b-%d'))
 		
-	pyplot.savefig(settings.MEDIA_ROOT+ graph_path + '/aggregate_summary_graph.png')
+	pyplot.savefig(graph_path + '/aggregate_summary_graph.png')
 	pyplot.close()
 	
 	return 'aggregate_summary_graph.png'
