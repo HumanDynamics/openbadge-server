@@ -20,6 +20,7 @@ class Command(BaseCommand):
             groups = StudyGroup.objects.all()
         
         for group in groups:
+            self.stdout.write("Sending emails to group {0}".format(group.key))
             send_weekly_email(group, week_num)
 
         self.stdout.write("Sent the emails successfully!")

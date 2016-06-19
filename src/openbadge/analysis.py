@@ -89,7 +89,7 @@ def send_weekly_email(group, week_num):
     #return
 
     #url = "http://127.0.0.1:8000/weekly_group_report/"+group.key+"/"+week_num
-    url = "http://" + settings.SITE_ID + "/"+group.key+"/"+week_num
+    url = "http://" + settings.SITE_ID + "/weekly_group_report/"+group.key+"/"+week_num
     #settings.SITE_ID returns cynthia.media.mit.edu on my laptop
     #hopefully, settings.SITE_ID on production server is openbadgeprod.media.mit.edu ... 
 
