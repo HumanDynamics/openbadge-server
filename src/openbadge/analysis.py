@@ -93,11 +93,13 @@ def send_weekly_email(group, week_num):
     #settings.SITE_ID returns cynthia.media.mit.edu on my laptop
     #hopefully, settings.SITE_ID on production server is openbadgeprod.media.mit.edu ... 
 
+    report_week_num = str(int(week_num) + 2)
+
     template = loader.get_template("email/weekly_report_email.html")
-    body = template.render(dict(group=group, week_num=int(week_num), url=url, total_hours=total_hours))
+    body = template.render(dict(group=group, week_num=report_week_num, url=url, total_hours=total_hours))
 
     for recipient in recipients:
-        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "Roundtable Weekly Summary for " +group.name+ " for Week " +week_num, body)
+        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "Roundtable Weekly Summary for " +group.name+ " for Week " +report_week_num, body)
         time.sleep(.3)
    
 

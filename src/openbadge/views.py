@@ -162,7 +162,8 @@ def weekly_group_report(request, group_key, week_num):
     for image in images:
         paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num +"_"+image+".png"
 
-    return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':int(week_num)})
+    report_week_num = str(int(week_num) + 2)
+    return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':report_week_num})
 
 @user_passes_test(lambda u: u.is_superuser)
 def internal_report(request):
