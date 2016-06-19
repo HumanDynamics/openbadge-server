@@ -1,5 +1,5 @@
 import simplejson, pytz, StringIO
-import datetime, random, math
+import os, datetime, random, math
 from decimal import Decimal
 from dateutil.parser import parse as parse_date
 from pytz import timezone
@@ -162,6 +162,14 @@ def internal_report(request):
 		durations.append(time_meet_temp)
 		names.append(s_group.name)
 	
-	metadata = groupStatGraph(durations, num_meetings, dates, names)
+	graph_path = '/tmp'
+		
+	try:
+		os.mkdir(settings.MEDIA_ROOT+ graph_path)
+	except OSError:
+		if not os.path.isdir(settings.MEDIA_ROOT+ graph_path):
+			raise
+	
+	metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
 
 	return render(request, 'reports/internal_report.html', {'metadata':metadata})

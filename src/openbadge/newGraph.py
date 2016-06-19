@@ -1,7 +1,9 @@
 from matplotlib import pyplot, dates
 from django.conf import settings
 
-def groupStatGraph(durations, num_meetings, days, names):
+import os
+
+def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	total = len(durations)
 	
@@ -24,7 +26,7 @@ def groupStatGraph(durations, num_meetings, days, names):
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
 	ax.xaxis.set_major_formatter(dates.DateFormatter('%a-%b-%d'))
 	
-	pyplot.savefig(settings.MEDIA_ROOT+'/tmp/team_meeting_summary_graph.png')
+	pyplot.savefig(settings.MEDIA_ROOT+ graph_path + '/team_meeting_summary_graph.png')
 	pyplot.close()
 	
 	agg_duration = [sum(duration) for duration in zip(*durations)]
@@ -32,12 +34,12 @@ def groupStatGraph(durations, num_meetings, days, names):
 	
 	total_time = sum(agg_duration)
 	
-	agg_graph_file = aggregateGraph(agg_duration, agg_num_meetings, days)
+	agg_graph_file = aggregateGraph(agg_duration, agg_num_meetings, days, graph_path)
 	
 	return {'group_img':'team_meeting_summary_graph.png', 'agg_img':agg_graph_file,
 		'time':{'hrs':int(total_time), 'mins': int((total_time-int(total_time))*60)}, 'num_meetings':sum(agg_num_meetings)}
 	
-def aggregateGraph(durations, num_meetings, days):
+def aggregateGraph(durations, num_meetings, days, graph_path):
 		
 	pyplot.plot(days, durations, linestyle='-', linewidth=2.0, marker='D', markersize=2.0, label='duration')
 	pyplot.bar(days, num_meetings, facecolor='#ff3687', edgecolor='white', label='meetings', align='center')
@@ -49,7 +51,7 @@ def aggregateGraph(durations, num_meetings, days):
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
 	ax.xaxis.set_major_formatter(dates.DateFormatter('%a-%b-%d'))
 		
-	pyplot.savefig(settings.MEDIA_ROOT+'/tmp/aggregate_summary_graph.png')
+	pyplot.savefig(settings.MEDIA_ROOT+ graph_path + '/aggregate_summary_graph.png')
 	pyplot.close()
 	
 	return 'aggregate_summary_graph.png'
