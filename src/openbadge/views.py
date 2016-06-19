@@ -22,8 +22,6 @@ from django.conf import settings
 from createGraph import individualGraph, aggregateGraph
 from newGraph import groupStatGraph
 
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
 from django.contrib.auth.decorators import user_passes_test
 
 def json_response(**kwargs):
@@ -133,24 +131,7 @@ def weekly_group_report(request, group_key, week_num):
 
     return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':week_num})
 
-''' 
-def internal_report(request, period): 
-	
-	groups = StudyGroup.objects.all().order_by('name')
-	
-	meetings = [{study_group.name:Meeting.objects.filter(is_complete=True,
-			group__name=study_group.name, start_time__gt = datetime.datetime.now()- datetime.timedelta(days=int(period)-1),
-			end_time__lte = datetime.datetime.now()).all().order_by('start_time')}
-			for study_group in groups]
-	
-	metadata = individualGraph(meetings, datetime.datetime.now(), int(period))
-	metadata['period'] = period
-	
-	aggregateGraph(metadata['agg_duration'], metadata['days'])
-		
-	return render(request, 'reports/internal_report.html', {'metadata':metadata})
-'''
-
+@user_passes_test(lambda u: u.is_superuser)
 def internal_report(request):
 	
 	groups = StudyGroup.objects.all().order_by('name')
