@@ -85,7 +85,7 @@ class StudyGroupAdmin(admin.ModelAdmin):
 
     def total_hours_spend_meeting(self, inst):
         if inst.meetings.all():
-            return sum([(meeting.end_time - meeting.start_time).total_seconds()/3600 for meeting in inst.meetings.all()])
+            return int(sum([(meeting.end_time - meeting.start_time).total_seconds()/3600 for meeting in inst.meetings.all()]))
         return "NONE"
 
     def visualization_enabled(self, inst):
