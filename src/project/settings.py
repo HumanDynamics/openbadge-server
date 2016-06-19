@@ -10,8 +10,10 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 import datetime
 import os
+import socket
 
 import passwords
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..")
@@ -237,5 +239,13 @@ REST_FRAMEWORK = {
 }
 
 # Survery and report options
-SEND_POST_MEETING_SURVEY = True
+SEND_POST_MEETING_SURVEY = False
 POST_MEETING_SURVEY_URL = "https://mit.co1.qualtrics.com/jfe/form/SV_0MR67T0jZVKamwJ"
+
+
+try:
+    HOSTNAME = socket.gethostname()
+except:
+    HOSTNAME = 'localhost'
+
+SITE_ID = HOSTNAME+".media.mit.edu"
