@@ -207,7 +207,7 @@ def get_week_dates(week_num):
 
     #Monday to Sunday, starting from Mon 2016-06-13
     time_format = "%Y-%m-%d"
-    day1 = datetime.datetime.strptime("2016-06-06", time_format)
+    day1 = datetime.datetime.strptime("2016-06-13", time_format)
     start_date = day1 + datetime.timedelta(days = (week_num-1)*7)
     end_date = start_date + datetime.timedelta(days = 6)
     start_date = datetime.datetime.strftime(start_date, time_format) #removes 00:00:00 at the end
@@ -424,242 +424,233 @@ def get_speaking_series(df_meeting,sampleDelay = 50):
 
 def data_process(week_num, group_key=None):
 
-        print("Start: "+str(time.time()))
+    print("Start time: "+str(time.time()))
 
-        matplotlib.rcParams['font.size'] = 18    
-	scale = 3.0
-	x_fontsize = 10
-	y_fontsize = 10 
-	title_fontsize = 14
-        start_date, end_date = get_week_dates(int(week_num))
-        idx = pd.date_range(start_date,end_date)
+    matplotlib.rcParams['font.size'] = 18    
+    scale = 3.0
+    x_fontsize = 10
+    y_fontsize = 10 
+    title_fontsize = 14
+    start_date, end_date = get_week_dates(int(week_num))
+    idx = pd.date_range(start_date,end_date)
 	
-        print("Getting log file paths")
-	groups_meeting_data = {} # This will be a list of data frames
-        if group_key:
-            input_file_names = [meeting.log_file.path for meeting in get_meetings_date_group(start_date, end_date, group_key)]
-        else:
-            input_file_names = [meeting.log_file.path for meeting in get_meetings_date(start_date, end_date)]
+    print("Getting log file paths...")
 
-        for input_file_name in input_file_names:
-	    group = input_file_name.split("/")[-2].split("_")[0]
-	    if(not group in groups_meeting_data):
-	        groups_meeting_data[group] = []
-	    df_meeting = sample2data(input_file_name)
-            if df_meeting is not None:
-                groups_meeting_data[group].append(df_meeting)
-        #print("2: "+str(time.time()))
-        #i = 0
+    groups_meeting_data = {} # This will be a list of data frames
+    if group_key:
+        input_file_names = [meeting.log_file.path for meeting in get_meetings_date_group(start_date, end_date, group_key)]
+    else:
+        input_file_names = [meeting.log_file.path for meeting in get_meetings_date(start_date, end_date)]
+
+    df_metadata = pd.DataFrame()
+
+    print("Finished getting log file paths.")
+    
+    print("Storing meta data for each meeting...")
+    
+    for input_file_name in input_file_names:
+        group = input_file_name.split("/")[-2].split("_")[0]
+        if(not group in groups_meeting_data):
+            groups_meeting_data[group] = []
+        df_meeting = sample2data(input_file_name)
+        if df_meeting is not None:
+
+            print("UUID: "+df_meeting.metadata['uuid'])
+
+            groups_meeting_data[group].append(df_meeting)        
+
+            #Do this for each meeting of the group
+            ##Store the metadata for the meeting in a dataframe format for easier aggregation and plotting
+            metadata = {}
+            metadata.update(df_meeting.metadata)
+            df_meeting=pd.pivot_table(df_meeting.reset_index(),index='datetime',columns='member',values='signal').dropna()
+            df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
+            #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
+            start_time = df_meeting.index[0]
+            end_time = df_meeting.index[-1]
+            metadata["startTime"] = start_time
+            metadata["endTime"] = end_time
+            metadata["totalMeetingTime"] = end_time - start_time
+            metadata["file_name"] = input_file_name #for longest meeting
+            #Calculate number of turns here
+            members_stats = get_speaking_stats(df_meeting)
+            del metadata['members']
+            for member_stats in members_stats:
+                member_stats.update(metadata)
+            #Calculate speaking time per participant here
+            df_metadata = df_metadata.append(pd.DataFrame(members_stats))
+
+    df_metadata = df_metadata.reset_index()
 	
-        df_metadata = pd.DataFrame()
-	for group in groups_meeting_data:
-	    #Do this for each group
-            print(group)
-    	    group_meeting_data = groups_meeting_data[group]
-	    for df_meeting in group_meeting_data:
-                print("UUID: "+df_meeting.metadata['uuid'])
-                #Do this for each meeting of the group
-	        #
-	        ##Store the metadata for the meeting in a dataframe format for easier aggregation and plotting
-	        metadata = {}
-	        metadata.update(df_meeting.metadata)
-	        df_meeting=pd.pivot_table(df_meeting.reset_index(),index='datetime',columns='member',values='signal').dropna()
-	        df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
-                #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
-       	        start_time = df_meeting.index[0]
-	        end_time = df_meeting.index[-1]
-	        metadata["startTime"] = start_time
-	        metadata["endTime"] = end_time
-	        metadata["totalMeetingTime"] = end_time - start_time
-	        #Calculate number of turns here
-	        members_stats = get_speaking_stats(df_meeting)
-	        del metadata['members']
-	        for member_stats in members_stats:
-	            member_stats.update(metadata)
-	        #Calculate speaking time per participant here
-	        df_metadata = df_metadata.append(pd.DataFrame(members_stats))
-	    df_metadata = df_metadata.reset_index()
-	    del df_metadata['index']
+    if 'group' in df_metadata:
+        df_groups = df_metadata.groupby('group')
+    else:
+        print("Error: No meetings occured in Week "+week_num)
+        return
 
-            print("Metadata stored for "+group)
+    datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
+    for group_name,group_data in df_groups:
 
-            #i += 1
-            #print ("2." + str(i) + ": Group " + group + " " +str(time.time()))
+        print("Processing data / saving dictionary dict_plotdata for: " + group_name + "...")
 
-        #i = 0
-	
-        if 'group' in df_metadata:
-            df_groups = df_metadata.groupby('group')
-        else:
-            print("Error: No meetings occured in Week "+week_num)
-            return
+        dict_plotdata = {}
+        dict_plotdata['group_name'] = group_name
 
-	datetime2str = lambda x:x.strftime('%Y-%m-%d %a')
-	for group_name,group_data in df_groups:
-            print("dict_plotdata for: ")
-            print(group_name)
-	    dict_plotdata = {}
-	    dict_plotdata['group_name'] = group_name
-	    #print "Meeting report for study group "+group_name
-	    #print "\nTotal number of meetings"
-	    #print pd.Series.nunique(group_data['uuid'])
-	    dict_plotdata['total_meeting_count']=pd.Series.nunique(group_data['uuid'])
-	    #print "\nTotal number of meetings by day"
-	    #print group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
-	    dict_plotdata['daily_meeting_count']= group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
-	    #print "\nTotal number of meetings by location"
-	    #print "\n",group_data.groupby(['location']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
-	    dict_plotdata['location_meeting_count']=group_data.groupby(['location']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
-	    #print "\nTotal number of meetings by type"
-	    #print "\n",group_data.groupby(['type']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
-	    dict_plotdata['type_meeting_count']=group_data.groupby(['type']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})
-	    #print "Total number of turns taken this week"
-	    #print "\n",np.sum(group_data["totalTurns"])
-	    dict_plotdata['total_turns_count'] = np.sum(group_data["totalTurns"])
+        #print "Meeting report for study group "+group_name
+        #print "\nTotal number of meetings"
+        #print pd.Series.nunique(group_data['uuid'])
+        dict_plotdata['total_meeting_count']=pd.Series.nunique(group_data['uuid'])
+
+        #print "\nTotal number of meetings by day"
+        #print group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
+        dict_plotdata['daily_meeting_count']= group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
+
+        #print "\nTotal number of meetings by location"
+        #print "\n",group_data.groupby(['location']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
+        dict_plotdata['location_meeting_count']=group_data.groupby(['location']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
+
+        #print "\nTotal number of meetings by type"
+        #print "\n",group_data.groupby(['type']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})#.to_dict(orient='split')
+        dict_plotdata['type_meeting_count']=group_data.groupby(['type']).agg({"uuid": pd.Series.nunique}).rename(columns={'uuid':'meeting_count'})
+
+        #print "Total number of turns taken this week"
+        #print "\n",np.sum(group_data["totalTurns"])
+        dict_plotdata['total_turns_count'] = np.sum(group_data["totalTurns"])
 	    
-	    #print "\nTotal speaking time (in minutes) by day"
-	    dict_plotdata['daily_speaking_time'] = group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalSpeakingTime": lambda x:sum(x,datetime.timedelta(0))})
+        #print "\nTotal speaking time (in minutes) by day"
+        dict_plotdata['daily_speaking_time'] = group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalSpeakingTime": lambda x:sum(x,datetime.timedelta(0))})
 
-            #print("Daily speaking time: "+str(dict_plotdata['daily_speaking_time']))
+        #print("Daily speaking time: "+str(dict_plotdata['daily_speaking_time']))
+        dict_plotdata['daily_speaking_time']['totalSpeakingTime'] = dict_plotdata['daily_speaking_time']['totalSpeakingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')	    
 
-	    dict_plotdata['daily_speaking_time']['totalSpeakingTime'] = dict_plotdata['daily_speaking_time']['totalSpeakingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
-	    #print dict_plotdata['daily_speaking_time']
+        dict_plotdata['total_speaking_time'] = np.sum(dict_plotdata['daily_speaking_time']['totalSpeakingTime'])
 	    
+        #dict_plotdata['daily_meeting_time'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
 
-	    dict_plotdata['total_speaking_time'] = np.sum(dict_plotdata['daily_speaking_time']['totalSpeakingTime'])
+        #print "\nTotal duration of meetings (in minutes) by day"
+        dict_plotdata['daily_meeting_time'] = group_data[['uuid','startTime','totalMeetingTime']].drop_duplicates().groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
+
+        #dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split') #in minutes
+        dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:float(x.days)*24+float(x.seconds)/3600)#.to_dict(orient='split') #in hours
+        dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime']*60)
+        dict_plotdata['total_duration_of_meetings'] = str(int(dict_plotdata['total_duration_of_meetings_min']//60)) + " hr " + str(int(dict_plotdata['total_duration_of_meetings_min']%60)) + " min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(int(dict_plotdata['total_duration_of_meetings_min'])) + " min"
+        dict_plotdata['avg_speaking_time'] = int(dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min'])
+
+        #print "\nTotal number of turns taken by day"
+        #print "\n",group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalTurns": np.sum})#.to_dict(orient='split')
+        dict_plotdata['daily_turns_count'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalTurns": np.sum})#.to_dict(orient='split')
+        dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_count']['totalTurns'].divide(dict_plotdata['daily_meeting_time']['totalMeetingTime']*60) #per minute
 	    
-            dict_plotdata['daily_meeting_time'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalMeetingTime": np.sum})
-            #dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:x.days*24*60+x.seconds//60)#.to_dict(orient='split')
-	    dict_plotdata['daily_meeting_time']['totalMeetingTime'] = dict_plotdata['daily_meeting_time']['totalMeetingTime'].apply(lambda x:float(x.days)*24+float(x.seconds)/3600)#.to_dict(orient='split')
-	    #print dict_plotdata['daily_meeting_time']['totalMeetingTime']
-	    #print dict_plotdata['daily_meeting_time']
+        dict_plotdata['daily_meeting_time'] = dict_plotdata['daily_meeting_time'].reindex(idx, fill_value=0)
+        #print dict_plotdata['daily_meeting_time']
+        dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_rate'].reindex(idx, fill_value=0)
+        #print dict_plotdata['daily_turns_rate']
+
+        #print "Number of turns taken per minute for the longest group meeting this week"
+        longest_meeting = group_data.loc[group_data['totalMeetingTime'].argmax()]['file_name']
+        #print(longest_meeting)
+        group_meeting_data = groups_meeting_data[group_name]
+        df_meeting = sample2data(longest_meeting)
+
+        df_meeting=pd.pivot_table(df_meeting.reset_index(),index='datetime',columns='member',values='signal').fillna(value=0)
+        df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
+        #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
+        dict_plotdata['longest_meeting_date'] = pd.to_datetime(str(df_meeting.index.values[0])).strftime('%A %Y-%m-%d')
+        df_meeting_turns = get_speaking_series(df_meeting)
+        df_meeting_turns['total'] = df_meeting_turns.sum(axis=1)
 	    
-	    '''
-            dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime'])
-            dict_plotdata['total_duration_of_meetings'] = str(dict_plotdata['total_duration_of_meetings_min']//60) + " hr " + str(dict_plotdata['total_duration_of_meetings_min']%60) + " min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(dict_plotdata['total_duration_of_meetings_min']) + " min"
-	    dict_plotdata['avg_speaking_time'] = dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min']
-            '''
-
-	    dict_plotdata['total_duration_of_meetings_min'] = np.sum(dict_plotdata['daily_meeting_time']['totalMeetingTime']*60)
-            dict_plotdata['total_duration_of_meetings'] = str(int(dict_plotdata['total_duration_of_meetings_min']//60)) + " hr " + str(int(dict_plotdata['total_duration_of_meetings_min']%60)) + " min" if dict_plotdata['total_duration_of_meetings_min']>60 else str(int(dict_plotdata['total_duration_of_meetings_min'])) + " min"
-	    dict_plotdata['avg_speaking_time'] = int(dict_plotdata['total_speaking_time']*60/dict_plotdata['total_duration_of_meetings_min'])
-
-	    #print "\nTotal number of turns taken by day"
-	    #print "\n",group_data.groupby([group_data['startTime'].apply(datetime2str)]).agg({"totalTurns": np.sum})#.to_dict(orient='split')
-	    dict_plotdata['daily_turns_count'] = group_data.groupby(pd.Grouper(key='startTime',freq='1D')).agg({"totalTurns": np.sum})#.to_dict(orient='split')
-	    dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_count']['totalTurns'].divide(dict_plotdata['daily_meeting_time']['totalMeetingTime']*60) #per minute
+        dict_plotdata['longest_meeting_turns'] = df_meeting_turns['total']
 	    
-            dict_plotdata['daily_meeting_time'] = dict_plotdata['daily_meeting_time'].reindex(idx, fill_value=0)
-            #print dict_plotdata['daily_meeting_time']
-            dict_plotdata['daily_turns_rate'] = dict_plotdata['daily_turns_rate'].reindex(idx, fill_value=0)
-            #print dict_plotdata['daily_turns_rate']
+        #print "Number of participants per meeting:"
+        #print group_data.groupby('uuid')['member'].count()
+        dict_plotdata['meeting_member_count'] = group_data.groupby('uuid')['member'].count()
+        dict_plotdata['avg. member count'] = np.mean(dict_plotdata['meeting_member_count'])
 
-	    #print "Number of turns taken per minute for the longest group meeting this week"
-	    longest_meeting = group_data.loc[group_data['totalMeetingTime'].argmax()]['uuid']
-	    group_meeting_data = groups_meeting_data[group_name]
-	    for df in group_meeting_data:
-	        if(df.metadata['uuid']==longest_meeting):
-	            df_meeting=pd.pivot_table(df.reset_index(),index='datetime',columns='member',values='signal').fillna(value=0)
-	            df_meeting.index = df_meeting.index - np.timedelta64(4, 'h') # Convert UTC to EST
-                    #df_meeting.index = df_meeting.index.tz_localize('UTC').tz_convert('US/Eastern')
-	            dict_plotdata['longest_meeting_date'] = pd.to_datetime(str(df_meeting.index.values[0])).strftime('%A %Y-%m-%d')
-	            df_meeting_turns = get_speaking_series(df_meeting)
-	            df_meeting_turns['total'] = df_meeting_turns.sum(axis=1)
-	            break
-	    dict_plotdata['longest_meeting_turns'] = df_meeting_turns['total']
-	    
-	    #print "Number of participants per meeting:"
-	    #print group_data.groupby('uuid')['member'].count()
-	    dict_plotdata['meeting_member_count'] = group_data.groupby('uuid')['member'].count()
-	    dict_plotdata['avg. member count'] = np.mean(dict_plotdata['meeting_member_count'])
+        print("Finished pocessing data / saving dictionary dict_plotdata for: " + group_name + ".")
 
-
-            #i += 1
-            #print("3:"+str(i)+ group + " "+str(time.time()))    
-            print("Data processed for "+group)
-           
+        print("Generating charts for: " + group_name + "...")
  
-            ax1 = dict_plotdata['type_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
-            ax1.set_aspect('equal')
-            fig_type = ax1.get_figure()
-            plt.ylabel('')
-            plt.xlabel('')
-            plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
-            plt.tight_layout()
-            mpld3.fig_to_html(fig_type)
+        ax1 = dict_plotdata['type_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
+        ax1.set_aspect('equal')
+        fig_type = ax1.get_figure()
+        plt.ylabel('')
+        plt.xlabel('')
+        plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
+        plt.tight_layout()
+        mpld3.fig_to_html(fig_type)
 
-            reports_path = settings.MEDIA_ROOT + "/img/weekly_group_reports/" + dict_plotdata['group_name']
-            def make_sure_path_exists(path):
-                try: 
-                    os.makedirs(path)
-                except OSError:
-                    if not os.path.isdir(path):
-                        raise
-            make_sure_path_exists(reports_path)
-            plt.savefig(reports_path + "/week_" + week_num + "_type_meeting_count.png")
-            plt.gcf().clear()
+        reports_path = settings.MEDIA_ROOT + "/img/weekly_group_reports/" + dict_plotdata['group_name']
+        def make_sure_path_exists(path):
+            try: 
+                os.makedirs(path)
+            except OSError:
+                if not os.path.isdir(path):
+                    raise
+        make_sure_path_exists(reports_path)
+        plt.savefig(reports_path + "/week_" + week_num + "_type_meeting_count.png")
+        plt.gcf().clear()
             
-            ax2 = dict_plotdata['location_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
-            ax2.set_aspect('equal')
-            fig_loc = ax2.get_figure()
-            #plt.title('Meetings by location',fontsize=title_fontsize)
-            plt.ylabel('')
-            plt.xlabel('')
-            plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
-            plt.tight_layout()
-            mpld3.fig_to_html(fig_loc)
-            plt.savefig(reports_path + "/week_" + week_num + "_location_meeting_count.png")
-            plt.gcf().clear()
+        ax2 = dict_plotdata['location_meeting_count']['meeting_count'].plot.pie(legend=True,labels=None,autopct='%.1f%%')
+        ax2.set_aspect('equal')
+        fig_loc = ax2.get_figure()
+        #plt.title('Meetings by location',fontsize=title_fontsize)
+        plt.ylabel('')
+        plt.xlabel('')
+        plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
+        plt.tight_layout()
+        mpld3.fig_to_html(fig_loc)
+        plt.savefig(reports_path + "/week_" + week_num + "_location_meeting_count.png")
+        plt.gcf().clear()
 	
-            fig_meet_time, ax3 = plt.subplots(figsize=(scale*2.5, scale*1.5))
-            ax3.xaxis.set_major_locator(DayLocator())
-            ax3.xaxis.set_major_formatter(DateFormatter('%A'))
-            ax3.bar(dict_plotdata['daily_meeting_time'].index, dict_plotdata['daily_meeting_time']['totalMeetingTime'],align="center")
-            fig_meet_time.autofmt_xdate()
-            plt.ylabel('Total meeting duration (hours)',fontsize=y_fontsize)
-            #plt.xlabel('Day', fontsize=x_fontsize)
-            plt.tight_layout()
-            plt.savefig(reports_path + "/week_" + week_num + "_daily_meeting_time.png")
-            plt.gcf().clear()
+        fig_meet_time, ax3 = plt.subplots(figsize=(scale*2.5, scale*1.5))
+        ax3.xaxis.set_major_locator(DayLocator())
+        ax3.xaxis.set_major_formatter(DateFormatter('%A'))
+        ax3.bar(dict_plotdata['daily_meeting_time'].index, dict_plotdata['daily_meeting_time']['totalMeetingTime'],align="center")
+        fig_meet_time.autofmt_xdate()
+        plt.ylabel('Total meeting duration (hours)',fontsize=y_fontsize)
+        #plt.xlabel('Day', fontsize=x_fontsize)
+        plt.tight_layout()
+        plt.savefig(reports_path + "/week_" + week_num + "_daily_meeting_time.png")
+        plt.gcf().clear()
 	
-            fig_turns_count, ax5 = plt.subplots(figsize=(scale*2.5, scale*1.5))
-            ax5.xaxis.set_major_locator(DayLocator())
-            ax5.xaxis.set_major_formatter(DateFormatter('%A'))
-            ax5.bar(dict_plotdata['daily_turns_rate'].index, dict_plotdata['daily_turns_rate'],align="center")
-            fig_meet_time.autofmt_xdate()
-            #plt.title('Number of speaking turns by day',fontsize=title_fontsize)
-            plt.ylabel('Average number of speaking turns per hour',fontsize=y_fontsize)
-            #plt.xlabel('Day', fontsize=x_fontsize)
-            plt.tight_layout()
-            mpld3.fig_to_html(fig_turns_count)
-            plt.savefig(reports_path + "/week_" + week_num + "_daily_turns_rate.png")
-            plt.gcf().clear()
+        fig_turns_count, ax5 = plt.subplots(figsize=(scale*2.5, scale*1.5))
+        ax5.xaxis.set_major_locator(DayLocator())
+        ax5.xaxis.set_major_formatter(DateFormatter('%A'))
+        ax5.bar(dict_plotdata['daily_turns_rate'].index, dict_plotdata['daily_turns_rate'],align="center")
+        fig_meet_time.autofmt_xdate()
+        #plt.title('Number of speaking turns by day',fontsize=title_fontsize)
+        plt.ylabel('Average number of speaking turns per hour',fontsize=y_fontsize)
+        #plt.xlabel('Day', fontsize=x_fontsize)
+        plt.tight_layout()
+        mpld3.fig_to_html(fig_turns_count)
+        plt.savefig(reports_path + "/week_" + week_num + "_daily_turns_rate.png")
+        plt.gcf().clear()
             
-            #minorLocator = HourLocator() #removed because hours labels didn't show on some graphs
-            ax4 = dict_plotdata['longest_meeting_turns'].resample('S').interpolate(method='linear').rolling(window=60, min_periods=1, center=False).mean().plot(figsize=(scale*5,scale*2))
-            #clip(lower=0.0).plot(figsize=(scale*5,scale*2))#
-            #ax4.xaxis.set_minor_locator(minorLocator)
-            fig_meet_turns = ax4.get_figure()
-            #plt.title('Number of turns per minute in the longest meeting',fontsize=title_fontsize)
-            plt.ylabel('Average number of turns taken', fontsize=y_fontsize+2)
-            plt.xlabel('Time', fontsize=x_fontsize+2)
-            plt.tight_layout()
-            mpld3.fig_to_html(fig_meet_turns)
-            plt.savefig(reports_path + "/week_" + week_num + "_longest_meeting_turns.png")
-            plt.gcf().clear()
+        #minorLocator = HourLocator() #removed because hours labels didn't show on some graphs
+        ax4 = dict_plotdata['longest_meeting_turns'].resample('S').interpolate(method='linear').rolling(window=60, min_periods=1, center=False).mean().plot(figsize=(scale*5,scale*2))
+        #clip(lower=0.0).plot(figsize=(scale*5,scale*2))#
+        #ax4.xaxis.set_minor_locator(minorLocator)
+        fig_meet_turns = ax4.get_figure()
+        #plt.title('Number of turns per minute in the longest meeting',fontsize=title_fontsize)
+        plt.ylabel('Average number of turns taken', fontsize=y_fontsize+2)
+        plt.xlabel('Time', fontsize=x_fontsize+2)
+        plt.tight_layout()
+        mpld3.fig_to_html(fig_meet_turns)
+        plt.savefig(reports_path + "/week_" + week_num + "_longest_meeting_turns.png")
+        plt.gcf().clear()
 
-            WeeklyGroupReport.objects.filter(group_key=dict_plotdata['group_name'], week_num=week_num).delete()
-            WeeklyGroupReport.objects.create(group_key=dict_plotdata['group_name'],
-                                             week_num=week_num,
-                                             start_date=start_date,
-                                             end_date=end_date,
-                                             total_meeting_count=dict_plotdata['total_meeting_count'],
-                                             total_duration_of_meetings=dict_plotdata['total_duration_of_meetings'],
-                                             avg_speaking_time=dict_plotdata['avg_speaking_time'],
-                                             longest_meeting_date=dict_plotdata['longest_meeting_date']
-            )
+        WeeklyGroupReport.objects.filter(group_key=dict_plotdata['group_name'], week_num=week_num).delete()
+        WeeklyGroupReport.objects.create(group_key=dict_plotdata['group_name'],
+                                         week_num=week_num,
+                                         start_date=start_date,
+                                         end_date=end_date,
+                                         total_meeting_count=dict_plotdata['total_meeting_count'],
+                                         total_duration_of_meetings=dict_plotdata['total_duration_of_meetings'],
+                                         avg_speaking_time=dict_plotdata['avg_speaking_time'],
+                                         longest_meeting_date=dict_plotdata['longest_meeting_date']
+                                     )
              
-            print("Charts generated for "+group)
+        print("Charts generated for "+group)
         
-        print("End: "+str(time.time()))
-        print("Successfully generated charts for all meetings for Week "+week_num+"!")
+    print("End time: "+str(time.time()))
+    print("Successfully processed data + generated charts for all meetings for Week "+week_num+"!")
