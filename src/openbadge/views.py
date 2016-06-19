@@ -19,10 +19,10 @@ from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport
 import analysis
 from django.conf import settings
 
-from createGraph import individualGraph, aggregateGraph
 from newGraph import groupStatGraph
-
 from django.contrib.auth.decorators import user_passes_test
+
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def json_response(**kwargs):
     return HttpResponse(simplejson.dumps(kwargs))
@@ -51,6 +51,7 @@ def render_to(template):
         return wrapper
     return decorator
 
+## APP views ###########################################################################################################
 
 @app_view
 @api_view(['POST'])
@@ -109,6 +110,38 @@ def log_data(request):
 
     return json_response(success=True)
 
+@app_view
+@api_view(['GET'])
+def get_group(request, group_key):
+
+    if not group_key:
+        return json_response(success=False)
+
+    try:
+        group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
+    except StudyGroup.DoesNotExist:
+        return json_response(success=False)
+
+    return json_response(success=True, group=group.to_dict())
+
+
+@app_view
+@api_view(['GET'])
+def get_finished_meetings(request, group_key):
+
+    if not group_key:
+        raise Http404()
+
+    try:
+        group = StudyGroup.objects.prefetch_related("meetings").get(key=group_key)
+    except StudyGroup.DoesNotExist:
+        raise Http404()
+
+    finished_meetings = [meeting.uuid for meeting in group.meetings.filter(is_complete=True).all()]
+
+    return json_response(success=True, finished_meetings=finished_meetings)
+
+## Report views ########################################################################################################
 
 #@user_passes_test(lambda u: u.is_superuser)
 def weekly_group_report(request, group_key, week_num):
