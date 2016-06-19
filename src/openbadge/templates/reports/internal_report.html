@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Internal Report</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="http://keen.github.io/dashboards/assets/css/keen-dashboards.css">
+    <link rel="stylesheet" type="text/css" href="/static/internal.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <style>
+      
+      /* Set black background color, white text and some padding */
+      footer {
+      background-color: white;
+      color: black;
+      padding: 15px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row">
+	<center>
+	<h1>Overview Of Recent Activity</h1>
+	</center>
+	<center>
+	<div class="col-sm-3" id="aggregate_weekly_bar">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Aggregate Number of Meetings</h3>
+	    </div>
+	    <div class="chart-stage">
+	      {{metadata.num_meetings}}
+	    </div>
+	    <div class="chart-notes">
+		  <h5>Only counts meetings marked 'complete'</h5>
+	    </div>
+	  </div>
+	</div>
+	</center>
+	
+	<center>
+	<div class="col-sm-6" id="type">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Aggregate Meetings And Duration For Each Day</h3>
+	    </div>
+	    <div class="chart-stage">
+	      <img src="/media/tmp/{{metadata.agg_img}}" / alt="graph" height="400">
+	    </div>
+	    <div class="chart-notes">
+	      <h5>Bar graph denotes number of meetings and line denotes duration</h5>
+	    </div>
+	  </div>
+	</div>
+	</center>
+	
+	<center>
+	<div class="col-sm-3" id="type">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Aggregate Duration Of Meetings</h3>
+	    </div>
+	    <div class="chart-stage">
+	      {{metadata.time.hrs}} hrs and {{metadata.time.mins}} mins
+	    </div>
+	    <div class="chart-notes">
+	      <h5>Time reported in hours</h5>
+	    </div>
+	  </div>
+	</div>
+	</center>
+	
+      </div>
+
+      <div class="row">
+		<center>
+		<div class="col-sm-12">
+		  <div class="chart-wrapper">
+			  <div class="chart-title">
+			  <h3>Statistics For Each Group</h3>
+			  </div>
+			  <div class="chart-stage">
+			  <img src="/media/tmp/{{metadata.group_img}}" / alt="graph" height="500">
+			  </div>
+			  <div class="chart-notes">
+			  <h5>Distribution Across Each day For Number of Meetings and Their Duration</h5>
+			  </div>
+		  </div>
+		 </div>
+		</center>
+      </div>
+  </body>
+</html>
+

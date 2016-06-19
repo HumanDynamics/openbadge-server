@@ -19,8 +19,10 @@ from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport
 import analysis
 from django.conf import settings
 
-from django.contrib.auth.decorators import user_passes_test
+from createGraph import individualGraph, aggregateGraph
+from newGraph import groupStatGraph
 
+from django.contrib.auth.decorators import user_passes_test
 
 def json_response(**kwargs):
     return HttpResponse(simplejson.dumps(kwargs))
@@ -128,3 +130,38 @@ def weekly_group_report(request, group_key, week_num):
         paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num +"_"+image+".png"
 
     return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':week_num})
+
+@user_passes_test(lambda u: u.is_superuser)
+def internal_report(request):
+	
+	groups = StudyGroup.objects.all().order_by('name')
+	
+	durations = []
+	num_meetings = []
+	names = []
+	
+	dates = [datetime.date(2016,6,13) + datetime.timedelta(days=i) for i in xrange(28)]
+	
+	for s_group in groups:
+		meetings = Meeting.objects.filter(group__key = s_group.key, is_complete=True).all()
+		
+		num_meet_temp = []
+		time_meet_temp = []
+		
+		for current in dates:
+			meets = [meet for meet in meetings
+				if (meet.start_time.year == current.year and
+				meet.start_time.month == current.month and
+				meet.start_time.day == current.day)]
+			
+			num_meet_temp.append(len(meets))
+			times = [entry.end_time - entry.start_time for entry in meets]
+			time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds())/3600.0)
+			
+		num_meetings.append(num_meet_temp)
+		durations.append(time_meet_temp)
+		names.append(s_group.name)
+	
+	metadata = groupStatGraph(durations, num_meetings, dates, names)
+
+	return render(request, 'reports/internal_report.html', {'metadata':metadata})

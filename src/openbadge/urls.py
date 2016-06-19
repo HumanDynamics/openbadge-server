@@ -4,9 +4,18 @@ from django.conf.urls.static import static
 from . import views
 from django.views.generic.base import TemplateView
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
     url(r'^log_data/$', views.log_data, name='log_data'),
-
+    url(r'^internal_report/$', views.internal_report, name='internal_report'),
     url(r'^weekly_group_report/(?P<group_key>\w+)/(?P<week_num>[0-9]+)$', views.weekly_group_report, name='weekly_group_report'),
-
 ]
+
+## debug stuff to serve static media
+if settings.DEBUG:
+    urlpatterns += patterns('',
+        (r'^media/(?P<path>.*)$', 'django.views.static.serve', 
+            {'document_root': settings.MEDIA_ROOT}),
+   )

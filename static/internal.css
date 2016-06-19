@@ -1,0 +1,8 @@
+.twocolumnswrapper {
+  width:200px; /* width must be set */
+}
+
+.groupcolumn {
+  float:left;
+  width: 25%;
+}
