@@ -16,11 +16,11 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 			pyplot.setp(ax.get_xticklabels(), visible=False)
 		if i == 0:
 			pyplot.legend(loc='upper left', frameon=False)
-		pyplot.ylabel(names[i])
+		pyplot.ylabel(names[i], rotation=0)
 	
 	pyplot.xticks(rotation=90)
 	pyplot.tight_layout()
-	pyplot.subplots_adjust(hspace=0.02)
+	pyplot.subplots_adjust(hspace=0.05)
 	
 	ax = pyplot.gca()
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
@@ -50,6 +50,8 @@ def aggregateGraph(durations, num_meetings, days, graph_path):
 	ax = pyplot.gca()
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
 	ax.xaxis.set_major_formatter(dates.DateFormatter('%a-%b-%d'))
+	
+	pyplot.legend(loc='upper left', frameon=False)
 		
 	pyplot.savefig(graph_path + '/aggregate_summary_graph.png')
 	pyplot.close()
