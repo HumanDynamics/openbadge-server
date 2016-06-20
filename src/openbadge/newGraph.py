@@ -23,7 +23,7 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 		pyplot.ylabel(group_numbers[i], rotation=0)
 		
 		for x,y in zip(days, durations[i]):
-			pyplot.text(x, y+0.05, '%.1f' % y, ha='center', va= 'bottom')
+			pyplot.text(x, y+0.05, '%.1f' % y, ha='center', va= 'bottom', fontsize=9.0)
 
 	
 	pyplot.xticks(rotation=90)
