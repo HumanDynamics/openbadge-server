@@ -1,4 +1,4 @@
-from matplotlib import pyplot, dates
+from matplotlib import pyplot, dates, rcParams
 from django.conf import settings
 
 import os
@@ -6,21 +6,29 @@ import os
 def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	total = len(durations)
+	group_numbers = [name.split()[-1] for name in names]
+	
+	rcParams['figure.figsize'] = 10, total+10
 	
 	for i in xrange(total):
 		ax = pyplot.subplot(total, 1, i+1)
 		pyplot.plot(days, durations[i], linestyle='-', linewidth=2.0, marker='D', markersize=2.0, label='duration')
 		pyplot.bar(days, num_meetings[i], facecolor='#ff3687', edgecolor='white', label='meetings', align='center')
 		pyplot.ylim(0, 10.3)
+		
 		if i!= total-1:
 			pyplot.setp(ax.get_xticklabels(), visible=False)
 		if i == 0:
 			pyplot.legend(loc='upper left', frameon=False)
-		pyplot.ylabel(names[i])
+		pyplot.ylabel(group_numbers[i], rotation=0)
+		
+		for x,y in zip(days, durations[i]):
+			pyplot.text(x, y+0.05, '%.1f' % y, ha='center', va= 'bottom', fontsize=9.0)
+
 	
 	pyplot.xticks(rotation=90)
 	pyplot.tight_layout()
-	pyplot.subplots_adjust(hspace=0.02)
+	pyplot.subplots_adjust(hspace=0.05)
 	
 	ax = pyplot.gca()
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
@@ -41,6 +49,8 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 def aggregateGraph(durations, num_meetings, days, graph_path):
 		
+	rcParams['figure.figsize'] = 8, 5.5
+	
 	pyplot.plot(days, durations, linestyle='-', linewidth=2.0, marker='D', markersize=2.0, label='duration')
 	pyplot.bar(days, num_meetings, facecolor='#ff3687', edgecolor='white', label='meetings', align='center')
 	
@@ -50,6 +60,8 @@ def aggregateGraph(durations, num_meetings, days, graph_path):
 	ax = pyplot.gca()
 	ax.xaxis.set_major_locator(dates.DayLocator(bymonthday=range(1,32), interval=1))
 	ax.xaxis.set_major_formatter(dates.DateFormatter('%a-%b-%d'))
+	
+	pyplot.legend(loc='upper left', frameon=False)
 		
 	pyplot.savefig(graph_path + '/aggregate_summary_graph.png')
 	pyplot.close()
