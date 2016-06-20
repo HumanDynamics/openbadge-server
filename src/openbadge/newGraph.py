@@ -6,6 +6,7 @@ import os
 def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	total = len(durations)
+	group_numbers = [name.split()[-1] for name in names]
 	
 	rcParams['figure.figsize'] = 10, total+10
 	
@@ -14,11 +15,16 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 		pyplot.plot(days, durations[i], linestyle='-', linewidth=2.0, marker='D', markersize=2.0, label='duration')
 		pyplot.bar(days, num_meetings[i], facecolor='#ff3687', edgecolor='white', label='meetings', align='center')
 		pyplot.ylim(0, 10.3)
+		
 		if i!= total-1:
 			pyplot.setp(ax.get_xticklabels(), visible=False)
 		if i == 0:
 			pyplot.legend(loc='upper left', frameon=False)
-		pyplot.ylabel(names[i], rotation=0)
+		pyplot.ylabel(group_numbers[i], rotation=0)
+		
+		for x,y in zip(days, durations[i]):
+			pyplot.text(x, y+0.05, '%.1f' % y, ha='center', va= 'bottom')
+
 	
 	pyplot.xticks(rotation=90)
 	pyplot.tight_layout()
