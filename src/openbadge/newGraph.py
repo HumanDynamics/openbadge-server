@@ -1,4 +1,4 @@
-from matplotlib import pyplot, dates
+from matplotlib import pyplot, dates, rcParams
 from django.conf import settings
 
 import os
@@ -6,6 +6,8 @@ import os
 def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	total = len(durations)
+	print total
+	rcParams['figure.figsize'] = 10, total+10
 	
 	for i in xrange(total):
 		ax = pyplot.subplot(total, 1, i+1)
