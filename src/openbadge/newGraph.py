@@ -6,7 +6,7 @@ import os
 def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	total = len(durations)
-	print total
+	
 	rcParams['figure.figsize'] = 10, total+10
 	
 	for i in xrange(total):
@@ -43,6 +43,8 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 def aggregateGraph(durations, num_meetings, days, graph_path):
 		
+	rcParams['figure.figsize'] = 8, 5.5
+	
 	pyplot.plot(days, durations, linestyle='-', linewidth=2.0, marker='D', markersize=2.0, label='duration')
 	pyplot.bar(days, num_meetings, facecolor='#ff3687', edgecolor='white', label='meetings', align='center')
 	
