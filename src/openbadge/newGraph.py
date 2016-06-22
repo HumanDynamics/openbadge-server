@@ -44,11 +44,11 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	agg_graph_file = aggregateGraph(agg_duration, agg_num_meetings, days, graph_path)
 	
-	generateTable(durations, days, names, graph_path)
+	csv_file = generateTable(durations, days, names, graph_path)
 	
 	return {'group_img':'team_meeting_summary_graph.png', 'agg_img':agg_graph_file,
 		'time':{'hrs':int(total_time), 'mins': int((total_time-int(total_time))*60)},
-		'num_meetings':sum(agg_num_meetings)}
+		'num_meetings':sum(agg_num_meetings), 'stats_csv':csv_file}
 	
 def aggregateGraph(durations, num_meetings, days, graph_path):
 		
@@ -86,4 +86,4 @@ def generateTable(durations, days, names, table_path):
 	table_stats = csv.writer(open(table_path + '/group_stats.csv', 'wb'))
 	table_stats.writerows(csv_data)
 	
-	return
+	return 'group_stats.csv'
