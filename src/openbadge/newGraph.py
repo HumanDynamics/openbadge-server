@@ -1,7 +1,7 @@
 from matplotlib import pyplot, dates, rcParams
 from django.conf import settings
 
-import os
+import os, csv
 
 def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
@@ -44,8 +44,11 @@ def groupStatGraph(durations, num_meetings, days, names, graph_path):
 	
 	agg_graph_file = aggregateGraph(agg_duration, agg_num_meetings, days, graph_path)
 	
+	csv_file = generateTable(durations, days, names, graph_path)
+	
 	return {'group_img':'team_meeting_summary_graph.png', 'agg_img':agg_graph_file,
-		'time':{'hrs':int(total_time), 'mins': int((total_time-int(total_time))*60)}, 'num_meetings':sum(agg_num_meetings)}
+		'time':{'hrs':int(total_time), 'mins': int((total_time-int(total_time))*60)},
+		'num_meetings':sum(agg_num_meetings), 'stats_csv':csv_file}
 	
 def aggregateGraph(durations, num_meetings, days, graph_path):
 		
@@ -67,4 +70,20 @@ def aggregateGraph(durations, num_meetings, days, graph_path):
 	pyplot.close()
 	
 	return 'aggregate_summary_graph.png'
+	
+def generateTable(durations, days, names, table_path):
+	
+	headers = days
+	headers.insert(0, 'Group\Date')
+	
+	csv_data = durations
+	
+	for i in xrange(len(names)):
+		csv_data[i].insert(0, names[i])
 		
+	csv_data.insert(0, headers)
+	
+	table_stats = csv.writer(open(table_path + '/group_stats.csv', 'wb'))
+	table_stats.writerows(csv_data)
+	
+	return 'group_stats.csv'
