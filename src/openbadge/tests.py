@@ -58,3 +58,8 @@ class APITest(TestCase):
         meetings = group.meetings.all()
         meeting = meetings[0]
         analysis.post_meeting_analysis(meeting)
+
+
+    def test_weekly_email(self):
+        group = StudyGroup.objects.get(name="Oren group")
+        analysis.send_weekly_email(group,'2')

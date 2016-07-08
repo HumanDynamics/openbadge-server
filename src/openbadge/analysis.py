@@ -99,7 +99,7 @@ def send_weekly_email(group, week_num):
     body = template.render(dict(group=group, week_num=report_week_num, url=url, total_hours=total_hours))
 
     for recipient in recipients:
-        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "Real-Time Visualisation Enabled in Roundtable + Summary of Past Week", body)
+        send_email(passwords.EMAIL_USERNAME, passwords.EMAIL_PASSWORD, recipient, "RoundTable - Announcements & Summary of Past Week", body)
         time.sleep(.3)
    
 
