@@ -11,4 +11,5 @@ urlpatterns = [
     # Reports
     url(r'^internal_report/$', views.internal_report, name='internal_report'),
     url(r'^weekly_group_report/(?P<group_key>\w+)/(?P<week_num>[0-9]+)$', views.weekly_group_report, name='weekly_group_report'),
+    url(r'^h1_report/(?P<member_key>\w+)/$', views.h1_report, name='report'),  
 ]

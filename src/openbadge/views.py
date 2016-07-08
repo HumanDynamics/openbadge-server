@@ -22,6 +22,8 @@ from django.conf import settings
 from newGraph import groupStatGraph
 from django.contrib.auth.decorators import user_passes_test
 
+import ast
+
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def json_response(**kwargs):
@@ -207,3 +209,38 @@ def internal_report(request):
 	metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
 
 	return render(request, 'reports/internal_report.html', {'metadata':metadata})
+
+
+def h1_report(request, member_key):
+    charts_path = settings.MEDIA_ROOT + '/h1_reports/charts/'
+    p_chart_file_name = charts_path + member_key + '_participation_chart.txt'
+    with open(p_chart_file_name, 'r') as out:
+        h1_report_data = ast.literal_eval(out.read())
+        
+    s_chart_file_name = charts_path + member_key + '_satisfaction_chart.txt'
+    with open(s_chart_file_name, 'r') as out:
+        h1_report_data.update(ast.literal_eval(out.read()))
+
+    member = StudyMember.objects.get(key=member_key)
+    group = member.group
+    member_names = {}
+    for member in group.members.all():
+        member_names[member.key] = member.name
+
+    path = "../media/h1_reports/transitions/"
+    transition_file_name = path + group.key + '.json'
+    s = ''
+    with open(transition_file_name, 'r+') as transitions:
+        s = transitions.read()
+        for member_key, member_name in member_names.iteritems():
+            s = s.replace(member_key, member_name)
+    #with open(transition_file_name, 'w') as transitions:
+    #    transitions.write(s)
+
+    graph_dict = ast.literal_eval(s)
+    graph = simplejson.dumps(graph_dict)
+        
+    misc_data = dict(member=member, group=group,
+                     graph=graph)
+    h1_report_data.update(misc_data)
+    return render(request, 'reports/h1_report.html', h1_report_data)
