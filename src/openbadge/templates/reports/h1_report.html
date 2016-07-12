@@ -114,7 +114,9 @@
 	      {{ participation_div|safe }}
 	    </div>
 	    <div class="chart-notes">
-	      The percentage of participation per member per week, as well as the percentage of participation for all weeks. Participation can be determined by either the number of speaking turns or the amount of time spent speaking. The red rectangles show which weeks had visualization enabled.
+	      The percentage of participation per member per week, as well as the percentage of participation for all weeks. The bottom bars represent your participation.<br>
+	      Participation can be determined by either the number of speaking turns or the amount of time spent speaking.<br>
+	      The red rectangles show which weeks had visualization enabled.
 	    </div>
 	  </div>
 	</div>
@@ -169,7 +171,7 @@ var radius = d3.scale.linear()
 
 var edgeWeight = d3.scale.linear()
     .domain([1, 30])
-    .range([1.5, 8])
+    .range([1, 12])
 
 
 var force = d3.layout.force()
@@ -367,8 +369,9 @@ makeScript({{graph|safe}});
 	      </script>
 	    </div>
 	    <div class="chart-notes">
-	      Here, we have each circle representing a participant, with circle sizes representing participation, i.e. number of speaking turns throughout the whole study.<br>
-	      Arrows represent the probability of participant A responding to participant B. Double-click on a circle to see only the arrows relating to the participant.<br>
+	      Here, we have each circle representing a participant, with circle sizes representing the amount of participation, i.e. number of speaking turns, throughout the whole study.<br>
+	      The circle who has its arrow point towards your circle is the person who you respond the most after. Arrow thickness corresponds to frequency of responses.<br>
+	      Double-click on your circle to see only the arrows and circles relating to you.
 	    </div>
 	  </div>
 	</div>
