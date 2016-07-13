@@ -220,6 +220,10 @@ def h1_report(request, member_key):
     s_chart_file_name = charts_path + member_key + '_satisfaction_chart.txt'
     with open(s_chart_file_name, 'r') as out:
         h1_report_data.update(ast.literal_eval(out.read()))
+        
+    a_chart_file_name = charts_path + member_key + '_all_chart.txt'
+    with open(a_chart_file_name, 'r') as out:
+        h1_report_data.update(ast.literal_eval(out.read()))
 
     member = StudyMember.objects.get(key=member_key)
     group = member.group
@@ -228,19 +232,24 @@ def h1_report(request, member_key):
         member_names[member.key] = member.name
 
     path = "../media/h1_reports/transitions/"
-    transition_file_name = path + group.key + '.json'
-    s = ''
-    with open(transition_file_name, 'r+') as transitions:
-        s = transitions.read()
-        for member_key, member_name in member_names.iteritems():
-            s = s.replace(member_key, member_name)
-    #with open(transition_file_name, 'w') as transitions:
-    #    transitions.write(s)
+    transition_left_file_name = path + group.key + '_' + member_key + '_left.json'
+    transition_right_file_name = path + group.key + '_' + member_key + '_right.json'
+    s_left = ''
+    s_right = ''
+    with open(transition_left_file_name, 'r') as transitions_left:
+        s_left = transitions_left.read()
+    with open(transition_right_file_name, 'r') as transitions_right:
+        s_right = transitions_right.read()
+    for member_key, member_name in member_names.iteritems():
+        s_left = s_left.replace(member_key, member_name)
+        s_right = s_right.replace(member_key, member_name)
 
-    graph_dict = ast.literal_eval(s)
-    graph = simplejson.dumps(graph_dict)
+    graph_dict_left = ast.literal_eval(s_left)
+    graph_left = simplejson.dumps(graph_dict_left)
+    graph_dict_right = ast.literal_eval(s_right)
+    graph_right = simplejson.dumps(graph_dict_right)
         
     misc_data = dict(member=member, group=group,
-                     graph=graph)
+                     graph_left=graph_left, graph_right=graph_right)
     h1_report_data.update(misc_data)
     return render(request, 'reports/h1_report.html', h1_report_data)
