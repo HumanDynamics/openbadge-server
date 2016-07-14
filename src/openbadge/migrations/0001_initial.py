@@ -2,9 +2,10 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import django.contrib.auth.models
 import django.utils.timezone
 import django.core.validators
-import django.contrib.auth.models
+import openbadge.models
 
 
 class Migration(migrations.Migration):
@@ -44,52 +45,83 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Meeting',
-            fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True)),
-                ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
-                ('date_created', models.DateTimeField(auto_now_add=True)),
-                ('date_updated', models.DateTimeField(auto_now=True)),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField()),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.CreateModel(
-            name='StudyGroup',
-            fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True)),
-                ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
-                ('date_created', models.DateTimeField(auto_now_add=True)),
-                ('date_updated', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=64, blank=True)),
-                ('show_widget', models.BooleanField()),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.CreateModel(
-            name='StudyMember',
+            name='Hub',
             fields=[
                 ('id', models.AutoField(serialize=False, primary_key=True)),
                 ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_updated', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=64)),
-                ('email', models.EmailField(max_length=254)),
+                ('uuid', models.CharField(unique=True, max_length=64, db_index=True)),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='Meeting',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('date_updated', models.DateTimeField(auto_now=True)),
+                ('uuid', models.CharField(unique=True, max_length=64, db_index=True)),
+                ('start_time', models.DateTimeField()),
+                ('end_time', models.DateTimeField()),
+                ('last_update_time', models.DateTimeField(null=True)),
+                ('ending_method', models.CharField(max_length=16, blank=True)),
+                ('type', models.CharField(max_length=32)),
+                ('location', models.CharField(max_length=32)),
+                ('description', models.TextField(blank=True)),
+                ('is_complete', models.BooleanField(default=False)),
+                ('log_file', models.FileField(storage=openbadge.models.OverwriteStorage(), upload_to=openbadge.models.upload_to, blank=True)),
+                ('hub_uuid', models.ForeignKey(related_name='meetings', to='openbadge.Hub')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='Member',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('date_updated', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=64)),
+                ('email', models.EmailField(unique=True, max_length=254)),
                 ('badge', models.CharField(max_length=64)),
-                ('group', models.ForeignKey(related_name='members', to='openbadge.StudyGroup')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='Project',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('date_updated', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=64)),
             ],
             options={
                 'abstract': False,
             },
         ),
         migrations.AddField(
+            model_name='member',
+            name='project',
+            field=models.ForeignKey(related_name='members', to='openbadge.Project'),
+        ),
+        migrations.AddField(
             model_name='meeting',
-            name='group',
-            field=models.ForeignKey(to='openbadge.StudyGroup'),
+            name='project',
+            field=models.ForeignKey(related_name='meetings', to='openbadge.Project'),
+        ),
+        migrations.AddField(
+            model_name='hub',
+            name='project',
+            field=models.ForeignKey(related_name='hubs', to='openbadge.Project', null=True),
         ),
     ]

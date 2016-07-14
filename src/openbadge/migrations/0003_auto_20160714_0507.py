@@ -7,12 +7,13 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('openbadge', '0012_auto_20160615_2011'),
+        ('openbadge', '0002_auto_20160713_2050'),
     ]
 
     operations = [
-        migrations.RenameModel(
-            old_name='DictPlotData',
-            new_name='WeeklyGroupReport',
+        migrations.AlterField(
+            model_name='meeting',
+            name='end_time',
+            field=models.DateTimeField(null=True),
         ),
     ]

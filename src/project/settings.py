@@ -25,7 +25,7 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..")
 SECRET_KEY = passwords.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = passwords.ALLOWED_HOSTS
@@ -63,7 +63,7 @@ ROOT_URLCONF = 'project.urls'
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
-TEMPLATE_CONTEXT_PROCESSORS = (
+CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "django.contrib.auth.context_processors.auth",
     "django.template.context_processors.debug",
@@ -73,7 +73,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.template.context_processors.tz",
     "django.contrib.messages.context_processors.messages",
 )
-TEMPLATE_DEBUG = True
 
 TEMPLATE_LOADERS = (
                     'django.template.loaders.filesystem.Loader',
@@ -85,8 +84,8 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': (os.path.join(BASE_DIR, "templates-admin"),),
         'OPTIONS': {
-            'context_processors': TEMPLATE_CONTEXT_PROCESSORS,
-            'debug': TEMPLATE_DEBUG,
+            'context_processors': CONTEXT_PROCESSORS,
+            'debug': DEBUG,
             'loaders': TEMPLATE_LOADERS,
         },
     },
@@ -96,7 +95,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'environment': 'project.jinjaenvironment.environment',
-            'context_processors': TEMPLATE_CONTEXT_PROCESSORS,
+            'context_processors': CONTEXT_PROCESSORS,
             'extensions': ['pipeline.templatetags.ext.PipelineExtension'],
         },
 
@@ -229,6 +228,7 @@ PIPELINE_CSS = {
 }
 
 APP_KEY = passwords.APP_KEY
+GOD_KEY = passwords.GOD_KEY
 
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
 

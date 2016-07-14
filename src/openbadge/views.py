@@ -10,12 +10,13 @@ from rest_framework.decorators import api_view, permission_classes
 from functools import wraps
 from django.shortcuts import render
 
-from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.http import HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound, JsonResponse, HttpResponseUnauthorized
 from django.shortcuts import get_object_or_404
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from .decorators import app_view
-from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport
+from .decorators import app_view, is_god, is_own_project
+
+from .models import Meeting, Project, Hub, Member # ActionDataChunk, SamplesDataChunk
 import analysis
 from django.conf import settings
 
@@ -29,6 +30,7 @@ def json_response(**kwargs):
 
 def context(**extra):
     return dict(**extra)
+
 
 @app_view
 def test(request):
@@ -51,95 +53,195 @@ def render_to(template):
         return wrapper
     return decorator
 
-## APP views ###########################################################################################################
+
+## No-Group views ######################################################################################################
+
+###########################
+# Project Level Endpoints #
+###########################
 
 @app_view
-@api_view(['POST'])
-def log_data(request):
+@api_view(['PUT', 'GET'])
+def projects(request):
+    if (request.method == 'PUT'):
+        return put_project(request)
+    elif (request.method == 'GET'):
+        return get_project(request)
+    return HttpResponseNotFound()
 
+
+@is_god
+@api_view(['PUT'])
+def put_project(request):
+    return json_response(status="Not Implemented")
+
+
+@api_view(['GET'])
+def get_project(request):
+    hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+    """ng-device's id for the hub submitting this request"""
+
+    if not hub_uuid:
+        return HttpResponseBadRequest()
+
+    try:
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+    except Hub.DoesNotExist:
+        return HttpResponseNotFound()
+
+    project = hub.project  # type: Project
+
+    return JsonResponse(project.to_object())
+
+###########################
+# Meeting Level Endpoints #
+###########################
+
+@is_own_project
+@app_view
+@api_view(['PUT', 'GET', 'POST'])
+def meetings(request, project_id):
+    if request.method == 'PUT':
+        return put_meeting(request, project_id)
+    elif request.method == 'GET':
+        return get_meeting(request, project_id)
+    elif request.method == 'POST':
+        return post_meeting(request, project_id)
+    return HttpResponseNotFound()
+
+
+@api_view(['PUT'])
+def put_meeting(request, project_id):
     log_file = request.FILES.get("file")
+
+    hub_uuid = request.META.get("HTTP_X_HUB_UUID")
 
     meeting_info = simplejson.loads(log_file.readline())
     log_file.seek(0)
 
     meeting_uuid = meeting_info["uuid"]
-    moderator_key = meeting_info["moderator"]
-    members = meeting_info["members"]
-    group_key = meeting_info["group"]
-    start_time = parse_date(meeting_info["startTime"])
-    meeting_location = meeting_info["location"]
-    meeting_type = meeting_info["type"]
-    meeting_description = meeting_info["description"]
-    show_visualization = meeting_info["showVisualization"]
-
-    is_complete = request.POST.get("isComplete") == 'true'
-    end_time_string = request.POST.get("endTime")
-    ending_method = request.POST.get("endingMethod", "")
-    end_time = parse_date(end_time_string) if end_time_string else None
 
     try:
-        meeting = Meeting.objects.select_related('moderator', 'group').get(group__key=group_key, uuid=meeting_uuid)
+        meeting = Meeting.objects.get(uuid=meeting_uuid)
+        if meeting.hub.uuid != hub_uuid:
+            return HttpResponseUnauthorized()
+
     except Meeting.DoesNotExist:
         meeting = Meeting()
-        group = StudyGroup.objects.get(key=group_key)
-        meeting.group = group
         meeting.uuid = meeting_uuid
+        meeting.project = Project.objects.get(id=project_id)
 
     meeting.log_file = log_file
-    try:
-        if moderator_key:
-            meeting.moderator = StudyMember.objects.get(key=moderator_key)
-        else:
-            meeting.moderator = None
-    except Exception, e:
-        pass
 
-    meeting.members = simplejson.dumps(members)
-    meeting.start_time = start_time
-    meeting.type = meeting_type
-    meeting.location = meeting_location
-    meeting.description = meeting_description
-    meeting.end_time = end_time if end_time else meeting.get_last_sample_time()
-    meeting.is_complete = is_complete
-    meeting.show_visualization = show_visualization
-    meeting.ending_method = ending_method
+
+    meeting.hub = Hub.objects.get(uuid=hub_uuid)
+
+    meeting.start_time = parse_date(meeting_info["start_time"])
+
+    meeting.location = meeting_info["location"]
+    meeting.type = meeting_info["type"]
+    meeting.description = meeting_info["description"]
+
+    meeting.last_update_time = meeting.get_last_sample_time()
+
+    meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
+    meeting.end_time_string = request.data["end_time"] if 'end_time' in request.data else None
+    meeting.ending_method = request.data["ending_method"] if 'ending_method' in request.data else None
+
+    meeting.end_time = parse_date(meeting.end_time_string) if meeting.end_time_string else meeting.last_update_time
+
+
+
     meeting.save()
 
     if meeting.is_complete and settings.SEND_POST_MEETING_SURVEY:
         analysis.post_meeting_analysis(meeting)
 
-    return json_response(success=True)
+    return JsonResponse({'detail':'meeting created'})
 
-@app_view
+
 @api_view(['GET'])
-def get_group(request, group_key):
-
-    if not group_key:
-        return json_response(success=False)
-
-    try:
-        group = StudyGroup.objects.prefetch_related("members", "visualization_ranges").get(key=group_key)
-    except StudyGroup.DoesNotExist:
-        return json_response(success=False)
-
-    return json_response(success=True, group=group.to_dict())
+def get_meeting(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
 
 
+@api_view(['POST'])
+def post_meeting(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
+
+#######################
+# Hub Level Endpoints #
+#######################
+
+@is_own_project
 @app_view
+@api_view(['PUT', 'GET', 'POST'])
+def hubs(request, project_id):
+    if request.method == 'PUT':
+        return put_hubs(request, project_id)
+    elif request.method == 'GET':
+        return get_hubs(request, project_id)
+    elif request.method == 'POST':
+        return post_hubs(request, project_id)
+    return HttpResponseNotFound()
+
+
+@is_god
+@api_view(['PUT'])
+def put_hubs(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
+
+
 @api_view(['GET'])
-def get_finished_meetings(request, group_key):
-
-    if not group_key:
-        raise Http404()
-
+def get_hubs(request, project_id):
+    hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+    if not hub_uuid:
+        return HttpResponseBadRequest()
     try:
-        group = StudyGroup.objects.prefetch_related("meetings").get(key=group_key)
-    except StudyGroup.DoesNotExist:
-        raise Http404()
+        hub = Hub.objects.get(uuid = hub_uuid)
+    except Hub.DoesNotExist:
+        return HttpResponseNotFound()
 
-    finished_meetings = [meeting.uuid for meeting in group.meetings.filter(is_complete=True).all()]
+    return JsonResponse(hub.get_object())
 
-    return json_response(success=True, finished_meetings=finished_meetings)
+
+@is_god
+@api_view(['POST'])
+def post_hubs(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
+
+#########################
+# Badge Level Endpoints #
+#########################
+
+@is_own_project
+@app_view
+@api_view(['PUT', 'GET', 'POST'])
+def members(request, project_id):
+    if request.method == 'PUT':
+        return put_members(request, project_id)
+    elif request.method == 'GET':
+        return get_members(request, project_id)
+    elif request.method == 'POST':
+        return post_members(request, project_id)
+    return HttpResponseNotFound()
+
+@is_god
+@api_view(['PUT'])
+def put_members(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
+
+
+@is_god
+@api_view(['GET'])
+def get_members(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
+
+
+@api_view(['POST'])
+def post_members(request, project_id):
+    return JsonResponse({"status":"Not Implemented"})
+
 
 ## Report views ########################################################################################################
 
@@ -167,43 +269,43 @@ def weekly_group_report(request, group_key, week_num):
 
 @user_passes_test(lambda u: u.is_superuser)
 def internal_report(request):
-	
+
 	groups = StudyGroup.objects.all().order_by('name')
-	
+
 	durations = []
 	num_meetings = []
 	names = []
-	
+
 	dates = [datetime.date(2016,6,13) + datetime.timedelta(days=i) for i in xrange(28)]
-	
+
 	for s_group in groups:
 		meetings = Meeting.objects.filter(group__key = s_group.key, is_complete=True).all()
-		
+
 		num_meet_temp = []
 		time_meet_temp = []
-		
+
 		for current in dates:
 			meets = [meet for meet in meetings
 				if (meet.start_time.year == current.year and
 				meet.start_time.month == current.month and
 				meet.start_time.day == current.day)]
-			
+
 			num_meet_temp.append(len(meets))
 			times = [entry.end_time - entry.start_time for entry in meets]
 			time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds())/3600.0)
-			
+
 		num_meetings.append(num_meet_temp)
 		durations.append(time_meet_temp)
 		names.append(s_group.name)
-	
+
 	graph_path = settings.MEDIA_ROOT + '/tmp'
-		
+
 	try:
 		os.mkdir(graph_path)
 	except OSError:
 		if not os.path.isdir(graph_path):
 			raise
-	
+
 	metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
 
 	return render(request, 'reports/internal_report.html', {'metadata':metadata})
