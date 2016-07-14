@@ -243,7 +243,8 @@ def h1_report(request, member_key):
     for member_key, member_name in member_names.iteritems():
         s_left = s_left.replace(member_key, member_name)
         s_right = s_right.replace(member_key, member_name)
-
+        h1_report_data['participation_script'] = h1_report_data['participation_script'].replace(member_key, member_name)
+        
     graph_dict_left = ast.literal_eval(s_left)
     graph_left = simplejson.dumps(graph_dict_left)
     graph_dict_right = ast.literal_eval(s_right)
