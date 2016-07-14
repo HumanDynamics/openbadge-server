@@ -149,8 +149,12 @@
 	    <div class="chart-title">
 	      <h3>Who Speaks After Whom</h3>
 	    </div>
-	    <div class="col-sm-6">
-	    <div class="chart-stage" id="transition-matrix">
+	    <div class="chart-notes">
+	      Each circle represents a team member, with the size of the circle representing their percentage participation (by number of speaking turns).
+	    </div>
+	      <div class="chart-stage">
+	    <div class="col-sm-6" id="transition-matrix">
+		<h3><center>Who Spoke After You</center></h3>
 	      <!--
 	      <script src="/static/js/curved-graph2.js"></script>
 	      -->
@@ -226,14 +230,14 @@ svg.append('svg:defs').append('svg:marker')
               .append('text')
               .attr({'class':'edgelabel',
 		     'id':function(d,i){return 'edgelabel'+i},
-		     'dx':function(d){return 90+d.source.value*2},
+		     'dx':function(d){return 80+d.source.value*2},
 		     'dy':40,
 		     'font-size':20,
 		     'fill':'#aaa'});
 
 	edgelabels.append('textPath')
             .attr('xlink:href',function(d,i) {return '#linkId_'+i})
-            .text(function(d,i){return parseInt(d.weight*100) + '%'});
+            .text(function(d,i){return Math.round(d.weight*1000) / 10 + '%'});
 	
 
     var node = svg.selectAll(".node")
@@ -249,7 +253,7 @@ svg.append('svg:defs').append('svg:marker')
     
     
     node.append("title")
-	.text(function(d) { return d.name + ": " + parseInt(d.value) + "% speaking turns"; });
+	.text(function(d) { return d.name + ": " + Math.round(d.value * 10) / 10 + "% speaking turns"; });
     
     node.append("text")
 //	.text(function(d) {return d.name})
@@ -299,7 +303,7 @@ function collide(alpha) {
 }
 		    
     link.append("title")
-	.text(function(d) { return d.source.name + " -> " + d.target.name + ": " + parseInt(d.weight*100) + "% transitions"; });    
+	.text(function(d) { return d.source.name + " -> " + d.target.name + ": " + Math.round(d.weight*1000) / 10 + "% transitions"; });    
     
     
     force.on("tick", function () {
@@ -338,11 +342,13 @@ function collide(alpha) {
 makeScript({{graph_left|safe}});
 		    
 	      </script>
-	    </div>
-	    </div>
+	      <div class="chart-notes">
+	      This graph shows who spoke after you - for example, if an arrow shows 10%, it mean that 10% of the responses were make that that person.
+	      </div>
 	    
-	    <div class="col-sm-6">
-	    <div class="chart-stage" id="transition-matrix-right">
+	      </div>
+	    <div class="col-sm-6" id="transition-matrix-right">
+	      <h3><center>Who You Responded To</center></h3>
 	      <script> 
 
 //function makeScript(fileName) {
@@ -415,14 +421,14 @@ svg.append('svg:defs').append('svg:marker')
               .append('text')
               .attr({'class':'edgelabel',
 		     'id':function(d,i){return 'edgelabel'+i},
-		     'dx':function(d){return 90+d.source.value*2},
+		     'dx':function(d){return 80+d.source.value*2},
 		     'dy':40,
 		     'font-size':20,
 		     'fill':'#aaa'});
 
 	edgelabels.append('textPath')
             .attr('xlink:href',function(d,i) {return '#linkId_right_'+i})
-            .text(function(d,i){return parseInt(d.weight*100) + '%'});
+            .text(function(d,i){return Math.round(d.weight*1000) / 10 + '%'});
 	
 
     var node = svg.selectAll(".node")
@@ -438,7 +444,7 @@ svg.append('svg:defs').append('svg:marker')
     
     
     node.append("title")
-	.text(function(d) { return d.name + ": " + parseInt(d.value) + "% speaking turns"; });
+	.text(function(d) { return d.name + ": " + Math.round(d.value*10) / 10 + "% speaking turns"; });
     
     node.append("text")
 //	.text(function(d) {return d.name})
@@ -488,7 +494,7 @@ function collide(alpha) {
 }
 		    
     link.append("title")
-	.text(function(d) { return d.source.name + " -> " + d.target.name + ": " + parseInt(d.weight*100) + "% transitions"; });    
+	.text(function(d) { return d.source.name + " -> " + d.target.name + ": " + Math.round(d.weight*1000) / 10 + "% transitions"; });    
     
     
     force.on("tick", function () {
@@ -523,14 +529,20 @@ function collide(alpha) {
     })
 		    
 }
-makeScript({{graph_right|safe}}); </script>
-						      </div>
+						      makeScript({{graph_right|safe}});
+						      </script>
+	      <div class="chart-notes">
+	      Similarly, this graph shows who you responded to - for example, if an arrow shows 25%, it means that 25% of your responses were made to that person.
+	      </div>
 	    </div>
+	    </div>
+	    <!--
 	    <div class="chart-notes">
 	      Each circle represents a team member, with the size of the circle representing their percentage participation (by number of speaking turns).<br>
 	      The graph on the left shows who spoke after you - for example, if an arrow shows 10%, it mean that 10% of the responses were make that that person.<br>
 	      Similarly, the graph on the right shows who you responded to - for example, if an arrow shows 25%, it means that 25% of your responses were made to that person.
 	    </div>
+	    -->
 	  </div>
 	</div>
 
@@ -565,7 +577,7 @@ makeScript({{graph_right|safe}}); </script>
     </div>
 
     <footer>
-      Thank you for your participation.
+      Thank you for your participation!
     </footer>
     <br>
 
