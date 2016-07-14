@@ -228,8 +228,8 @@ def h1_report(request, member_key):
     member = StudyMember.objects.get(key=member_key)
     group = member.group
     member_names = {}
-    for member in group.members.all():
-        member_names[member.key] = member.name
+    for member_data in group.members.all():
+        member_names[member_data.key] = member_data.name
 
     path = settings.MEDIA_ROOT + "/h1_reports/transitions/"
     transition_left_file_name = path + group.key + '_' + member_key + '_left.json'
