@@ -1,0 +1,587 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+
+    <title>H1 Report for {{ member }}</title>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="http://keen.github.io/dashboards/assets/css/keen-dashboards.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.0.min.css" type="text/css" />
+
+    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.0.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+    
+    {{ satisfaction_script|safe }}
+    {{ participation_script|safe }}
+    {{ all_script|safe }}
+    
+    <style>      
+      .fixed-max-width {
+      margin: 0 auto;
+      }
+      body {
+      max-width: 1300px;
+      margin: 0 auto;
+      }
+      .chart-wrapper .chart-title {
+      background: #fbfbfb;
+      }
+      .chart-wrapper .chart-notes {
+      font-size: 18px;
+      }
+      .height {
+      min-height: 250px;
+      }
+      footer {
+      background-color: white;
+      color: black;
+      padding: 15px;
+      font-size: 18px;
+      border: 1px solid #e2e2e2;
+      border-radius: 3px;
+      margin-bottom: 10px;
+      }
+      img {
+      max-width:100%;
+      max-height:100%;
+      }
+      .keen-metric { 
+      background: steelblue; 
+      display: block-inline;
+      border-radius: 4px; 
+      color: #fff; 
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+      padding: 10px 0;
+      margin: 10px; 
+      text-align: center;
+      }
+      .keen-metric-value { 
+      display: block; 
+      font-size: 60px; 
+      font-weight: 700; 
+      line-height: 84px; 
+      }
+      .keen-metric-title { 
+      display: block; 
+      font-size: 24px; 
+      font-weight: 200; 
+      }
+      
+      .node {
+      stroke: #fff;
+      stroke-width: 1.5px;
+      }
+      .link {
+      stroke: #999;
+      stroke-opacity: .6;
+      }
+      path.link {
+      fill: none;
+      stroke: #000;
+      stroke-width: 4px;
+      cursor: default;
+      }
+    </style>
+    
+  </head>
+
+  <body class="application">
+
+    <img src="/static/img/media_lab_logo.png" alt="" height="100" width="170">
+
+    <div class="container-fluid fixed-max-width">
+
+      <h1>H1 Report for {{ member }}</h1>
+      
+      <div class="row">
+
+	<div class="col-sm-12" id="percentage_participation">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Your Participation Compared to Your Team Members</h3>
+	    </div>
+	    <div class="chart-stage">
+	      {{ participation_div|safe }}
+	    </div>
+	    <div class="chart-notes">
+	      This graph represents your percentage of participation as compared to your team members. The bottom bars represent your participation, which can be determined by either the number of times you spoke (speaking turns) or the amount of time you spoke. The purple rectangles show the weeks in which visualization was enabled.
+	    </div>
+	  </div>
+	</div>
+	
+      </div>
+
+      
+      <div class="row">
+
+	<div class="col-sm-12" id="percentage_participation">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Your Participation Compared to All Other Members</h3>
+	    </div>
+	    <div class="chart-stage">
+	      {{ all_div|safe }}
+	    </div>
+	    <div class="chart-notes">
+	      This graph marks (in orange) where you stand in terms of percentage of participation by speaking turns when compared to all other members.
+	    </div>
+	  </div>
+	</div>
+	
+      </div>
+      
+
+      <div class="row">
+
+	<div class="col-sm-12" id="bar2">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Who Speaks After Whom</h3>
+	    </div>
+	    <div class="chart-notes">
+	      Each circle represents a team member, with the size of the circle representing their percentage participation (by number of speaking turns).
+	    </div>
+	      <div class="chart-stage">
+	    <div class="col-sm-6" id="transition-matrix">
+		<h3><center>Who Spoke After You</center></h3>
+	      <!--
+	      <script src="/static/js/curved-graph2.js"></script>
+	      -->
+	      <script type="text/javascript">
+
+//function makeScript(fileName) {
+function makeScript(graph) {
+		
+var width = 600,
+    height = 600;
+
+var color = d3.scale.category20();
+
+var radius = d3.scale.linear()
+    .domain([0, 26])
+    .range([30, 60])
+
+var edgeWeight = d3.scale.linear()
+    .domain([0, 1])
+    .range([0.1, 20])
+
+
+var force = d3.layout.force()
+    .linkDistance(width*.3)
+    .size([width, height])
+
+var svg = d3.select("#transition-matrix").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+
+// define arrow markers for graph links
+svg.append('svg:defs').append('svg:marker')
+    .attr('id', 'end-arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 9)
+    .attr('refY', 0)
+    .attr('markerWidth', 5)
+    .attr('markerHeight', 5)
+    .attr('orient', 'auto')
+    .append('svg:path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#000')
+    .attr('markerUnits', '5');
+
+    force
+	.nodes(graph.nodes)
+	.links(graph.edges)
+	.charge(function(d){
+		var charge = -500;
+		if (d.index == 0) charge = 10 * charge;
+		return charge;
+})
+.linkStrength(function(d){
+//console.log(d.weight, 1/Math.pow(edgeWeight(d.weight),2)*10);
+		return 1/Math.pow(edgeWeight(d.weight),2)*10;
+})
+	.start();
+    
+    var link = svg.selectAll('.link')
+        .data(graph.edges)
+        .enter().append('svg:path')
+        .attr('class', 'link')
+        .style('marker-end', function(d) { return 'url(#end-arrow)'; })
+        .style("stroke-width", function(d) { return edgeWeight(d.weight); })
+	.style("stroke-opacity", ".5")
+.attr("id",function(d,i) { return "linkId_" + i; });
+
+
+	var edgelabels = svg.selectAll(".edgelabel")
+              .data(graph.edges)
+              .enter()
+              .append('text')
+              .attr({'class':'edgelabel',
+		     'id':function(d,i){return 'edgelabel'+i},
+		     'dx':function(d){return 80+d.source.value*2},
+		     'dy':40,
+		     'font-size':20,
+		     'fill':'#aaa'});
+
+	edgelabels.append('textPath')
+            .attr('xlink:href',function(d,i) {return '#linkId_'+i})
+            .text(function(d,i){return Math.round(d.weight*1000) / 10 + '%'});
+	
+
+    var node = svg.selectAll(".node")
+        .data(graph.nodes)
+	.enter().append("g")
+	.attr("class", "node")
+	.call(force.drag);
+    
+    node.append("circle")
+	.attr("r", function (d) {
+	    return radius(d.value); })
+        .style("fill", function(d) { return color(d.name); });
+    
+    
+    node.append("title")
+	.text(function(d) { return d.name + ": " + Math.round(d.value * 10) / 10 + "% speaking turns"; });
+    
+    node.append("text")
+//	.text(function(d) {return d.name})
+//	.attr("dx", function(d) { return (-0.1)*radius(d.value)*d.name.length })
+	.text(function(d) { return d.name.split(" ")[0].substring(0,7) })
+	.attr("dx", function(d) { return (-0.1)*radius(d.value)*1.4*d.name.split(" ")[0].substring(0,7).length })
+	.attr("font-size", function(d) { return d.value+8 })
+//      .attr("fill", "white");
+	.attr("color", "gray")
+	.attr("text-shadow", "gray");
+    
+    node.append("text")
+    	.text(function(d) { return d.name.split(" ")[1].charAt(0)+"." })
+	.attr("dx", function(d) { return (-0.1)*radius(d.value)*d.name.split(" ")[1].length })
+	.attr("dx", function(d) { return (-0.05)*radius(d.value) })
+	.attr("dy", "1em")
+	.attr("font-size", function(d) { return d.value+8 })
+//      .attr("fill", "white");
+
+
+//Making sure nodes don't overlap: (taken from http://www.coppelia.io/2014/07/an-a-to-z-of-extra-features-for-the-d3-force-layout/)
+var padding = 1; // separation between circles
+function collide(alpha) {
+  var quadtree = d3.geom.quadtree(graph.nodes);
+  return function(d) {
+      var rb = 2*radius(d.value) + padding,
+        nx1 = d.x - rb,
+        nx2 = d.x + rb,
+        ny1 = d.y - rb,
+        ny2 = d.y + rb;
+    quadtree.visit(function(quad, x1, y1, x2, y2) {
+      if (quad.point && (quad.point !== d)) {
+        var x = d.x - quad.point.x,
+            y = d.y - quad.point.y,
+            l = Math.sqrt(x * x + y * y);
+          if (l < rb) {
+          l = (l - rb) / l * alpha;
+          d.x -= x *= l;
+          d.y -= y *= l;
+          quad.point.x += x;
+          quad.point.y += y;
+        }
+      }
+      return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+    });
+  };
+}
+		    
+    link.append("title")
+	.text(function(d) { return d.source.name + " -> " + d.target.name + ": " + Math.round(d.weight*1000) / 10 + "% transitions"; });    
+    
+    
+    force.on("tick", function () {
+	    // draw directed edges with proper padding from node centers
+	    link.attr('d', function(d) {
+		var deltaX = d.target.x - d.source.x,
+		    deltaY = d.target.y - d.source.y,
+		    dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+		    normX = deltaX / dist,
+		    normY = deltaY / dist,
+		    targetPadding = radius(d.target.value) + 0,
+		    sourcePadding = radius(d.source.value) + 1,
+		    //sourcePadding = d.left ? 17 : 12,
+		    //targetPadding = d.right ? 17 : 12,
+		    sourceX = d.source.x - (sourcePadding * normX),
+		    sourceY = d.source.y - (sourcePadding * normY),
+		    targetX = d.target.x - (targetPadding * normX),
+		    targetY = d.target.y - (targetPadding * normY);
+		return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
+						      });
+						      
+						      
+	    node.attr('transform', function(d) {
+		return 'translate(' + d.x + ',' + d.y + ')';
+	    });
+	    
+	    node.each(collide(0.4));
+
+	    node[0][0].x = width/2;
+	    node[0][0].y = height/2;
+	    node[0][0].fixed = true;
+    })
+		    
+}
+
+makeScript({{graph_left|safe}});
+		    
+	      </script>
+	      <div class="chart-notes">
+	      This graph shows who spoke after you - for example, if an arrow shows 10%, it mean that 10% of the responses were make that that person.
+	      </div>
+	    
+	      </div>
+	    <div class="col-sm-6" id="transition-matrix-right">
+	      <h3><center>Who You Responded To</center></h3>
+	      <script> 
+
+//function makeScript(fileName) {
+function makeScript(graph) {
+		
+var width = 600,
+    height = 600;
+
+var color = d3.scale.category20();
+
+var radius = d3.scale.linear()
+    .domain([0, 26])
+    .range([30, 60])
+
+var edgeWeight = d3.scale.linear()
+    .domain([0, 1])
+    .range([0.1, 20])
+
+
+var force = d3.layout.force()
+    .linkDistance(width*.3)
+    .size([width, height])
+
+var svg = d3.select("#transition-matrix-right").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+
+// define arrow markers for graph links
+svg.append('svg:defs').append('svg:marker')
+    .attr('id', 'end-arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 9)
+    .attr('refY', 0)
+    .attr('markerWidth', 5)
+    .attr('markerHeight', 5)
+    .attr('orient', 'auto')
+    .append('svg:path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#000')
+    .attr('markerUnits', '5');
+
+    force
+	.nodes(graph.nodes)
+	.links(graph.edges)
+	.charge(function(d){
+		var charge = -500;
+		if (d.index == 0) charge = 10 * charge;
+		return charge;
+})
+.linkStrength(function(d){
+//console.log(d.weight, 1/Math.pow(edgeWeight(d.weight),2)*10);
+		return 1/Math.pow(edgeWeight(d.weight),2)*10;
+})
+	.start();
+    
+    var link = svg.selectAll('.link')
+        .data(graph.edges)
+        .enter().append('svg:path')
+        .attr('class', 'link')
+        .style('marker-end', function(d) { return 'url(#end-arrow)'; })
+        .style("stroke-width", function(d) { return edgeWeight(d.weight); })
+	.style("stroke-opacity", ".5")
+.attr("id",function(d,i) { return "linkId_right_" + i; });
+
+
+	var edgelabels = svg.selectAll(".edgelabel")
+              .data(graph.edges)
+              .enter()
+              .append('text')
+              .attr({'class':'edgelabel',
+		     'id':function(d,i){return 'edgelabel'+i},
+		     'dx':function(d){return 80+d.source.value*2},
+		     'dy':40,
+		     'font-size':20,
+		     'fill':'#aaa'});
+
+	edgelabels.append('textPath')
+            .attr('xlink:href',function(d,i) {return '#linkId_right_'+i})
+            .text(function(d,i){return Math.round(d.weight*1000) / 10 + '%'});
+	
+
+    var node = svg.selectAll(".node")
+        .data(graph.nodes)
+	.enter().append("g")
+	.attr("class", "node")
+	.call(force.drag);
+    
+    node.append("circle")
+	.attr("r", function (d) {
+	    return radius(d.value); })
+        .style("fill", function(d) { return color(d.name); });
+    
+    
+    node.append("title")
+	.text(function(d) { return d.name + ": " + Math.round(d.value*10) / 10 + "% speaking turns"; });
+    
+    node.append("text")
+//	.text(function(d) {return d.name})
+//	.attr("dx", function(d) { return (-0.1)*radius(d.value)*d.name.length })
+	.text(function(d) { return d.name.split(" ")[0].substring(0,7) })
+	.attr("dx", function(d) { return (-0.1)*radius(d.value)*1.4*d.name.split(" ")[0].substring(0,7).length })
+	.attr("font-size", function(d) { return d.value+8 })
+//      .attr("fill", "white");
+	.attr("color", "gray")
+	.attr("text-shadow", "gray");
+    
+    node.append("text")
+    	.text(function(d) { return d.name.split(" ")[1].charAt(0)+"." })
+	.attr("dx", function(d) { return (-0.1)*radius(d.value)*d.name.split(" ")[1].length })
+	.attr("dx", function(d) { return (-0.05)*radius(d.value) })
+	.attr("dy", "1em")
+	.attr("font-size", function(d) { return d.value+8 })
+//      .attr("fill", "white");
+
+
+//Making sure nodes don't overlap: (taken from http://www.coppelia.io/2014/07/an-a-to-z-of-extra-features-for-the-d3-force-layout/)
+var padding = 1; // separation between circles
+function collide(alpha) {
+  var quadtree = d3.geom.quadtree(graph.nodes);
+  return function(d) {
+      var rb = 2*radius(d.value) + padding,
+        nx1 = d.x - rb,
+        nx2 = d.x + rb,
+        ny1 = d.y - rb,
+        ny2 = d.y + rb;
+    quadtree.visit(function(quad, x1, y1, x2, y2) {
+      if (quad.point && (quad.point !== d)) {
+        var x = d.x - quad.point.x,
+            y = d.y - quad.point.y,
+            l = Math.sqrt(x * x + y * y);
+          if (l < rb) {
+          l = (l - rb) / l * alpha;
+          d.x -= x *= l;
+          d.y -= y *= l;
+          quad.point.x += x;
+          quad.point.y += y;
+        }
+      }
+      return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+    });
+  };
+}
+		    
+    link.append("title")
+	.text(function(d) { return d.source.name + " -> " + d.target.name + ": " + Math.round(d.weight*1000) / 10 + "% transitions"; });    
+    
+    
+    force.on("tick", function () {
+	    // draw directed edges with proper padding from node centers
+	    link.attr('d', function(d) {
+		var deltaX = d.target.x - d.source.x,
+		    deltaY = d.target.y - d.source.y,
+		    dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+		    normX = deltaX / dist,
+		    normY = deltaY / dist,
+		    targetPadding = radius(d.target.value) + 0,
+		    sourcePadding = radius(d.source.value) + 1,
+		    //sourcePadding = d.left ? 17 : 12,
+		    //targetPadding = d.right ? 17 : 12,
+		    sourceX = d.source.x - (sourcePadding * normX),
+		    sourceY = d.source.y - (sourcePadding * normY),
+		    targetX = d.target.x - (targetPadding * normX),
+		    targetY = d.target.y - (targetPadding * normY);
+		return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
+						      });
+						      
+						      
+	    node.attr('transform', function(d) {
+		return 'translate(' + d.x + ',' + d.y + ')';
+	    });
+	    
+	    node.each(collide(0.4));
+
+	    node[0][0].x = width/2;
+	    node[0][0].y = height/2;
+	    node[0][0].fixed = true;
+    })
+		    
+}
+						      makeScript({{graph_right|safe}});
+						      </script>
+	      <div class="chart-notes">
+	      Similarly, this graph shows who you responded to - for example, if an arrow shows 25%, it means that 25% of your responses were made to that person.
+	      </div>
+	    </div>
+	    </div>
+	    <!--
+	    <div class="chart-notes">
+	      Each circle represents a team member, with the size of the circle representing their percentage participation (by number of speaking turns).<br>
+	      The graph on the left shows who spoke after you - for example, if an arrow shows 10%, it mean that 10% of the responses were make that that person.<br>
+	      Similarly, the graph on the right shows who you responded to - for example, if an arrow shows 25%, it means that 25% of your responses were made to that person.
+	    </div>
+	    -->
+	  </div>
+	</div>
+
+      </div>
+
+      <div class="row">
+	<div class="col-sm-12" id="aggregate_daily_plot">
+	  <div class="chart-wrapper">
+	    <div class="chart-title">
+	      <h3>Your Satisfaction vs. Participation</h3>
+	    </div>
+	    <div class="chart-stage">
+	      {{ satisfaction_div|safe }}
+	      
+	      <div class="bk-root"> <div class="plotdiv" id="5066d1c9-7c8a-4275-b4a4-d62ddd7bf3df"></div> </div>
+
+	      
+	    </div>
+	    <div class="chart-notes">
+	      This graph represents the level of satisfaction and the level of participation for each week based on the following survey questions:<br>
+	      <li>Outcome: How satisfied you were with the outcome of the meetings.</li>
+	      <li>Process: How satisfied you were with the process of the meetings.</li>
+	      <li>Value: How valuable you thought your perspective was to the meetings.</li>
+	      <li>Comfort: How comfortable you were in sharing your perspective with the team.</li>
+	      Average Satisfaction represents the average of the four above values.<br>
+	      Note: If there are any red marks on the bottom, they display the weeks in which you did not fill out the survey. :(
+	    </div>
+	  </div>
+	</div>
+      </div>
+
+    </div>
+
+    <footer>
+      Thank you for your participation!
+    </footer>
+    <br>
+
+  </body>
+
+</html>
+
