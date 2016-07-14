@@ -231,7 +231,7 @@ def h1_report(request, member_key):
     for member in group.members.all():
         member_names[member.key] = member.name
 
-    path = "../media/h1_reports/transitions/"
+    path = settings.MEDIA_ROOT + "/h1_reports/transitions/"
     transition_left_file_name = path + group.key + '_' + member_key + '_left.json'
     transition_right_file_name = path + group.key + '_' + member_key + '_right.json'
     s_left = ''
