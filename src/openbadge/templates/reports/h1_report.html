@@ -21,17 +21,36 @@
     <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.0.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+
+    <!-- jQuery Plugin, for page loading message -->
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script>
+      $(window).load(function () { $("#spinner").fadeOut(2000); })
+    </script>
+    <script>
+      if( screen.width <= 840 ) { alert("Note: Your report is best viewed on a bigger screen."); }
+    </script>
     
     {{ satisfaction_script|safe }}
     {{ participation_script|safe }}
     {{ all_script|safe }}
     
-    <style>      
+    <style>
+      #spinner
+      {
+      position: fixed;
+      left: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      background: 50% 50% no-repeat #fbfbfb;
+      }
       .fixed-max-width {
       margin: 0 auto;
       }
       body {
-      max-width: 1300px;
+      max-width: 1270px;
       margin: 0 auto;
       }
       .chart-wrapper .chart-title {
@@ -39,6 +58,15 @@
       }
       .chart-wrapper .chart-notes {
       font-size: 18px;
+      }
+      .chart-wrapper .chart-stage {
+      max-width: 100%;
+      height: auto;
+      width: auto;
+      overflow: auto;
+      resize: both;
+      padding: 5px 10px;
+      position: relative;
       }
       .height {
       min-height: 250px;
@@ -98,8 +126,18 @@
 
   <body class="application">
 
+    <!-- Preloader -->
+    <div id="spinner">
+      <center>
+	<h2>This page might take a few seconds to load... Thank you for your patience!</h2>
+	<!-- SNORLAX
+	<img src="http://vignette3.wikia.nocookie.net/pokemon/images/9/9f/143Snorlax_OS_anime.png/revision/latest?cb=20140924022259" alt=""></img>
+	-->
+      </center>
+    </div>
+    
     <img src="/static/img/media_lab_logo.png" alt="" height="100" width="170">
-
+    
     <div class="container-fluid fixed-max-width">
 
       <h1>H1 Report for {{ member }}</h1>
@@ -134,7 +172,7 @@
 	      {{ all_div|safe }}
 	    </div>
 	    <div class="chart-notes">
-	      This graph marks (in orange) where you stand in terms of percentage of participation by speaking turns when compared to all other members.
+	      This graph marks (in orange) where you stand in terms of percentage of participation by speaking turns within a group, compared to all other members.
 	    </div>
 	  </div>
 	</div>
