@@ -105,7 +105,7 @@ class MeetingAdmin(admin.ModelAdmin):
     actions_on_top = True
     
     def duration(self, inst):
-        return int((inst.end_time - inst.start_time).total_seconds()/3600)
+        return inst.end_time - inst.start_time
 
 @register(WeeklyGroupReport)
 class WeeklyGroupReportAdmin(admin.ModelAdmin):
