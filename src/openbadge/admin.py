@@ -1,12 +1,10 @@
-from django.contrib import admin
-from django.contrib.auth import admin as auth_admin
+from datetime import datetime, tzinfo
 
 import simplejson
-
+from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
-
+from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
-
 from .models import OpenBadgeUser, Meeting, Member, Project, Hub
 
 
@@ -79,8 +77,11 @@ class ProjectAdmin(admin.ModelAdmin):
     @staticmethod
     def total_meeting_hours(inst):
         if inst.meetings.all():
+            def time_diff(x):
+                return (x.end_time - x.start_time).total_seconds()
+
             return int(sum(
-                [(meeting.end_time - meeting.start_time).total_seconds() / 3600 for meeting in inst.meetings.all() if meeting.end_time]))
+                [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time]) / 3600)
         return "NONE"
 
 
@@ -88,10 +89,15 @@ class ProjectAdmin(admin.ModelAdmin):
 class MeetingAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
     list_display = ('uuid', 'project_name', 'hub',
-                    'start_time', 'end_time', 'last_update_time',
+                    'start_time', 'end_time',
+                    'last_update', 'last_update_serial',
                     'duration', 'type', 'location',
                     'is_complete')
     actions_on_top = True
+
+    def last_update(self, inst):
+        if inst.last_update_time:
+            return datetime.fromtimestamp(inst.last_update_time)
 
     def project_name(self, inst):
         return inst.project.name

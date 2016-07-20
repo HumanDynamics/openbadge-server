@@ -1,6 +1,5 @@
 from functools import wraps
-# from django.views.decorators.http import require_POST
-# from django.views.decorators.csrf import csrf_exempt
+
 from django.conf import settings
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseUnauthorized, HttpResponseNotFound
 from .models import Hub
@@ -11,6 +10,11 @@ def is_own_project(f):
 
     @wraps(f)
     def wrap(request, project_id, *args, **kwargs):
+        god_key = request.META.get("HTTP_X_GODKEY")
+        if god_key == settings.GOD_KEY:
+            return f(request, project_id, *args, **kwargs)
+
+
         hub_uuid = request.META.get("HTTP_X_HUB_UUID")
         try:
             hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
@@ -18,10 +22,6 @@ def is_own_project(f):
             return HttpResponseNotFound()
         hub_project_id = hub.project.id
         if str(hub_project_id) == str(project_id):
-            return f(request, project_id, *args, **kwargs)
-
-        god_key = request.META.get("HTTP_X_GODKEY")
-        if god_key == settings.GOD_KEY:
             return f(request, project_id, *args, **kwargs)
 
         return HttpResponseUnauthorized()

@@ -1,32 +1,27 @@
-import simplejson, pytz, StringIO
-import os, datetime, random, math
-from decimal import Decimal
-from dateutil.parser import parse as parse_date
-from pytz import timezone
-
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
-
+import datetime
+import subprocess
 from functools import wraps
-from django.shortcuts import render
 
-from django.http import HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound, JsonResponse, HttpResponseUnauthorized
-from django.shortcuts import get_object_or_404
-from django.core.files.uploadedfile import InMemoryUploadedFile
-
-from .decorators import app_view, is_god, is_own_project
-
-from .models import Meeting, Project, Hub, Member # ActionDataChunk, SamplesDataChunk
 import analysis
+import os
+import simplejson
+from dateutil.parser import parse as parse_date
 from django.conf import settings
-
-from newGraph import groupStatGraph
 from django.contrib.auth.decorators import user_passes_test
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse, \
+    HttpResponseUnauthorized
+from django.shortcuts import render
+from newGraph import groupStatGraph
+from rest_framework.decorators import api_view
+from .decorators import app_view, is_god, is_own_project
+from .models import Meeting, Project, Hub  # ActionDataChunk, SamplesDataChunk
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+
 def json_response(**kwargs):
     return HttpResponse(simplejson.dumps(kwargs))
+
 
 def context(**extra):
     return dict(**extra)
@@ -50,7 +45,9 @@ def render_to(template):
             if isinstance(out, dict):
                 out = render(request, template, out)
             return out
+
         return wrapper
+
     return decorator
 
 
@@ -93,6 +90,7 @@ def get_project(request):
 
     return JsonResponse(project.to_object())
 
+
 ###########################
 # Meeting Level Endpoints #
 ###########################
@@ -133,7 +131,6 @@ def put_meeting(request, project_id):
 
     meeting.log_file = log_file
 
-
     meeting.hub = Hub.objects.get(uuid=hub_uuid)
 
     meeting.start_time = parse_date(meeting_info["start_time"])
@@ -142,38 +139,63 @@ def put_meeting(request, project_id):
     meeting.type = meeting_info["type"]
     meeting.description = meeting_info["description"]
 
-    meeting.last_update_time = meeting.get_last_sample_time()
-
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
-    meeting.end_time_string = request.data["end_time"] if 'end_time' in request.data else None
-    meeting.ending_method = request.data["ending_method"] if 'ending_method' in request.data else None
 
-    meeting.end_time = parse_date(meeting.end_time_string) if meeting.end_time_string else meeting.last_update_time
+    if not meeting.last_update_serial:
+        meeting.last_update_serial = -1
 
-
+    if meeting.is_complete:
+        meeting.ending_method = request.data["ending_method"] if 'ending_method' in request.data else None
+        meeting.end_time_string = request.data["end_time"] if 'end_time' in request.data else None
+        meeting.end_time = parse_date(meeting.end_time_string) if meeting.end_time_string else \
+            meeting.get_last_sample_time()[0]
 
     meeting.save()
 
     if meeting.is_complete and settings.SEND_POST_MEETING_SURVEY:
         analysis.post_meeting_analysis(meeting)
 
-    return JsonResponse({'detail':'meeting created'})
+    return JsonResponse({'detail': 'meeting created'})
 
 
 @api_view(['GET'])
 def get_meeting(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+    return JsonResponse({"status": "Not Implemented"})
 
 
 @api_view(['POST'])
 def post_meeting(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+    meeting = Meeting.objects.get(uuid=request.data.get('uuid'))
+    chunks = (request.data.get('chunks'))
+
+    update_serial = None
+    update_time = None
+
+    print "Appending chunks",
+    chunks = simplejson.loads(chunks)
+    for chunk in chunks:
+        chunk = simplejson.loads(chunk)
+        update_time = chunk['last_log_time']
+        update_serial = chunk['last_log_serial']
+        print update_serial,
+    print "to", meeting
+    log = meeting.log_file.file.name
+    with open(log, 'a') as f:
+        f.writelines(chunks)
+
+    if update_time and update_serial:
+        meeting.last_update_time = update_time #simplejson.loads(chunks[-1])['last_log_time']
+        meeting.last_update_serial = update_serial #simplejson.loads(chunks[-1])['last_log_serial']
+
+    meeting.save()
+
+    return JsonResponse({"status": "success"})
+
 
 #######################
 # Hub Level Endpoints #
 #######################
 
-@is_own_project
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def hubs(request, project_id):
@@ -186,29 +208,38 @@ def hubs(request, project_id):
     return HttpResponseNotFound()
 
 
-@is_god
 @api_view(['PUT'])
 def put_hubs(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+    hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+    if hub_uuid:
+        hub = Hub()
+        hub.uuid = hub_uuid
+        hub.project = Project.objects.get(name="OB-DEFAULT")
+        hub.name = "New Hub"
+        hub.save()
+        return HttpResponse()
 
+    return HttpResponseBadRequest()
 
+@is_own_project
 @api_view(['GET'])
 def get_hubs(request, project_id):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
     if not hub_uuid:
         return HttpResponseBadRequest()
     try:
-        hub = Hub.objects.get(uuid = hub_uuid)
+        hub = Hub.objects.get(uuid=hub_uuid)
     except Hub.DoesNotExist:
         return HttpResponseNotFound()
 
     return JsonResponse(hub.get_object())
 
-
+@is_own_project
 @is_god
 @api_view(['POST'])
 def post_hubs(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+    return JsonResponse({"status": "Not Implemented"})
+
 
 #########################
 # Badge Level Endpoints #
@@ -226,86 +257,91 @@ def members(request, project_id):
         return post_members(request, project_id)
     return HttpResponseNotFound()
 
+
 @is_god
 @api_view(['PUT'])
 def put_members(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+    return JsonResponse({"status": "Not Implemented"})
 
 
 @is_god
 @api_view(['GET'])
 def get_members(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+    return JsonResponse({"status": "Not Implemented"})
 
 
 @api_view(['POST'])
 def post_members(request, project_id):
-    return JsonResponse({"status":"Not Implemented"})
+
+    return JsonResponse({"status": "Not Implemented"})
 
 
 ## Report views ########################################################################################################
 
-#@user_passes_test(lambda u: u.is_superuser)
+# @user_passes_test(lambda u: u.is_superuser)
 def weekly_group_report(request, group_key, week_num):
-
     try:
         info = WeeklyGroupReport.objects.get(group_key=group_key, week_num=week_num).to_dict()
         group = StudyGroup.objects.get(key=group_key)
         name = group.name
     except WeeklyGroupReport.DoesNotExist:
-        return render(request, 'openbadge/report_template.html', {'exist':False, 'key':group_key, 'week_num':week_num})
+        return render(request, 'openbadge/report_template.html',
+                      {'exist': False, 'key': group_key, 'week_num': week_num})
 
-    info['start_date'] = datetime.datetime.strptime(info['start_date'],"%Y-%m-%d").strftime("%A, %B %d")
-    info['end_date'] = datetime.datetime.strptime(info['end_date'],"%Y-%m-%d").strftime("%A, %B %d")
-    info['longest_meeting_date'] = datetime.datetime.strptime(info['longest_meeting_date'],"%A %Y-%m-%d").strftime("%A, %B %d")
+    info['start_date'] = datetime.datetime.strptime(info['start_date'], "%Y-%m-%d").strftime("%A, %B %d")
+    info['end_date'] = datetime.datetime.strptime(info['end_date'], "%Y-%m-%d").strftime("%A, %B %d")
+    info['longest_meeting_date'] = datetime.datetime.strptime(info['longest_meeting_date'], "%A %Y-%m-%d").strftime(
+        "%A, %B %d")
 
-    images = ['location_meeting_count','type_meeting_count','daily_meeting_time','daily_turns_rate','longest_meeting_turns']
+    images = ['location_meeting_count', 'type_meeting_count', 'daily_meeting_time', 'daily_turns_rate',
+              'longest_meeting_turns']
     paths = {}
     for image in images:
-        paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num +"_"+image+".png"
+        paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num + "_" + image + ".png"
 
     report_week_num = str(int(week_num) + 2)
-    return render(request, 'openbadge/report_template.html', {'exist':True, 'paths':paths , 'info':info, 'name':name, 'week_num':report_week_num})
+    return render(request, 'openbadge/report_template.html',
+                  {'exist': True, 'paths': paths, 'info': info, 'name': name, 'week_num': report_week_num})
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def internal_report(request):
+    groups = StudyGroup.objects.all().order_by('name')
 
-	groups = StudyGroup.objects.all().order_by('name')
+    durations = []
+    num_meetings = []
+    names = []
 
-	durations = []
-	num_meetings = []
-	names = []
+    dates = [datetime.date(2016, 6, 13) + datetime.timedelta(days=i) for i in xrange(28)]
 
-	dates = [datetime.date(2016,6,13) + datetime.timedelta(days=i) for i in xrange(28)]
+    for s_group in groups:
+        meetings = Meeting.objects.filter(group__key=s_group.key, is_complete=True).all()
 
-	for s_group in groups:
-		meetings = Meeting.objects.filter(group__key = s_group.key, is_complete=True).all()
+        num_meet_temp = []
+        time_meet_temp = []
 
-		num_meet_temp = []
-		time_meet_temp = []
+        for current in dates:
+            meets = [meet for meet in meetings
+                     if (meet.start_time.year == current.year and
+                         meet.start_time.month == current.month and
+                         meet.start_time.day == current.day)]
 
-		for current in dates:
-			meets = [meet for meet in meetings
-				if (meet.start_time.year == current.year and
-				meet.start_time.month == current.month and
-				meet.start_time.day == current.day)]
+            num_meet_temp.append(len(meets))
+            times = [entry.end_time - entry.start_time for entry in meets]
+            time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds()) / 3600.0)
 
-			num_meet_temp.append(len(meets))
-			times = [entry.end_time - entry.start_time for entry in meets]
-			time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds())/3600.0)
+        num_meetings.append(num_meet_temp)
+        durations.append(time_meet_temp)
+        names.append(s_group.name)
 
-		num_meetings.append(num_meet_temp)
-		durations.append(time_meet_temp)
-		names.append(s_group.name)
+    graph_path = settings.MEDIA_ROOT + '/tmp'
 
-	graph_path = settings.MEDIA_ROOT + '/tmp'
+    try:
+        os.mkdir(graph_path)
+    except OSError:
+        if not os.path.isdir(graph_path):
+            raise
 
-	try:
-		os.mkdir(graph_path)
-	except OSError:
-		if not os.path.isdir(graph_path):
-			raise
+    metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
 
-	metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
-
-	return render(request, 'reports/internal_report.html', {'metadata':metadata})
+    return render(request, 'reports/internal_report.html', {'metadata': metadata})

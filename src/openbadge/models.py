@@ -1,16 +1,15 @@
 # coding=utf-8
+import datetime
+import os
+import pytz
+import random
+import simplejson
+import string
+
+from django.conf import settings
+from django.contrib.auth import models as auth_models
 from django.core.files.storage import FileSystemStorage
 from django.db import models
-from django.contrib.auth import models as auth_models
-from django.db.models import Q, Sum
-
-import string, random, os, math, datetime, pytz, simplejson
-
-from .fields import SerializedDataField
-
-from django.db.models.signals import post_delete, pre_delete
-from django.dispatch import receiver
-from django.conf import settings
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -116,8 +115,8 @@ class Project(BaseModel):
 
         return {'project_id': self.id,
                 'name': self.name,
-                'badge_map': {member.badge:{"name":member.name,"key":member.key} for member in self.members.all()},
-                #'members': [member.to_dict() for member in self.members.all()]
+                'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
+                # 'members': [member.to_dict() for member in self.members.all()]
                 }
 
 
@@ -129,20 +128,38 @@ class Hub(BaseModel):
 
     project = models.ForeignKey(Project, null=True, related_name="hubs")
 
+    god = models.BooleanField(default=False)
+
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
     def get_object(self):
-        return {"name":self.name, "meetings":self.get_completed_meetings()}
-
-
+        return {"name": self.name, "meetings": self.get_completed_meetings(), "is_god":self.god}
 
     def get_completed_meetings(self):
-        return {meeting.uuid: meeting.last_update_time for meeting in self.meetings.all() if meeting.is_complete}
+        for meeting in self.meetings.all():
+            if meeting.last_update_serial == -1:
+                try:
+                    with open(meeting.log_file.file.name, "rb") as f:
+                        f.seek(-2, 2)  # Jump to the second last byte.
+                        while f.read(1) != b"\n":  # Until EOL is found...
+                            f.seek(-2, 1)  # ...jump back the read byte plus one more.
+
+                        last = f.readline()  # Read last line.
+                    last_log = simplejson.loads(last)
+                    meeting.last_update_serial = last_log['last_log_serial']
+                    meeting.last_update_time = last_log['last_log_time']
+                except IOError:
+                    print "Error! File empty?"
+
+                meeting.save()
+        return {meeting.uuid: {"last_log_timestamp": meeting.last_update_time,
+                               "last_log_serial": meeting.last_update_serial,
+                               "is_complete": meeting.is_complete}
+                                for meeting in self.meetings.all()}
 
     def __unicode__(self):
         """This method is called in the drop-down for choosing the hub a project is associated with"""
-
         return self.name
 
 
@@ -178,11 +195,14 @@ class Meeting(BaseModel):
     start_time = models.DateTimeField()
     """time they hit start"""
 
-    end_time = models.DateTimeField(null = True)
+    end_time = models.DateTimeField(null=True)
     """time that they either hit end, or that the meeting timesout."""
 
-    last_update_time = models.DateTimeField(null=True)
-    """timestamp of the last chunk received"""
+    last_update_time = models.FloatField(null=True)
+    """log_timestamp of the last chunk received"""
+
+    last_update_serial = models.IntegerField(null=True)
+    """Serial Number of last log chunk received. Better be continuous!!"""
 
     ending_method = models.CharField(max_length=16, blank=True, null=True)
     """what caused the meeting to end? timeout|manual"""
@@ -232,24 +252,25 @@ class Meeting(BaseModel):
         chunks = self.get_chunks()
 
         if not chunks:
-            return self.start_time
+            return (self.start_time, None)
 
         chunk = chunks[-1]
-        #print len(chunks), chunk
+        # print len(chunks), chunk
         start_timestamp = chunk['timestamp']
+        start_timestamp += chunk['timestamp_ms']/1000.0 if 'timestamp_ms' in chunk else 0
         sample_duration = chunk['sampleDelay'] / 1000.0 if 'sampleDelay' in chunk else 0
         num_samples = len(chunk['samples']) if 'samples' in chunk else 0
 
         end_timestamp = start_timestamp + sample_duration * num_samples
 
-        return datetime.datetime.fromtimestamp(end_timestamp)
+        return (datetime.datetime.fromtimestamp(end_timestamp), start_timestamp)
 
     def to_object(self):
         """Get an representation of this object for use with HTTP responses"""
-        return {"start":self.start_time,
-                "end":self.end_time,
-                "samples":[samples.to_dict() for samples in self.samplesDataChunks.all()],
-                "actions":[badge.to_dict() for badge in self.actionsDataChunks.all()]}
+        return {"start": self.start_time,
+                "end": self.end_time,
+                "samples": [samples.to_dict() for samples in self.samplesDataChunks.all()],
+                "actions": [badge.to_dict() for badge in self.actionsDataChunks.all()]}
 
 # class SamplesDataChunk(models.Model):
 #     badge = models.ForeignKey(Badge)
