@@ -1,4 +1,4 @@
-#API
+#OpenBadge API -- The working bits
 
 ##Overview
 The basic idea in this backend is that there should be only one way to do anything. 
@@ -15,7 +15,7 @@ There exist a collection of `God` level endpoints. These require a special key t
 not be available to any hubs meant for use by the end user. All other endpoints are restricted
 to hubs that are members of the project being accessed. 
 
-In general Headers are used exclusively for Authentication, either via a `GodKey` for God-level
+In general Headers are used exclusively for Authentication, either via a `X-GODKEY` for God-level
 endpoints, or by the `badgeID` (ng-Device's `uuid`). The exeption to this is in `GET`'s, which 
 sometimes use headers to specify what is to be gotten.
 
@@ -26,34 +26,22 @@ sometimes use headers to specify what is to be gotten.
 
 ##Endpoints
 ####Project Level Endpoints
-Method                |        Path            | Summary                       | Protection Level   | Status
-----------------------|------------------------|-------------------------------|--------------------|-------------
-[PUT](#putproject)    | /projects              | create a project w/ given data| God                | None
-[GET](#getproject)    | /projects              | get project's badges/members  | None               | Implemented
+Method                |        Path            | Summary                       | Accessible To
+----------------------|------------------------|-------------------------------|------------------------------
+[GET](#getproject)    | /projects              | get project's badges/members  | Project's Hubs
 
 ####Meeting Level Endpoints
-Method                |        Path            | Summary                       | Protection Level   | Status    
-----------------------|------------------------|-------------------------------|--------------------|-------------
-[PUT](#putmeeting)    | /:projectID/meetings   | initialize a meeting          | Project's Hubs     | Implemented
-[GET](#getmeeting)    | /:projectID/meetings   | get last update's timestamp   | Project's Hubs     | None
-[POST](#postmeeting)  | /:projectID/meetings   | upload meeting logs           | Project's Hubs     | None *
+Method                |        Path            | Summary                       | Accessible To
+----------------------|------------------------|-------------------------------|------------------------------
+[PUT](#putmeeting)    | /:projectID/meetings   | initialize a meeting          | Project's Hubs
+[POST](#postmeeting)  | /:projectID/meetings   | add data to a meeting        | Project's Hubs
 
 
 ####Hub Level Endpoints
-Method                |        Path            | Summary                       | Protection Level   | Status
-----------------------|------------------------|-------------------------------|--------------------|-------------
-[PUT](#puthub)        | /:projectID/hubs       | add hub to project            | God                | None
-[GET](#gethub)        | /:projectID/hubs       | get hub's data (w/ viz range?)| Project's Hubs     | Implemented
-[POST](#posthub)      | /:projectID/hubs       | change hub's name/desc/etc.   | God                | None
-
-####Badge Level Endpoints
-Method                |        Path            | Summary                       | Protection Level   | Status
-----------------------|------------------------|-------------------------------|--------------------|-------------
-[PUT](putbadge)       | /:projectID/badges     | add badge(s) to project       | God                | None
-[GET](#getbadge)      | /:projectID/badges     | get name/project for badge    | God                | None
-[POST](#getbadge)     | /:projectID/badges     | change name associated w badge| Project's Hubs     | None
-
-
+Method                |        Path            | Summary                       | Accessible To
+----------------------|------------------------|-------------------------------|------------------------------
+[PUT](#puthub)        | /:anyNumber/hubs       | add hub to defualt project    | All    
+[GET](#gethub)        | /:projectID/hubs       | get hub's metadata and projects| Project's Hubs
 
 
 
@@ -67,58 +55,10 @@ Method                |        Path            | Summary                       |
 
 ##Project Level Endpoints
 
-<a name="putproject"></a>
-###PUT /projects
-
-Creates a new project with given name, hubs, and badges, returning the created (unique) `projectID`.
-
-**Headers Passed**
-
-Key        | Type    |
------------|---------|
-X-GODKEY   | text    |
-
-**Passed JSON**
-
-```json 
-{
-    "name":"Apple, Inc.",
-    "hubs": 
-    [
-        {"name":"West Conference", "uuid":"341fef..."},
-        {"name":"East Conference", "uuid":"gug455..."},
-         ...
-    ],
-    "badges": 
-    [
-        {"name":"Steve Jobs", "uuid":"guhwe..."},
-        {"name":"Tim Cook", "uuid":"grege..."},
-         ...
-    ]
-}
-```
-                
-                
-
-*Response Codes*
-- 201 - project was created
-- 403 - forbidden (not god?)
-
-
-**Returned JSON**
-```json
-{
-  "status": "success",
-  "details": "project added",
-  "projectID": "eyJ0eXAiOiJKV1..."
-}
-```
-
-
 <a name="getproject"></a>
 ###GET /projects
 
-Get badge ownership info and `projectID` for a hub
+Get badge ownership info and `project_id` for a hub
 
 **Headers Passed**
 
@@ -128,39 +68,63 @@ X-HUB-UUID   | text    |
 
 *Response Codes*
 - 200 - got project info
-- 404 - hub not found
+- 404 - hubID not found?
 
 **Returned JSON**
 
 ```json
 {
-  "name": "Amazon",
-  "project_id": 2,
-  "badge_map": {
-    "7": "Amazon.com",
-    "8": "IMDB",
-    "9": "Zappos"
-  },
-  "members": [
-    {
-      "badge": "7",
-      "name": "Amazon.com",
-      "key": "U5KUR996VZ",
-      "id": 4
+  "project_id": 3,
+  "name": "Human Dynamics Main",
+  "members": {
+    "Bill Gates": {
+      "badge": "DB:C8:1B:F8:B8:0F",
+      "name": "Bill Gates",
+      "id": 9
     },
-    {
-      "badge": "8",
-      "name": "IMDB",
-      "key": "8QZ1MY119K",
+    "Jackson Kearl": {
+      "badge": "D2:3C:F6:B9:87:24",
+      "name": "Jackson Kearl",
       "id": 5
     },
-    {
-      "badge": "9",
-      "name": "Zappos",
-      "key": "RZZU2SWK4M",
+    "Cynthia Zhou": {
+      "badge": "FA:DF:C3:8C:99:3C",
+      "name": "Cynthia Zhou",
+      "id": 7
+    },
+    "Oren Lederman": {
+      "badge": "E3:09:E5:88:38:B2",
+      "name": "Oren Lederman",
       "id": 6
+    },
+    "Steve Jobs": {
+      "badge": "F2:74:78:84:E2:76",
+      "name": "Steve Jobs",
+      "id": 8
     }
-  ]
+  },
+  "badge_map": {
+    "FA:DF:C3:8C:99:3C": {
+      "name": "Cynthia Zhou",
+      "key": "EE2FRYT3LT"
+    },
+    "E3:09:E5:88:38:B2": {
+      "name": "Oren Lederman",
+      "key": "Z01MPNJJ9Y"
+    },
+    "F2:74:78:84:E2:76": {
+      "name": "Steve Jobs",
+      "key": "XBACZK85G6"
+    },
+    "DB:C8:1B:F8:B8:0F": {
+      "name": "Bill Gates",
+      "key": "PC8FI0C9IU"
+    },
+    "D2:3C:F6:B9:87:24": {
+      "name": "Jackson Kearl",
+      "key": "0R4PW5FXP5"
+    }
+  }
 }
 ```
 
@@ -195,106 +159,179 @@ Create a meeting with given logfile.
 
 Key          | Type    |
 -------------|---------|
-hubID        | text    |
+X-HUB-UUID   | text    |
 
 
-**Passed JSON**
+**Passed FILE**
 ```json
-{
-    "log":
-    [
-        {"meetingID":"2016-07-02T15:31:07.767Z","showVisualization":true}
-        // optional log lines... 
-    ]
-}
+{"uuid":"12345","start_time":"2016-07-02T15:31:07.767Z","location":"meetingroom","type":"study","description":""}
+//chunk data
 ```
 
 *Response Codes*
-- 201 - meeting created
-- 401 - unauthorized (bad hubID?)
+- 200 - meeting created
+- 401 - hub doesn't belong to project
+- 404 - hubUUID not found
 
 **Returned JSON**
 
 ```json
 {
-  "status": "success",
-  "details": "meeting created",
-  "lastData":"2016-07-02T15:31:07.767Z"
+  "details": "meeting created"
 }
 ```
 
-<a name="getmeeting"></a>
-###GET :projectID/meetings
 
-Get the timestamp of the last received log.
+
+
+<a name="getmeeting"></a>
+###GET /:projectID/meetings
+
+Get all meetigns in a project, with or without thier respective files. 
+
+If X-GET-FILES.lower() is equal to "true", this will return a UUID-accessible Associated Array of metadata and chunk
+as separate entries in a dictionary. Otherwise, it will return a UUID-accessible Associated Array of metadata objects
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
-hubID        | text    |
-meetingID    | date    |
+X-HUB-UUID   | text    |
+X-GET-FILES  | text    |
+
 
 *Response Codes*
-- 200 - got stamp
-- 401 - unauthorized (bad hubID?)
-- 500 - server error (no meeting found?)
+- 200 - got meetings
+- 401 - hub doesn't belong to project
+- 404 - hubUUID not found
 
 **Returned JSON**
 
 ```json
 {
-  "status": "success",
-  "details": "last data found",
-  "lastData":"2016-07-02T15:39:27.767Z"
+  "meetings": {
+    "c65c943da5487d51_1468987120250": {
+      "metadata": {
+        "group": "Explore",
+        "uuid": "c65c943da5487d51_1468987120250",
+        "showVisualization": true,
+        "timestamp": 1468987120.25,
+        "start_time": "2016-07-20T03:58:40.250Z",
+        "last_log_serial": 0,
+        "moderator": "none",
+        "location": "meetingroom",
+        "members": [
+          "0R4PW5FXP5",
+          "Z01MPNJJ9Y",
+          "PC8FI0C9IU"
+        ],
+        "last_log_time": 1468987120.264,
+        "type": "study",
+        "description": ""
+      }
+    },
+    "c65c943da5487d51_1468988149042": {
+      "metadata": {
+        "group": "Explore",
+        "uuid": "c65c943da5487d51_1468988149042",
+        "showVisualization": true,
+        "timestamp": 1468988149.042,
+        "start_time": "2016-07-20T04:15:49.042Z",
+        "last_log_serial": 0,
+        "moderator": "none",
+        "location": "meetingroom",
+        "members": [
+          "Z01MPNJJ9Y",
+          "XBACZK85G6",
+          "EE2FRYT3LT",
+          "0R4PW5FXP5",
+          "PC8FI0C9IU"
+        ],
+        "last_log_time": 1468988149.047,
+        "type": "study",
+        "description": ""
+      }
+    },
+    "c65c943da5487d51_1468983088679": {
+      "metadata": {
+        "group": "Explore",
+        "uuid": "c65c943da5487d51_1468983088679",
+        "showVisualization": true,
+        "timestamp": 1468983088.679,
+        "start_time": "2016-07-20T02:51:28.679Z",
+        "last_log_serial": 0,
+        "moderator": "none",
+        "location": "meetingroom",
+        "members": [
+          "EE2FRYT3LT",
+          "0R4PW5FXP5"
+        ],
+        "last_log_time": 1468983088.691,
+        "type": "study",
+        "description": ""
+      }
+    },
+    "c65c943da5487d51_1468987429694": {
+      "metadata": {
+        "group": "Explore",
+        "uuid": "c65c943da5487d51_1468987429694",
+        "showVisualization": true,
+        "timestamp": 1468987429.694,
+        "start_time": "2016-07-20T04:03:49.694Z",
+        "last_log_serial": 0,
+        "moderator": "none",
+        "location": "meetingroom",
+        "members": [
+          "EE2FRYT3LT",
+          "0R4PW5FXP5",
+          "Z01MPNJJ9Y"
+        ],
+        "last_log_time": 1468987429.708,
+        "type": "study",
+        "description": ""
+      }
+    }
+  }
 }
 ```
+
+
+
+
+
+
+
 
 <a name="postmeeting"></a>
 ###POST /:projectID/meetings
 
-Upload log data to the server
+Add chunks to a meeting
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
-hubID        | text    |
-
-
+X-HUB-UUID  | text    |
 
 
 **Passed JSON**
-
 ```json
-{
-    "meetingID":"2016-07-02T15:31:07.767Z",
-    "logs": 
-    [
-        // log lines....
-    ]
+["{"uuid":"12345","start_time":"2016-07-02T15:31:07.767Z","location":"meetingroom","type":"study","description":""}", ...
+//chunk data as JSON'd list of JSON'd objects
+]
 ```
 
 *Response Codes*
-- 202 - uploaded log
-- 403 - unauthorized (bad hubID?)
-- 500 - server error (no meeting found?)
+- 200 - chunks added
+
 
 **Returned JSON**
 
 ```json
 {
-  "status": "success",
-  "details": "uploaded logs"
+  "details": "data added"
 }
 ```
-
-
-
-
-
-
-
 
 
 
@@ -315,107 +352,51 @@ hubID        | text    |
 
 ##Hub Level Endpoints
 
-
 <a name="puthub"></a>
-###PUT /:projectID/hubs
+###PUT /:anyNumber/hubs
 
-Create a hub for the given `projectID`.
+Create a hub in the default project.
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
-GodKey       | text    |
+X-APP-UUID   | text    |
 
-
-**Passed JSON**
-```json
-{
-    "name":"North Conference Room",
-    "description":"iPhone hub located in the north conference room",
-    "vizualizationRanges":[{"start":0, "end":45}, {"start":90,"end":180}],
-    "uuid":"fwefhewfh8ew"
-}
-```
 
 *Response Codes*
-- 201 - hub created
-- 403 - forbidden (bad GodKey?)
-
-**Returned JSON**
-
-```json
-{
-  "status": "success",
-  "details": "hub created",
-}
-```
+- 200 - hub created
+- 400 - bad request (no UUID?)
+- 500 - bad UUID, already registered?
 
 
 <a name="gethub"></a>
-###GET :projectID/hubs
+###GET /:projectID/hubs
 
-Get hubs visualization ranges, name, description, etc.
+Get hub's name and meetings.
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
-hubID        | text    |
+X-HUB-UUID   | text    |
 
 
 *Response Codes*
 - 200 - got hub data
-- 401 - unauthorized (bad hubID?)
+- 401 - hub doesn't belong to project
+- 404 - hubUUID not found
 
 **Returned JSON**
 
 ```json
 {
-  "status": "success",
-  "details": "hub data found",
-  "name":"South Conference Room",
-  "description":"iPhone hub located in the south conference room",
-  "vizualizationRanges":[{"start":0, "end":45}, {"start":90,"end":180}]
-}
-```
-
-<a name="posthub"></a>
-###POST /:projectID/hubs
-
-Edit/Update Hub name/description. Possibly Viz ranges as well. 
-
-**Headers Passed**
-
-Key          | Type    |
--------------|---------|
-GodKey       | text    |
-
-
-
-
-**Passed JSON**
-
-```json
-{
-    "uuid":"hg9843hf43",
-    "name":"West Conference",
-    "description":"Andriod in WC",
-    // maybe viz ranges
-}
-```
-
-*Response Codes*
-- 200 - updated hub
-- 403 - Forbidden (bad GodKey?)
-- 500 - server error (no hub found?)
-
-**Returned JSON**
-
-```json
-{
-  "status": "success",
-  "details": "updated hub"
+  "meetings": {
+    "12345": {"last_log_timestamp": some UNIX now-epoch int,
+              "last_log_serial": 43,
+              "is_complete": T/F
+  },
+  "name": "East Conference Room"
 }
 ```
 
@@ -446,113 +427,6 @@ GodKey       | text    |
 
 
 
-
-
-##Badge Level Endpoints
-
-
-<a name="putbadge"></a>
-###PUT /:projectID/badges
-
-Add a badge to a project.
-
-
-**Headers Passed**
-
-Key          | Type    |
--------------|---------|
-GodKey       | text    |
-
-
-**Passed JSON**
-```json
-{
-    "projectID":"wegifhuwhe",
-    "badegeID":"2apoihef",
-    "name":"Johnny Ive"
-}
-```
-
-*Response Codes*
-- 201 - badge created
-- 403 - forbidden (bad GodKey?)
-
-**Returned JSON**
-
-```json
-{
-  "status": "success",
-  "details": "badge created"
-}
-```
-
-<a name="getbadge"></a>
-###GET :projectID/badges
-
-Get the name and project associated with a given badge.
-
-**Headers Passed**
-
-Key          | Type    |
--------------|---------|
-GodKey       | text    |
-badgeID      | text    |
-
-
-
-*Response Codes*
-- 200 - got badge details
-- 401 - unauthorized (bad hubID?)
-- 500 - server error (no meeting found?)
-
-**Returned JSON**
-
-```json
-{
-  "status": "success",
-  "details": "badge found",
-  "name":"Steve Jobs",
-  "projectID":"84hgfieg",
-  "projectName":"Apple Inc."
-}
-```
-
-<a name="postbadge"></a>
-###POST /:projectID/badges
-
-Change the name associated with a given badge. 
-
-**Headers Passed**
-
-Key          | Type    |
--------------|---------|
-hubID        | text    |
-
-
-
-
-**Passed JSON**
-
-```json
-{
-    "badegeID":"2016-07-02T15:31:07.767Z",
-    "newName":"Tim Cook"
-}
-```
-
-*Response Codes*
-- 200 - updated name
-- 403 - unauthorized (bad hubID?)
-- 500 - server error (no badge found?)
-
-**Returned JSON**
-
-```json
-{
-  "status": "success",
-  "details": "updated badge"
-}
-```
 
 
 

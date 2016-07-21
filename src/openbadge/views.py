@@ -160,7 +160,14 @@ def put_meeting(request, project_id):
 
 @api_view(['GET'])
 def get_meeting(request, project_id):
-    return JsonResponse({"status": "Not Implemented"})
+    try:
+        project = Project.objects.prefetch_related("meetings").get(id=project_id)
+        get_file = request.META.get("HTTP_X_GET_FILE").lower() == "true"
+
+        return JsonResponse(project.get_meetings(get_file))
+
+    except Project.DoesNotExist:
+        return HttpResponseNotFound()
 
 
 @api_view(['POST'])

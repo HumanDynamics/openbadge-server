@@ -110,13 +110,17 @@ class Project(BaseModel):
     def __unicode__(self):
         return self.name
 
+    def get_meetings(self, File):
+        return {'meetings':{meeting.uuid:meeting.to_object(File) for meeting in self.meetings.all()}}
+
+
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
 
         return {'project_id': self.id,
                 'name': self.name,
                 'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
-                # 'members': [member.to_dict() for member in self.members.all()]
+                'members': {member.name : member.to_dict() for member in self.members.all()}
                 }
 
 
@@ -176,7 +180,7 @@ class Member(BaseModel):
     def to_dict(self):
         return dict(id=self.id,
                     name=self.name,
-                    badge=self.badge,
+                    badge=self.badge
                     )
 
     def __unicode__(self):
@@ -246,6 +250,12 @@ class Meeting(BaseModel):
         f.seek(0)
         return chunks
 
+    def get_meta(self):
+        """open and read the first line of this meeting's log_file"""
+
+        f = self.log_file
+        return simplejson.loads(f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
+
     def get_last_sample_time(self):
         """Reads this meetings log file and gets the timestamp of the last received chunk."""
 
@@ -265,12 +275,14 @@ class Meeting(BaseModel):
 
         return (datetime.datetime.fromtimestamp(end_timestamp), start_timestamp)
 
-    def to_object(self):
+    def to_object(self, File):
         """Get an representation of this object for use with HTTP responses"""
-        return {"start": self.start_time,
-                "end": self.end_time,
-                "samples": [samples.to_dict() for samples in self.samplesDataChunks.all()],
-                "actions": [badge.to_dict() for badge in self.actionsDataChunks.all()]}
+        if File:
+            return {"chunks": self.get_chunks(),
+                    "metadata": self.get_meta()}
+
+        return {"metadata": self.get_meta()}
+
 
 # class SamplesDataChunk(models.Model):
 #     badge = models.ForeignKey(Badge)
