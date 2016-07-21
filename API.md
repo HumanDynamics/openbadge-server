@@ -34,6 +34,7 @@ Method                |        Path            | Summary                       |
 Method                |        Path            | Summary                       | Accessible To
 ----------------------|------------------------|-------------------------------|------------------------------
 [PUT](#putmeeting)    | /:projectID/meetings   | initialize a meeting          | Project's Hubs
+[GET](#getmeeting)    | /:projectID/meetings   | get the meetings for a project| Project's Hubs
 [POST](#postmeeting)  | /:projectID/meetings   | add data to a meeting        | Project's Hubs
 
 
