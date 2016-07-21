@@ -174,12 +174,16 @@ def get_meeting(request, project_id):
 def post_meeting(request, project_id):
     meeting = Meeting.objects.get(uuid=request.data.get('uuid'))
     chunks = (request.data.get('chunks'))
-
+    meeting.is_complete = False #Make sure we always close a meeting with a PUT.
     update_serial = None
     update_time = None
 
-    print "Appending chunks",
+    print meeting.hub.name + " appending",
     chunks = simplejson.loads(chunks)
+    if len(chunks) == 0:
+        print " NO CHUNKS",
+    else:
+        print "chunks",
     for chunk in chunks:
         chunk = simplejson.loads(chunk)
         update_time = chunk['last_log_time']

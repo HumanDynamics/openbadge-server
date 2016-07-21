@@ -104,6 +104,7 @@ class Project(BaseModel):
     Definition of the Project, which is an `organization`-level collection of hubs, badges, and meetings
     """
 
+
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
 
@@ -199,13 +200,13 @@ class Meeting(BaseModel):
     start_time = models.DateTimeField()
     """time they hit start"""
 
-    end_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True, blank=True)
     """time that they either hit end, or that the meeting timesout."""
 
-    last_update_time = models.FloatField(null=True)
+    last_update_time = models.FloatField(null=True, blank=True)
     """log_timestamp of the last chunk received"""
 
-    last_update_serial = models.IntegerField(null=True)
+    last_update_serial = models.IntegerField(null=True, blank=True)
     """Serial Number of last log chunk received. Better be continuous!!"""
 
     ending_method = models.CharField(max_length=16, blank=True, null=True)
