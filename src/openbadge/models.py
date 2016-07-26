@@ -17,10 +17,10 @@ def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
 
 
 class BaseModel(models.Model):
-    '''
+    """
     Base model from which all other models should inherit. It has a unique key and other nice fields, like a unique id.
     If you override this class, you should probably add more unique identifiers, like a uuid or hash or something.
-    '''
+    """
     id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -104,16 +104,14 @@ class Project(BaseModel):
     Definition of the Project, which is an `organization`-level collection of hubs, badges, and meetings
     """
 
-
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
 
     def __unicode__(self):
         return self.name
 
-    def get_meetings(self, File):
-        return {'meetings':{meeting.uuid:meeting.to_object(File) for meeting in self.meetings.all()}}
-
+    def get_meetings(self, file):
+        return {'meetings': {meeting.uuid: meeting.to_object(file) for meeting in self.meetings.all()}}
 
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
@@ -121,7 +119,7 @@ class Project(BaseModel):
         return {'project_id': self.id,
                 'name': self.name,
                 'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
-                'members': {member.name : member.to_dict() for member in self.members.all()}
+                'members': {member.name: member.to_dict() for member in self.members.all()}
                 }
 
 
@@ -139,11 +137,12 @@ class Hub(BaseModel):
     """ng-device generated uuid"""
 
     def get_object(self):
-        return {"name": self.name, "meetings": self.get_completed_meetings(), "is_god":self.god}
+        return {"name": self.name, "meetings": self.get_completed_meetings(), "is_god": self.god}
 
     def get_completed_meetings(self):
         for meeting in self.meetings.all():
             if meeting.last_update_serial == -1:
+                print "need to reparse file"
                 try:
                     with open(meeting.log_file.file.name, "rb") as f:
                         f.seek(-2, 2)  # Jump to the second last byte.
@@ -156,12 +155,13 @@ class Hub(BaseModel):
                     meeting.last_update_time = last_log['last_log_time']
                 except IOError:
                     print "Error! File empty?"
+                    meeting.last_update_serial = 0
 
                 meeting.save()
         return {meeting.uuid: {"last_log_timestamp": meeting.last_update_time,
                                "last_log_serial": meeting.last_update_serial,
                                "is_complete": meeting.is_complete}
-                                for meeting in self.meetings.all()}
+                for meeting in self.meetings.all()}
 
     def __unicode__(self):
         """This method is called in the drop-down for choosing the hub a project is associated with"""
@@ -255,7 +255,8 @@ class Meeting(BaseModel):
         """open and read the first line of this meeting's log_file"""
 
         f = self.log_file
-        return simplejson.loads(f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
+        return simplejson.loads(
+            f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
 
     def get_last_sample_time(self):
         """Reads this meetings log file and gets the timestamp of the last received chunk."""
@@ -268,22 +269,21 @@ class Meeting(BaseModel):
         chunk = chunks[-1]
         # print len(chunks), chunk
         start_timestamp = chunk['timestamp']
-        start_timestamp += chunk['timestamp_ms']/1000.0 if 'timestamp_ms' in chunk else 0
+        start_timestamp += chunk['timestamp_ms'] / 1000.0 if 'timestamp_ms' in chunk else 0
         sample_duration = chunk['sampleDelay'] / 1000.0 if 'sampleDelay' in chunk else 0
         num_samples = len(chunk['samples']) if 'samples' in chunk else 0
 
         end_timestamp = start_timestamp + sample_duration * num_samples
 
-        return (datetime.datetime.fromtimestamp(end_timestamp), start_timestamp)
+        return datetime.datetime.fromtimestamp(end_timestamp), start_timestamp
 
-    def to_object(self, File):
+    def to_object(self, file):
         """Get an representation of this object for use with HTTP responses"""
-        if File:
+        if file:
             return {"chunks": self.get_chunks(),
                     "metadata": self.get_meta()}
 
         return {"metadata": self.get_meta()}
-
 
 # class SamplesDataChunk(models.Model):
 #     badge = models.ForeignKey(Badge)

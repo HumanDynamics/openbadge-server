@@ -15,6 +15,6 @@ urlpatterns = [
     url(r'^(?P<project_id>\w+)/members', views.members, name='members'),
 
     # Reports
-    url(r'^internal_report/$', views.internal_report, name='internal_report'),
-    url(r'^weekly_group_report/(?P<group_key>\w+)/(?P<week_num>[0-9]+)$', views.weekly_group_report, name='weekly_group_report'),
+    # url(r'^internal_report/$', views.internal_report, name='internal_report'),
+    # url(r'^weekly_group_report/(?P<group_key>\w+)/(?P<week_num>[0-9]+)$', views.weekly_group_report, name='weekly_group_report'),
 ]

@@ -1,17 +1,12 @@
-import datetime
-import subprocess
 from functools import wraps
 
 import analysis
-import os
 import simplejson
 from dateutil.parser import parse as parse_date
 from django.conf import settings
-from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse, \
     HttpResponseUnauthorized
 from django.shortcuts import render
-from newGraph import groupStatGraph
 from rest_framework.decorators import api_view
 from .decorators import app_view, is_god, is_own_project
 from .models import Meeting, Project, Hub  # ActionDataChunk, SamplesDataChunk
@@ -141,7 +136,7 @@ def put_meeting(request, project_id):
 
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
 
-    if not meeting.last_update_serial:
+    if meeting.last_update_serial == None:
         meeting.last_update_serial = -1
 
     if meeting.is_complete:
@@ -162,7 +157,7 @@ def put_meeting(request, project_id):
 def get_meeting(request, project_id):
     try:
         project = Project.objects.prefetch_related("meetings").get(id=project_id)
-        get_file = request.META.get("HTTP_X_GET_FILE").lower() == "true"
+        get_file = str(request.META.get("HTTP_X_GET_FILE")).lower() == "true"
 
         return JsonResponse(project.get_meetings(get_file))
 
@@ -174,7 +169,7 @@ def get_meeting(request, project_id):
 def post_meeting(request, project_id):
     meeting = Meeting.objects.get(uuid=request.data.get('uuid'))
     chunks = (request.data.get('chunks'))
-    meeting.is_complete = False #Make sure we always close a meeting with a PUT.
+    meeting.is_complete = False  # Make sure we always close a meeting with a PUT.
     update_serial = None
     update_time = None
 
@@ -183,6 +178,9 @@ def post_meeting(request, project_id):
     if len(chunks) == 0:
         print " NO CHUNKS",
     else:
+        post_start_serial = simplejson.loads(chunks[0])['last_log_serial']
+        if post_start_serial != meeting.last_update_serial + 1:
+            return JsonResponse({"status": "log mismatch"})
         print "chunks",
     for chunk in chunks:
         chunk = simplejson.loads(chunk)
@@ -195,8 +193,8 @@ def post_meeting(request, project_id):
         f.writelines(chunks)
 
     if update_time and update_serial:
-        meeting.last_update_time = update_time #simplejson.loads(chunks[-1])['last_log_time']
-        meeting.last_update_serial = update_serial #simplejson.loads(chunks[-1])['last_log_serial']
+        meeting.last_update_time = update_time      # simplejson.loads(chunks[-1])['last_log_time']
+        meeting.last_update_serial = update_serial  # simplejson.loads(chunks[-1])['last_log_serial']
 
     meeting.save()
 
@@ -232,6 +230,7 @@ def put_hubs(request, project_id):
 
     return HttpResponseBadRequest()
 
+
 @is_own_project
 @api_view(['GET'])
 def get_hubs(request, project_id):
@@ -244,6 +243,7 @@ def get_hubs(request, project_id):
         return HttpResponseNotFound()
 
     return JsonResponse(hub.get_object())
+
 
 @is_own_project
 @is_god
@@ -289,70 +289,70 @@ def post_members(request, project_id):
 
 ## Report views ########################################################################################################
 
+# # @user_passes_test(lambda u: u.is_superuser)
+# def weekly_group_report(request, group_key, week_num):
+#     try:
+#         info = WeeklyGroupReport.objects.get(group_key=group_key, week_num=week_num).to_dict()
+#         group = StudyGroup.objects.get(key=group_key)
+#         name = group.name
+#     except WeeklyGroupReport.DoesNotExist:
+#         return render(request, 'openbadge/report_template.html',
+#                       {'exist': False, 'key': group_key, 'week_num': week_num})
+#
+#     info['start_date'] = datetime.datetime.strptime(info['start_date'], "%Y-%m-%d").strftime("%A, %B %d")
+#     info['end_date'] = datetime.datetime.strptime(info['end_date'], "%Y-%m-%d").strftime("%A, %B %d")
+#     info['longest_meeting_date'] = datetime.datetime.strptime(info['longest_meeting_date'], "%A %Y-%m-%d").strftime(
+#         "%A, %B %d")
+#
+#     images = ['location_meeting_count', 'type_meeting_count', 'daily_meeting_time', 'daily_turns_rate',
+#               'longest_meeting_turns']
+#     paths = {}
+#     for image in images:
+#         paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num + "_" + image + ".png"
+#
+#     report_week_num = str(int(week_num) + 2)
+#     return render(request, 'openbadge/report_template.html',
+#                   {'exist': True, 'paths': paths, 'info': info, 'name': name, 'week_num': report_week_num})
+#
+#
 # @user_passes_test(lambda u: u.is_superuser)
-def weekly_group_report(request, group_key, week_num):
-    try:
-        info = WeeklyGroupReport.objects.get(group_key=group_key, week_num=week_num).to_dict()
-        group = StudyGroup.objects.get(key=group_key)
-        name = group.name
-    except WeeklyGroupReport.DoesNotExist:
-        return render(request, 'openbadge/report_template.html',
-                      {'exist': False, 'key': group_key, 'week_num': week_num})
-
-    info['start_date'] = datetime.datetime.strptime(info['start_date'], "%Y-%m-%d").strftime("%A, %B %d")
-    info['end_date'] = datetime.datetime.strptime(info['end_date'], "%Y-%m-%d").strftime("%A, %B %d")
-    info['longest_meeting_date'] = datetime.datetime.strptime(info['longest_meeting_date'], "%A %Y-%m-%d").strftime(
-        "%A, %B %d")
-
-    images = ['location_meeting_count', 'type_meeting_count', 'daily_meeting_time', 'daily_turns_rate',
-              'longest_meeting_turns']
-    paths = {}
-    for image in images:
-        paths[image] = "img/weekly_group_reports/" + group_key + "/week_" + week_num + "_" + image + ".png"
-
-    report_week_num = str(int(week_num) + 2)
-    return render(request, 'openbadge/report_template.html',
-                  {'exist': True, 'paths': paths, 'info': info, 'name': name, 'week_num': report_week_num})
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def internal_report(request):
-    groups = StudyGroup.objects.all().order_by('name')
-
-    durations = []
-    num_meetings = []
-    names = []
-
-    dates = [datetime.date(2016, 6, 13) + datetime.timedelta(days=i) for i in xrange(28)]
-
-    for s_group in groups:
-        meetings = Meeting.objects.filter(group__key=s_group.key, is_complete=True).all()
-
-        num_meet_temp = []
-        time_meet_temp = []
-
-        for current in dates:
-            meets = [meet for meet in meetings
-                     if (meet.start_time.year == current.year and
-                         meet.start_time.month == current.month and
-                         meet.start_time.day == current.day)]
-
-            num_meet_temp.append(len(meets))
-            times = [entry.end_time - entry.start_time for entry in meets]
-            time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds()) / 3600.0)
-
-        num_meetings.append(num_meet_temp)
-        durations.append(time_meet_temp)
-        names.append(s_group.name)
-
-    graph_path = settings.MEDIA_ROOT + '/tmp'
-
-    try:
-        os.mkdir(graph_path)
-    except OSError:
-        if not os.path.isdir(graph_path):
-            raise
-
-    metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
-
-    return render(request, 'reports/internal_report.html', {'metadata': metadata})
+# def internal_report(request):
+#     groups = StudyGroup.objects.all().order_by('name')
+#
+#     durations = []
+#     num_meetings = []
+#     names = []
+#
+#     dates = [datetime.date(2016, 6, 13) + datetime.timedelta(days=i) for i in xrange(28)]
+#
+#     for s_group in groups:
+#         meetings = Meeting.objects.filter(group__key=s_group.key, is_complete=True).all()
+#
+#         num_meet_temp = []
+#         time_meet_temp = []
+#
+#         for current in dates:
+#             meets = [meet for meet in meetings
+#                      if (meet.start_time.year == current.year and
+#                          meet.start_time.month == current.month and
+#                          meet.start_time.day == current.day)]
+#
+#             num_meet_temp.append(len(meets))
+#             times = [entry.end_time - entry.start_time for entry in meets]
+#             time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds()) / 3600.0)
+#
+#         num_meetings.append(num_meet_temp)
+#         durations.append(time_meet_temp)
+#         names.append(s_group.name)
+#
+#     graph_path = settings.MEDIA_ROOT + '/tmp'
+#
+#     try:
+#         os.mkdir(graph_path)
+#     except OSError:
+#         if not os.path.isdir(graph_path):
+#             raise
+#
+#     metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
+#
+#     return render(request, 'reports/internal_report.html', {'metadata': metadata})
