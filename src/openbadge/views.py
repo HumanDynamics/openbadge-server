@@ -1,5 +1,7 @@
 import simplejson, pytz, StringIO
+import json
 import os, datetime, random, math
+import os.path
 from decimal import Decimal
 from dateutil.parser import parse as parse_date
 from pytz import timezone
@@ -8,14 +10,18 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 
 from functools import wraps
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
+from django.template import RequestContext
 
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.views.decorators.csrf import csrf_exempt
 
 from .decorators import app_view
-from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport
+from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport\
+    #, H2DailyReport
+from .forms import H2DailyForm
 import analysis
 from django.conf import settings
 
@@ -180,32 +186,32 @@ def internal_report(request):
 	
 	for s_group in groups:
 		meetings = Meeting.objects.filter(group__key = s_group.key, is_complete=True).all()
-		
+
 		num_meet_temp = []
 		time_meet_temp = []
-		
+
 		for current in dates:
 			meets = [meet for meet in meetings
 				if (meet.start_time.year == current.year and
 				meet.start_time.month == current.month and
 				meet.start_time.day == current.day)]
-			
+
 			num_meet_temp.append(len(meets))
 			times = [entry.end_time - entry.start_time for entry in meets]
 			time_meet_temp.append((sum(times, datetime.timedelta()).total_seconds())/3600.0)
-			
+
 		num_meetings.append(num_meet_temp)
 		durations.append(time_meet_temp)
 		names.append(s_group.name)
-	
+
 	graph_path = settings.MEDIA_ROOT + '/tmp'
-		
+
 	try:
 		os.mkdir(graph_path)
 	except OSError:
 		if not os.path.isdir(graph_path):
 			raise
-	
+
 	metadata = groupStatGraph(durations, num_meetings, dates, names, graph_path)
 
 	return render(request, 'reports/internal_report.html', {'metadata':metadata})
@@ -216,11 +222,11 @@ def h1_report(request, member_key):
     p_chart_file_name = charts_path + member_key + '_participation_chart.txt'
     with open(p_chart_file_name, 'r') as out:
         h1_report_data = ast.literal_eval(out.read())
-        
+
     s_chart_file_name = charts_path + member_key + '_satisfaction_chart.txt'
     with open(s_chart_file_name, 'r') as out:
         h1_report_data.update(ast.literal_eval(out.read()))
-        
+
     a_chart_file_name = charts_path + member_key + '_all_chart.txt'
     with open(a_chart_file_name, 'r') as out:
         h1_report_data.update(ast.literal_eval(out.read()))
@@ -254,3 +260,197 @@ def h1_report(request, member_key):
                      graph_left=graph_left, graph_right=graph_right)
     h1_report_data.update(misc_data)
     return render(request, 'reports/h1_report.html', h1_report_data)
+
+
+@api_view(['GET'])
+def api_groups(request):
+    groups = StudyGroup.objects.all()
+    groups_dicts = []
+    for group in groups:
+        groups_dicts.append(group.to_dict())
+    return json_response(success=True, groups=groups_dicts)
+
+
+@api_view(['GET'])
+def api_group(request, group_key):
+    if not group_key:
+        return json_response(success=False)
+    try:
+        group = StudyGroup.objects.get(key=group_key)
+    except StudyGroup.DoesNotExist:
+        return json_response(success=False)
+    group_data = group.to_dict()
+    group_data['meetings'] = [
+        {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
+        'end_time': str(meeting.end_time), 'moderator': str(meeting.moderator), 'type': meeting.type,
+        'location': meeting.location, 'description': meeting.description, 'members': meeting.members,
+        'is_complete': meeting.is_complete, 'show_visualization': meeting.show_visualization,
+        'log_file': meeting.log_file.path, 'ending_method': meeting.ending_method}
+        for meeting in Meeting.objects.filter(group=group)]
+    return json_response(success=True, group=group_data)
+
+
+@api_view(['GET'])
+def api_meetings(request):
+    meetings = Meeting.objects.all()
+    meetings_dicts = []
+    for meeting in meetings:
+        meeting_data = {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
+                        'end_time': str(meeting.end_time), 'moderator': str(meeting.moderator), 'type': meeting.type,
+                        'location': meeting.location, 'description': meeting.description, 'members': meeting.members,
+                        'is_complete': meeting.is_complete, 'show_visualization': meeting.show_visualization,
+                        'log_file': meeting.log_file.path, 'ending_method': meeting.ending_method}
+        meetings_dicts.append(meeting_data)
+    return json_response(success=True, meetings=meetings_dicts)
+
+
+@api_view(['GET'])
+def api_meeting(request, uuid):
+    if not uuid:
+        return json_response(success=False)
+    try:
+        meeting = Meeting.objects.get(uuid=uuid)
+    except Meeting.DoesNotExist:
+        return json_response(success=False)
+    with open(meeting.log_file.path, 'r') as input_file:
+        meeting_data = input_file.read()
+    return json_response(success=True, meeting=meeting_data)
+
+
+@csrf_exempt
+def forms_h2_report(request):
+    if request.method == 'POST':
+        form = H2DailyForm(request.POST)
+        if form.is_valid():
+            member_key = form.cleaned_data['member_key']
+            date = form.cleaned_data['date']
+            #graph_left = form.cleaned_data['graph_left']
+            #graph_right = form.cleaned_data['graph_right']
+            participation_div_days = form.cleaned_data['participation_div_days']
+            participation_script_days = form.cleaned_data['participation_script_days']
+            participation_div_weeks = form.cleaned_data['participation_div_weeks']
+            participation_script_weeks = form.cleaned_data['participation_script_weeks']
+            report_data = {'member_key': member_key, 'date': str(date),
+                           #'graph_left': graph_left, 'graph_right': graph_right,
+                           'participation_div_days': participation_div_days,
+                           'participation_script_days': participation_script_days,
+                           'participation_div_weeks': participation_div_weeks,
+                           'participation_script_weeks': participation_script_weeks}
+            file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + str(date) + '_' + member_key + '.txt'
+            with open(file_path, 'w') as report_file:
+                report_file.write(str(report_data))
+            print('Wrote h2 daily report file to ' + file_path)
+            return render_to_response('reports/h2_form.html', form.cleaned_data, context_instance=RequestContext(request))
+            # redirect to a new URL:
+            #return HttpResponseRedirect('/admin/')
+        else:
+            print('Cannot validate form')
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = H2DailyForm()
+    return render(request, 'reports/h2_form.html', {'form': form})
+
+
+def h2_daily_report(request, member_key, date):
+    file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + date + '_' + member_key + '.txt'
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as report_file:
+            report_data = ast.literal_eval(report_file.read())
+        member = StudyMember.objects.get(key=member_key)
+        group = member.group
+        member_names = {}
+        for member_data in group.members.all():
+            member_names[member_data.key] = member_data.name
+        #graph_left = report_data['graph_left']
+        #graph_right = report_data['graph_right']
+        participation_div_days = report_data['participation_div_days']
+        participation_script_days = report_data['participation_script_days']
+        participation_div_weeks = report_data['participation_div_weeks']
+        participation_script_weeks = report_data['participation_script_weeks']
+        for member_key, member_name in member_names.iteritems():
+            participation_div_days = participation_div_days.replace(member_key, member_name)
+            participation_script_days = participation_script_days.replace(member_key, member_name)
+            participation_div_weeks = participation_div_weeks.replace(member_key, member_name)
+            participation_script_weeks = participation_script_weeks.replace(member_key, member_name)
+        date = datetime.datetime.strptime(report_data['date'], '%Y-%m-%d')
+        date = date.strftime('%A, %B %d, %Y')
+        return render(request, 'reports/h2_report.html', {'date': date, 'member': member.name,
+                                                        'participation_div_days': participation_div_days,
+                                                        'participation_script_days': participation_script_days,
+                                                        'participation_div_weeks': participation_div_weeks,
+                                                        'participation_script_weeks': participation_script_weeks})
+    else:
+        return HttpResponse('No report available for ' + member_key + ' for ' + date)
+
+
+"""
+@csrf_exempt
+def forms_h2_report(request):
+    if request.method == 'POST':
+        form = H2DailyForm(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            member_key = form.cleaned_data['member_key']
+            date = form.cleaned_data['date']
+            graph_left = form.cleaned_data['graph_left']
+            graph_right = form.cleaned_data['graph_right']
+            p_chart_div = form.cleaned_data['p_chart_div']
+            p_chart_script = form.cleaned_data['p_chart_script']
+            try:
+                report = H2DailyReport.objects.get(member_key=member_key, date=date)
+            except H2DailyReport.DoesNotExist:
+                H2DailyReport.objects.create(member_key=member_key, date=date,
+                                             graph_left=graph_left, graph_right=graph_right,
+                                             p_chart_div=p_chart_div, p_chart_script=p_chart_script)
+            report.graph_left = graph_left
+            report.graph_right = graph_right
+            report.p_chart_div = p_chart_div
+            report.p_chart_script = p_chart_script
+            report.save()
+            return render_to_response('reports/h2_form.html', form.cleaned_data, context_instance=RequestContext(request))
+            # redirect to a new URL:
+            #return HttpResponseRedirect('/admin/')
+        else:
+            print('Cannot validate form')
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = H2DailyForm()
+    return render(request, 'reports/h2_form.html', {'form': form})
+
+
+def h2_daily_report(request, member_key, date):
+    try:
+        report = H2DailyReport.objects.get(member_key=member_key, date=date)
+    except H2DailyReport.DoesNotExist:
+        return HttpResponse('No meetings for ' + member_key + ' on ' + date)
+
+    date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    date = date.strftime('%A, %B %d, %Y')
+    member = StudyMember.objects.get(key=member_key)
+    group = member.group
+    member_names = {}
+    for member_data in group.members.all():
+        member_names[member_data.key] = member_data.name
+
+    h2_report_data = {}
+    s_left = report.graph_left
+    s_right = report.graph_right
+    for member_key, member_name in member_names.iteritems():
+        s_left = s_left.replace(member_key, member_name)
+        s_right = s_right.replace(member_key, member_name)
+
+    graph_dict_left = ast.literal_eval(s_left)
+    graph_left = simplejson.dumps(graph_dict_left)
+    graph_dict_right = ast.literal_eval(s_right)
+    graph_right = simplejson.dumps(graph_dict_right)
+
+    p_chart_div = report.p_chart_div
+    p_chart_script = report.p_chart_script
+
+    misc_data = dict(member=member, date=date,
+                     graph_left=graph_left, graph_right=graph_right,
+                     p_chart_div=p_chart_div, p_chart_script=p_chart_script)
+    h2_report_data.update(misc_data)
+    return render(request, 'reports/h2_report.html', h2_report_data)
+"""
