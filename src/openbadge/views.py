@@ -6,8 +6,10 @@ from decimal import Decimal
 from dateutil.parser import parse as parse_date
 from pytz import timezone
 
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.response import Response
 
 from functools import wraps
 from django.shortcuts import render, render_to_response
@@ -29,6 +31,15 @@ from newGraph import groupStatGraph
 from django.contrib.auth.decorators import user_passes_test
 
 import ast
+
+# Creating Token for API Authorization
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+for user in User.objects.all():
+    Token.objects.get_or_create(user=user)
+
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -262,59 +273,124 @@ def h1_report(request, member_key):
     return render(request, 'reports/h1_report.html', h1_report_data)
 
 
+def h2_daily_report(request, member_key, date):
+    file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + date + '_' + member_key + '.txt'
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as report_file:
+            report_data = ast.literal_eval(report_file.read())
+        member = StudyMember.objects.get(key=member_key)
+        group = member.group
+        member_names = {}
+        for member_data in group.members.all():
+            member_names[member_data.key] = member_data.name
+        #graph_left = report_data['graph_left']
+        #graph_right = report_data['graph_right']
+        participation_div_days = report_data['participation_div_days']
+        participation_script_days = report_data['participation_script_days']
+        participation_div_weeks = report_data['participation_div_weeks']
+        participation_script_weeks = report_data['participation_script_weeks']
+        for member_key, member_name in member_names.iteritems():
+            participation_div_days = participation_div_days.replace(member_key, member_name)
+            participation_script_days = participation_script_days.replace(member_key, member_name)
+            participation_div_weeks = participation_div_weeks.replace(member_key, member_name)
+            participation_script_weeks = participation_script_weeks.replace(member_key, member_name)
+        date = datetime.datetime.strptime(report_data['date'], '%Y-%m-%d')
+        date = date.strftime('%A, %B %d, %Y')
+        return render(request, 'reports/h2_report.html', {'date': date, 'member': member.name,
+                                                        'participation_div_days': participation_div_days,
+                                                        'participation_script_days': participation_script_days,
+                                                        'participation_div_weeks': participation_div_weeks,
+                                                        'participation_script_weeks': participation_script_weeks})
+    else:
+        return HttpResponse('No report available for ' + member_key + ' for ' + date)
+
+
+## API views ###########################################################################################################
+## NOTE: If using TokenAuthentication in production, must ensure that your API is only available over https.
+
+
+@api_view(['GET'])
+def example_view(request, format=None):
+    if request.user.is_authenticated():
+        content = {
+            'user': unicode(request.user),  # `django.contrib.auth.User` instance.
+            'auth': unicode(request.auth),  # None
+        }
+    else:
+        content = {
+            'success': False
+        }
+    return Response(content)
+
+
 @api_view(['GET'])
 def api_groups(request):
-    groups = StudyGroup.objects.all()
-    groups_dicts = []
-    for group in groups:
-        groups_dicts.append(group.to_dict())
-    return json_response(success=True, groups=groups_dicts)
+    if request.user.is_authenticated():
+        groups = StudyGroup.objects.all()
+        groups_dicts = []
+        for group in groups:
+            groups_dicts.append(group.to_dict())
+        return json_response(success=True, groups=groups_dicts)
+    else:
+        return json_response(success=False)
 
 
 @api_view(['GET'])
 def api_group(request, group_key):
-    if not group_key:
+    if request.user.is_authenticated():
+        if not group_key:
+            return json_response(success=False)
+        try:
+            group = StudyGroup.objects.get(key=group_key)
+        except StudyGroup.DoesNotExist:
+            return json_response(success=False)
+        group_data = group.to_dict()
+        group_data['meetings'] = [
+            {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
+            'end_time': str(meeting.end_time), 'moderator': str(meeting.moderator), 'type': meeting.type,
+            'location': meeting.location, 'description': meeting.description, 'members': meeting.members,
+            'is_complete': meeting.is_complete, 'show_visualization': meeting.show_visualization,
+            'log_file': meeting.log_file.path, 'ending_method': meeting.ending_method}
+            for meeting in Meeting.objects.filter(group=group)]
+        return json_response(success=True, group=group_data)
+    else:
         return json_response(success=False)
-    try:
-        group = StudyGroup.objects.get(key=group_key)
-    except StudyGroup.DoesNotExist:
-        return json_response(success=False)
-    group_data = group.to_dict()
-    group_data['meetings'] = [
-        {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
-        'end_time': str(meeting.end_time), 'moderator': str(meeting.moderator), 'type': meeting.type,
-        'location': meeting.location, 'description': meeting.description, 'members': meeting.members,
-        'is_complete': meeting.is_complete, 'show_visualization': meeting.show_visualization,
-        'log_file': meeting.log_file.path, 'ending_method': meeting.ending_method}
-        for meeting in Meeting.objects.filter(group=group)]
-    return json_response(success=True, group=group_data)
 
 
 @api_view(['GET'])
 def api_meetings(request):
-    meetings = Meeting.objects.all()
-    meetings_dicts = []
-    for meeting in meetings:
-        meeting_data = {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
-                        'end_time': str(meeting.end_time), 'moderator': str(meeting.moderator), 'type': meeting.type,
-                        'location': meeting.location, 'description': meeting.description, 'members': meeting.members,
-                        'is_complete': meeting.is_complete, 'show_visualization': meeting.show_visualization,
-                        'log_file': meeting.log_file.path, 'ending_method': meeting.ending_method}
-        meetings_dicts.append(meeting_data)
-    return json_response(success=True, meetings=meetings_dicts)
+    if request.user.is_authenticated():
+        meetings = Meeting.objects.all()
+        meetings_dicts = []
+        for meeting in meetings:
+            meeting_data = {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
+                            'end_time': str(meeting.end_time), 'moderator': str(meeting.moderator), 'type': meeting.type,
+                            'location': meeting.location, 'description': meeting.description, 'members': meeting.members,
+                            'is_complete': meeting.is_complete, 'show_visualization': meeting.show_visualization,
+                            'log_file': meeting.log_file.path, 'ending_method': meeting.ending_method}
+            meetings_dicts.append(meeting_data)
+        return json_response(success=True, meetings=meetings_dicts)
+    else:
+        return json_response(success=False)
 
 
 @api_view(['GET'])
 def api_meeting(request, uuid):
-    if not uuid:
+    if request.user.is_authenticated():
+        if not uuid:
+            return json_response(success=False)
+        try:
+            meeting = Meeting.objects.get(uuid=uuid)
+        except Meeting.DoesNotExist:
+            return json_response(success=False)
+        with open(meeting.log_file.path, 'r') as input_file:
+            meeting_data = input_file.read()
+        return json_response(success=True, meeting=meeting_data)
+    else:
         return json_response(success=False)
-    try:
-        meeting = Meeting.objects.get(uuid=uuid)
-    except Meeting.DoesNotExist:
-        return json_response(success=False)
-    with open(meeting.log_file.path, 'r') as input_file:
-        meeting_data = input_file.read()
-    return json_response(success=True, meeting=meeting_data)
+
+
+## Form views ##########################################################################################################
 
 
 @csrf_exempt
@@ -349,38 +425,6 @@ def forms_h2_report(request):
     else:
         form = H2DailyForm()
     return render(request, 'reports/h2_form.html', {'form': form})
-
-
-def h2_daily_report(request, member_key, date):
-    file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + date + '_' + member_key + '.txt'
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as report_file:
-            report_data = ast.literal_eval(report_file.read())
-        member = StudyMember.objects.get(key=member_key)
-        group = member.group
-        member_names = {}
-        for member_data in group.members.all():
-            member_names[member_data.key] = member_data.name
-        #graph_left = report_data['graph_left']
-        #graph_right = report_data['graph_right']
-        participation_div_days = report_data['participation_div_days']
-        participation_script_days = report_data['participation_script_days']
-        participation_div_weeks = report_data['participation_div_weeks']
-        participation_script_weeks = report_data['participation_script_weeks']
-        for member_key, member_name in member_names.iteritems():
-            participation_div_days = participation_div_days.replace(member_key, member_name)
-            participation_script_days = participation_script_days.replace(member_key, member_name)
-            participation_div_weeks = participation_div_weeks.replace(member_key, member_name)
-            participation_script_weeks = participation_script_weeks.replace(member_key, member_name)
-        date = datetime.datetime.strptime(report_data['date'], '%Y-%m-%d')
-        date = date.strftime('%A, %B %d, %Y')
-        return render(request, 'reports/h2_report.html', {'date': date, 'member': member.name,
-                                                        'participation_div_days': participation_div_days,
-                                                        'participation_script_days': participation_script_days,
-                                                        'participation_div_weeks': participation_div_weeks,
-                                                        'participation_script_weeks': participation_script_weeks})
-    else:
-        return HttpResponse('No report available for ' + member_key + ' for ' + date)
 
 
 """

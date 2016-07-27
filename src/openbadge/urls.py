@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^api/group/(?P<group_key>\w+)/$', views.api_group, name='api_group'),
     url(r'^api/meetings/$', views.api_meetings, name='api_meetings'),
     url(r'^api/meeting/(?P<uuid>\w+)/$', views.api_meeting, name='api_meeting'),
+    url(r'^api/example_view/$', views.example_view, name='example_view'),
 
     # Forms
     url(r'^forms/h2_report/$', views.forms_h2_report),
