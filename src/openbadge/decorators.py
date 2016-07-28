@@ -13,10 +13,10 @@ def is_own_project(f):
     """ensures a hub that accesses a given /:projectID/whatever is a member of the project with that ID, **OR GOD**"""
 
     @wraps(f)
-    def wrap(request, project_id, *args, **kwargs):
+    def wrap(request, project_key, *args, **kwargs):
         god_key = request.META.get("HTTP_X_GODKEY")
         if god_key == settings.GOD_KEY:
-            return f(request, project_id, *args, **kwargs)
+            return f(request, project_key, *args, **kwargs)
 
 
         hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -24,9 +24,9 @@ def is_own_project(f):
             hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
         except Hub.DoesNotExist:
             return HttpResponseNotFound()
-        hub_project_id = hub.project.id
-        if str(hub_project_id) == str(project_id):
-            return f(request, project_id, *args, **kwargs)
+        hub_project_key = hub.project.key
+        if str(hub_project_key) == str(project_key):
+            return f(request, project_key, *args, **kwargs)
 
         return HttpResponseUnauthorized()
 
