@@ -4,14 +4,17 @@ import analysis
 import simplejson
 from dateutil.parser import parse as parse_date
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse, \
-    HttpResponseUnauthorized
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from .decorators import app_view, is_god, is_own_project
 from .models import Meeting, Project, Hub  # ActionDataChunk, SamplesDataChunk
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+class HttpResponseUnauthorized(HttpResponse):
+    status_code = 401
 
 
 def json_response(**kwargs):
