@@ -192,9 +192,9 @@ def post_meeting(request, project_key):
     log = meeting.log_file.file.name
     with open(log, 'a') as f:
         for chunk in chunks:
-            chunk = simplejson.loads(chunk)
-            update_time = chunk['last_log_time']
-            update_serial = chunk['last_log_serial']
+            chunk_obj = simplejson.loads(chunk)
+            update_time = chunk_obj['last_log_time']
+            update_serial = chunk_obj['last_log_serial']
             f.write(chunk)
 
     print "to", meeting
