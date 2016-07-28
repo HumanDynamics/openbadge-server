@@ -382,34 +382,40 @@ def api_meeting(request, uuid):
 ## Form views ##########################################################################################################
 
 
+@api_view(['POST'])  # For authentication
 @csrf_exempt
 def forms_h2_report(request):
     if request.method == 'POST':
-        form = H2DailyForm(request.POST)
-        if form.is_valid():
-            member_key = form.cleaned_data['member_key']
-            date = form.cleaned_data['date']
-            #graph_left = form.cleaned_data['graph_left']
-            #graph_right = form.cleaned_data['graph_right']
-            participation_div_days = form.cleaned_data['participation_div_days']
-            participation_script_days = form.cleaned_data['participation_script_days']
-            participation_div_weeks = form.cleaned_data['participation_div_weeks']
-            participation_script_weeks = form.cleaned_data['participation_script_weeks']
-            report_data = {'member_key': member_key, 'date': str(date),
-                           #'graph_left': graph_left, 'graph_right': graph_right,
-                           'participation_div_days': participation_div_days,
-                           'participation_script_days': participation_script_days,
-                           'participation_div_weeks': participation_div_weeks,
-                           'participation_script_weeks': participation_script_weeks}
-            file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + str(date) + '_' + member_key + '.txt'
-            with open(file_path, 'w') as report_file:
-                report_file.write(str(report_data))
-            print('Wrote h2 daily report file to ' + file_path)
-            return render_to_response('reports/h2_form.html', form.cleaned_data, context_instance=RequestContext(request))
-            # redirect to a new URL:
-            #return HttpResponseRedirect('/admin/')
+        if request.user.is_authenticated():
+            form = H2DailyForm(request.POST)
+            if form.is_valid():
+                member_key = form.cleaned_data['member_key']
+                date = form.cleaned_data['date']
+                #graph_left = form.cleaned_data['graph_left']
+                #graph_right = form.cleaned_data['graph_right']
+                participation_div_days = form.cleaned_data['participation_div_days']
+                participation_script_days = form.cleaned_data['participation_script_days']
+                participation_div_weeks = form.cleaned_data['participation_div_weeks']
+                participation_script_weeks = form.cleaned_data['participation_script_weeks']
+                report_data = {'member_key': member_key, 'date': str(date),
+                               #'graph_left': graph_left, 'graph_right': graph_right,
+                               'participation_div_days': participation_div_days,
+                               'participation_script_days': participation_script_days,
+                               'participation_div_weeks': participation_div_weeks,
+                               'participation_script_weeks': participation_script_weeks}
+                file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + str(date) + '_' + member_key + '.txt'
+                with open(file_path, 'w') as report_file:
+                    report_file.write(str(report_data))
+                print('Wrote h2 daily report file to ' + file_path)
+                return render_to_response('reports/h2_form.html', form.cleaned_data, context_instance=RequestContext(request))
+                # redirect to a new URL:
+                #return HttpResponseRedirect('/admin/')
+            else:
+                print('Cannot validate form')
+                return HttpResponse('Cannot validate form')
         else:
-            print('Cannot validate form')
+            print('Unauthenticated user')
+            return HttpResponse('Unauthenticated user')
     # if a GET (or any other method) we'll create a blank form
     else:
         form = H2DailyForm()
