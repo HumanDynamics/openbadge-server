@@ -96,18 +96,18 @@ def get_project(request):
 @is_own_project
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
-def meetings(request, project_id):
+def meetings(request, project_key):
     if request.method == 'PUT':
-        return put_meeting(request, project_id)
+        return put_meeting(request, project_key)
     elif request.method == 'GET':
-        return get_meeting(request, project_id)
+        return get_meeting(request, project_key)
     elif request.method == 'POST':
-        return post_meeting(request, project_id)
+        return post_meeting(request, project_key)
     return HttpResponseNotFound()
 
 
 @api_view(['PUT'])
-def put_meeting(request, project_id):
+def put_meeting(request, project_key):
     log_file = request.FILES.get("file")
 
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -125,7 +125,7 @@ def put_meeting(request, project_id):
     except Meeting.DoesNotExist:
         meeting = Meeting()
         meeting.uuid = meeting_uuid
-        meeting.project = Project.objects.get(id=project_id)
+        meeting.project = Project.objects.get(key=project_key)
 
     meeting.log_file = log_file
 
@@ -157,9 +157,9 @@ def put_meeting(request, project_id):
 
 
 @api_view(['GET'])
-def get_meeting(request, project_id):
+def get_meeting(request, project_key):
     try:
-        project = Project.objects.prefetch_related("meetings").get(id=project_id)
+        project = Project.objects.prefetch_related("meetings").get(key=project_key)
         get_file = str(request.META.get("HTTP_X_GET_FILE")).lower() == "true"
 
         return JsonResponse(project.get_meetings(get_file))
@@ -169,7 +169,7 @@ def get_meeting(request, project_id):
 
 
 @api_view(['POST'])
-def post_meeting(request, project_id):
+def post_meeting(request, project_key):
     meeting = Meeting.objects.get(uuid=request.data.get('uuid'))
     chunks = (request.data.get('chunks'))
     meeting.is_complete = False  # Make sure we always close a meeting with a PUT.
@@ -183,17 +183,22 @@ def post_meeting(request, project_id):
     else:
         post_start_serial = simplejson.loads(chunks[0])['last_log_serial']
         if post_start_serial != meeting.last_update_serial + 1:
+            meeting.last_update_serial = -1
+            meeting.save()
             return JsonResponse({"status": "log mismatch"})
         print "chunks",
-    for chunk in chunks:
-        chunk = simplejson.loads(chunk)
-        update_time = chunk['last_log_time']
-        update_serial = chunk['last_log_serial']
+
         print update_serial,
-    print "to", meeting
     log = meeting.log_file.file.name
     with open(log, 'a') as f:
-        f.writelines(chunks)
+        for chunk in chunks:
+            chunk = simplejson.loads(chunk)
+            update_time = chunk['last_log_time']
+            update_serial = chunk['last_log_serial']
+            f.write(chunk)
+
+    print "to", meeting
+
 
     if update_time and update_serial:
         meeting.last_update_time = update_time      # simplejson.loads(chunks[-1])['last_log_time']
@@ -210,18 +215,18 @@ def post_meeting(request, project_id):
 
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
-def hubs(request, project_id):
+def hubs(request, project_key):
     if request.method == 'PUT':
-        return put_hubs(request, project_id)
+        return put_hubs(request, project_key)
     elif request.method == 'GET':
-        return get_hubs(request, project_id)
+        return get_hubs(request, project_key)
     elif request.method == 'POST':
-        return post_hubs(request, project_id)
+        return post_hubs(request, project_key)
     return HttpResponseNotFound()
 
 
 @api_view(['PUT'])
-def put_hubs(request, project_id):
+def put_hubs(request, project_key):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
     if hub_uuid:
         hub = Hub()
@@ -236,7 +241,7 @@ def put_hubs(request, project_id):
 
 @is_own_project
 @api_view(['GET'])
-def get_hubs(request, project_id):
+def get_hubs(request, project_key):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
     if not hub_uuid:
         return HttpResponseBadRequest()
@@ -251,7 +256,7 @@ def get_hubs(request, project_id):
 @is_own_project
 @is_god
 @api_view(['POST'])
-def post_hubs(request, project_id):
+def post_hubs(request, project_key):
     return JsonResponse({"status": "Not Implemented"})
 
 
@@ -262,30 +267,30 @@ def post_hubs(request, project_id):
 @is_own_project
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
-def members(request, project_id):
+def members(request, project_key):
     if request.method == 'PUT':
-        return put_members(request, project_id)
+        return put_members(request, project_key)
     elif request.method == 'GET':
-        return get_members(request, project_id)
+        return get_members(request, project_key)
     elif request.method == 'POST':
-        return post_members(request, project_id)
+        return post_members(request, project_key)
     return HttpResponseNotFound()
 
 
 @is_god
 @api_view(['PUT'])
-def put_members(request, project_id):
+def put_members(request, project_key):
     return JsonResponse({"status": "Not Implemented"})
 
 
 @is_god
 @api_view(['GET'])
-def get_members(request, project_id):
+def get_members(request, project_key):
     return JsonResponse({"status": "Not Implemented"})
 
 
 @api_view(['POST'])
-def post_members(request, project_id):
+def post_members(request, project_key):
 
     return JsonResponse({"status": "Not Implemented"})
 

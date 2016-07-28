@@ -96,7 +96,7 @@ def _to_timestamp(dt):
 
 
 def upload_to(self, filename):
-    return "/".join(('logs', str(self.project.name), self.uuid + os.path.splitext(filename)[1]))
+    return "/".join(('logs', str(self.project.key), self.uuid + os.path.splitext(filename)[1]))
 
 
 class Project(BaseModel):
@@ -117,6 +117,7 @@ class Project(BaseModel):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
 
         return {'project_id': self.id,
+                'key': self.key,
                 'name': self.name,
                 'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
                 'members': {member.name: member.to_dict() for member in self.members.all()}
@@ -284,24 +285,3 @@ class Meeting(BaseModel):
                     "metadata": self.get_meta()}
 
         return {"metadata": self.get_meta()}
-
-# class SamplesDataChunk(models.Model):
-#     badge = models.ForeignKey(Badge)
-#     time  = models.DateTimeField()
-#     samples = models.CommaSeparatedIntegerField()
-#
-#     def to_dict(self):
-#         return dict(badge = self.badge,
-#                     time = self.time,
-#                     samples = self.samples)
-#
-#
-# class ActionDataChunk(models.Model):
-#     action = models.CharField(max_length=64)
-#     time  = models.DateTimeField()
-#     member = models.ForeignKey(Badge, null=True)
-#
-#     def to_dict(self):
-#         return dict(action = self.action,
-#                     time = self.time,
-#                     member = self.member)

@@ -10,9 +10,9 @@ urlpatterns = [
 
     # No-Groups URLS
     url(r'^projects$', views.projects, name='projects'),
-    url(r'^(?P<project_id>\w+)/meetings$', views.meetings, name='meetings'),
-    url(r'^(?P<project_id>\w+)/hubs$', views.hubs, name='hubs'),
-    url(r'^(?P<project_id>\w+)/members', views.members, name='members'),
+    url(r'^(?P<project_key>\w+)/meetings$', views.meetings, name='meetings'),
+    url(r'^(?P<project_key>\w+)/hubs$', views.hubs, name='hubs'),
+    url(r'^(?P<project_key>\w+)/members', views.members, name='members'),
 
     # Reports
     # url(r'^internal_report/$', views.internal_report, name='internal_report'),
