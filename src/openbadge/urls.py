@@ -1,6 +1,7 @@
 from django.conf.urls import include, url
 from . import views
 from django.views.generic.base import TemplateView
+from rest_framework.authtoken import views as authviews
 
 urlpatterns = [
     # APP URLs. DO NOT TOUCH THESE
@@ -19,9 +20,12 @@ urlpatterns = [
     url(r'^api/group/(?P<group_key>\w+)/$', views.api_group, name='api_group'),
     url(r'^api/meetings/$', views.api_meetings, name='api_meetings'),
     url(r'^api/meeting/(?P<uuid>\w+)/$', views.api_meeting, name='api_meeting'),
-    url(r'^api/example_view/$', views.example_view, name='example_view'),
 
     # Forms
     url(r'^forms/h2_report/$', views.forms_h2_report),
+
+    # Tokens
+    url(r'^api-token-auth/$', authviews.obtain_auth_token),
+    url(r'^api-token-auth-renew/$', views.renew_token),
 
 ]

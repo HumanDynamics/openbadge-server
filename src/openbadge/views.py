@@ -6,9 +6,8 @@ from decimal import Decimal
 from dateutil.parser import parse as parse_date
 from pytz import timezone
 
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from functools import wraps
@@ -21,8 +20,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.views.decorators.csrf import csrf_exempt
 
 from .decorators import app_view
-from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport\
-    #, H2DailyReport
+from .models import StudyGroup, StudyMember, Meeting, WeeklyGroupReport
 from .forms import H2DailyForm
 import analysis
 from django.conf import settings
@@ -35,10 +33,6 @@ import ast
 # Creating Token for API Authorization
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
-
-User = get_user_model()
-for user in User.objects.all():
-    Token.objects.get_or_create(user=user)
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -308,19 +302,14 @@ def h2_daily_report(request, member_key, date):
 ## API views ###########################################################################################################
 ## NOTE: If using TokenAuthentication in production, must ensure that your API is only available over https.
 
-
-@api_view(['GET'])
-def example_view(request, format=None):
-    if request.user.is_authenticated():
-        content = {
-            'user': unicode(request.user),  # `django.contrib.auth.User` instance.
-            'auth': unicode(request.auth),  # None
-        }
-    else:
-        content = {
-            'success': False
-        }
-    return Response(content)
+# Tokens expire every 24 hours. Wraparound: Every time API is accessed, call renew_token
+def renew_token(request):
+    User = get_user_model()
+    for user in User.objects.all():
+        old_token, create = Token.objects.get_or_create(user=user)
+        old_token.delete()
+        new_token = Token.objects.create(user=user)
+    return HttpResponse('Successfully renewed all tokens')
 
 
 @api_view(['GET'])
