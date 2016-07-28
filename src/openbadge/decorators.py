@@ -1,8 +1,12 @@
 from functools import wraps
 
 from django.conf import settings
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseUnauthorized, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from .models import Hub
+
+
+class HttpResponseUnauthorized(HttpResponse):
+    status_code = 401
 
 
 def is_own_project(f):
