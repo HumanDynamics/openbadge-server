@@ -195,7 +195,7 @@ def post_meeting(request, project_key):
     else:
         post_start_serial = simplejson.loads(chunks[0])['last_log_serial']
         if post_start_serial != meeting.last_update_serial + 1:
-            meeting.last_update_serial = -1
+            #meeting.last_update_serial = -1
             meeting.save()
             return JsonResponse({"status": "log mismatch"})
         print "chunks",
