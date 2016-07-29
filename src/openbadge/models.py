@@ -263,8 +263,13 @@ class Meeting(BaseModel):
 
     def to_object(self, file):
         """Get an representation of this object for use with HTTP responses"""
+        meta = self.get_meta()
+        
+        meta['last_log_serial'] = self.last_update_serial
+        meta['last_log_time'] = self.last_update_time
+
         if file:
             return {"chunks": self.get_chunks(),
-                    "metadata": self.get_meta()}
+                    "metadata":meta}
 
-        return {"metadata": self.get_meta()}
+        return {"metadata": meta}
