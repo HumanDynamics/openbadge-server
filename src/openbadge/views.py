@@ -127,6 +127,21 @@ def put_meeting(request, project_key):
         meeting.uuid = meeting_uuid
         meeting.project = Project.objects.get(key=project_key)
 
+    try:
+        log_file.seek(-2, 2)  # Jump to the second last byte.
+        while log_file.read(1) != b"\n":  # Until EOL is found...
+            log_file.seek(-2, 1)  # ...jump back the read byte plus one more.
+
+        last = log_file.readline()  # Read last line.
+
+        last_log = simplejson.loads(last)
+        meeting.last_update_serial = last_log['last_log_serial']
+        meeting.last_update_time = last_log['last_log_time']
+    except IOError:
+        pass
+
+    log_file.seek(0)
+
     meeting.log_file = log_file
 
     meeting.hub = Hub.objects.get(uuid=hub_uuid)
@@ -138,9 +153,6 @@ def put_meeting(request, project_key):
     meeting.description = meeting_info["description"]
 
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
-
-    if meeting.last_update_serial == None:
-        meeting.last_update_serial = -1
 
     if meeting.is_complete:
         meeting.ending_method = request.data["ending_method"] if 'ending_method' in request.data else None

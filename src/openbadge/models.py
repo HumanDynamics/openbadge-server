@@ -141,24 +141,7 @@ class Hub(BaseModel):
         return {"name": self.name, "meetings": self.get_completed_meetings(), "is_god": self.god}
 
     def get_completed_meetings(self):
-        for meeting in self.meetings.all():
-            if meeting.last_update_serial == -1:
-                print "need to reparse file"
-                try:
-                    with open(meeting.log_file.file.name, "rb") as f:
-                        f.seek(-2, 2)  # Jump to the second last byte.
-                        while f.read(1) != b"\n":  # Until EOL is found...
-                            f.seek(-2, 1)  # ...jump back the read byte plus one more.
 
-                        last = f.readline()  # Read last line.
-                    last_log = simplejson.loads(last)
-                    meeting.last_update_serial = last_log['last_log_serial']
-                    meeting.last_update_time = last_log['last_log_time']
-                except IOError:
-                    print "Error! File empty?"
-                    meeting.last_update_serial = 0
-
-                meeting.save()
         return {meeting.uuid: {"last_log_timestamp": meeting.last_update_time,
                                "last_log_serial": meeting.last_update_serial,
                                "is_complete": meeting.is_complete}
