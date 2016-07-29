@@ -17,9 +17,6 @@ from django.conf import settings
 from django import utils
 
 from .models import OpenBadgeUser, StudyGroup, StudyMember, Meeting, VisualizationRange, WeeklyGroupReport
-from rest_framework.authtoken.admin import TokenAdmin
-
-TokenAdmin.raw_id_fields = ('user',)
 
 
 def register(model):

@@ -14,11 +14,11 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
-    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.css" type="text/css" />
-    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.0.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.1.min.css" type="text/css" />
 
-    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.1.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
 
@@ -67,7 +67,7 @@
       position: relative;
       }
       .height {
-      min-height: 250px;
+          min-height: 600px;
       }
       footer {
       background-color: white;
@@ -81,42 +81,6 @@
       img {
       max-width:100%;
       max-height:100%;
-      }
-      .keen-metric { 
-      background: steelblue; 
-      display: block-inline;
-      border-radius: 4px; 
-      color: #fff; 
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-      padding: 10px 0;
-      margin: 10px; 
-      text-align: center;
-      }
-      .keen-metric-value { 
-      display: block; 
-      font-size: 60px; 
-      font-weight: 700; 
-      line-height: 84px; 
-      }
-      .keen-metric-title { 
-      display: block; 
-      font-size: 24px; 
-      font-weight: 200; 
-      }
-      
-      .node {
-      stroke: #fff;
-      stroke-width: 1.5px;
-      }
-      .link {
-      stroke: #999;
-      stroke-opacity: .6;
-      }
-      path.link {
-      fill: none;
-      stroke: #000;
-      stroke-width: 4px;
-      cursor: default;
       }
     </style>
     
@@ -144,14 +108,14 @@
 	    <div class="col-sm-12" id="percentage_participation">
 	        <div class="chart-wrapper">
 	            <div class="chart-title">
-	                <h3>Your Participation Compared to Your Team Members For the Past 5 Days</h3>
+	                <h3>Your Participation Compared to Your Team Members For the Past Week</h3>
 	            </div>
-	            <div class="chart-stage">
+	            <div class="chart-stage height">
 	                {{ participation_div_days|safe }}
 	            </div>
 	            <div class="chart-notes">
-	                This graph represents your percentage of participation as compared to your team members. The bottom bars represent your participation, which can be determined by either the number of times you spoke (speaking turns) or the amount of time you spoke. The purple rectangles show the weeks in which visualization was enabled.
-	            </div>
+	                This graph represents your percentage of participation (based on the amount of time you spoke) compared to your team members for the past 7 days.
+                </div>
 	        </div>
 	    </div>
       </div>
@@ -162,11 +126,11 @@
 	            <div class="chart-title">
 	                <h3>Your Participation Compared to Your Team Members For All Weeks</h3>
 	            </div>
-	            <div class="chart-stage">
+	            <div class="chart-stage height">
 	                {{ participation_div_weeks|safe }}
 	            </div>
 	            <div class="chart-notes">
-	                This graph represents your percentage of participation as compared to your team members. The bottom bars represent your participation, which can be determined by either the number of times you spoke (speaking turns) or the amount of time you spoke. The purple rectangles show the weeks in which visualization was enabled.
+	                This graph represents your percentage of participation (based on the amount of time you spoke) compared to your team members for each week so far.
 	            </div>
 	        </div>
 	    </div>

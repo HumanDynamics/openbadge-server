@@ -24,8 +24,4 @@ urlpatterns = [
     # Forms
     url(r'^forms/h2_report/$', views.forms_h2_report),
 
-    # Tokens
-    url(r'^api-token-auth/$', authviews.obtain_auth_token),
-    url(r'^api-token-auth-renew/$', views.renew_token),
-
 ]
