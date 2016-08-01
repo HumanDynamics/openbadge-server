@@ -312,11 +312,11 @@ def api_groups(request):
 @api_view(['GET'])
 def api_group(request, group_key):
     if not group_key:
-        return json_response(success=False)
+        return json_response(success=False, reason='No group_key entered')
     try:
         group = StudyGroup.objects.get(key=group_key)
     except StudyGroup.DoesNotExist:
-        return json_response(success=False)
+        return json_response(success=False, reason='Study Group ' + group_key + ' Does Not Exist')
     group_data = group.to_dict()
     group_data['meetings'] = [
         {'uuid': meeting.uuid, 'group': meeting.group.key, 'start_time': str(meeting.start_time),
@@ -381,9 +381,17 @@ def forms_h2_report(request):
                            'participation_script_days': participation_script_days,
                            'participation_div_weeks': participation_div_weeks,
                            'participation_script_weeks': participation_script_weeks}
-            # TODO: run command to make folder if doesn't exist
+            def mkdir_p(path):
+                if not os.path.exists(path):
+                    try:
+                        os.makedirs(path)
+                    except:
+                        raise
+            def safe_open_w(path):
+                mkdir_p(os.path.dirname(path))
+                return open(path, 'w')
             file_path = settings.MEDIA_ROOT + '/reports/h2_daily_reports/' + str(date) + '_' + member_key + '.txt'
-            with open(file_path, 'w') as report_file:
+            with safe_open_w(file_path) as report_file:
                 report_file.write(str(report_data))
             print('Wrote h2 daily report file to ' + file_path)
             return render_to_response('reports/h2_form.html', form.cleaned_data, context_instance=RequestContext(request))
