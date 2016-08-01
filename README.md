@@ -9,6 +9,12 @@ For a dev server, you need first to install [Virtualenv](https://virtualenv.pypa
 
 Once you have those, be sure to check out the code from this repository. CD into the base directory, and Autoenv should show a message about executing the .env file. Choose `yes`, since it has some very useful shortcuts we'll use.
 
+If Autoenv does not trigger, try running
+
+    $ source /usr/local/bin/activate.sh
+    
+after pip install
+
 Now, create a virtual environment:
 
     virtualenv env
