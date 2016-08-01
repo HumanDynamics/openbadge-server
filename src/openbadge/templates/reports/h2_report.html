@@ -1,0 +1,149 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+
+    <title>Daily Report for {{ member }} for {{ date }}</title>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="http://keen.github.io/dashboards/assets/css/keen-dashboards.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-0.12.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.1.min.css" type="text/css" />
+
+    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.1.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+
+    <!-- jQuery Plugin, for page loading message -->
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script>
+      $(window).load(function () { $("#spinner").fadeOut(2000); })
+    </script>
+    <script>
+      if( screen.width <= 840 ) { alert("Note: Your report is best viewed on a bigger screen."); }
+    </script>
+	  {{ participation_script_days | safe }}
+	  {{ participation_script_weeks | safe }}
+    
+    <style>
+      #spinner
+      {
+      position: fixed;
+      left: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      background: 50% 50% no-repeat #fbfbfb;
+      }
+      .fixed-max-width {
+      margin: 0 auto;
+      }
+      body {
+      max-width: 1270px;
+      margin: 0 auto;
+      }
+      .chart-wrapper .chart-title {
+      background: #fbfbfb;
+      }
+      .chart-wrapper .chart-notes {
+      font-size: 18px;
+      }
+      .chart-wrapper .chart-stage {
+      max-width: 100%;
+      height: auto;
+      width: auto;
+      overflow: auto;
+      resize: both;
+      padding: 5px 10px;
+      position: relative;
+      }
+      .height {
+          min-height: 600px;
+      }
+      footer {
+      background-color: white;
+      color: black;
+      padding: 15px;
+      font-size: 18px;
+      border: 1px solid #e2e2e2;
+      border-radius: 3px;
+      margin-bottom: 10px;
+      }
+      img {
+      max-width:100%;
+      max-height:100%;
+      }
+    </style>
+    
+  </head>
+
+  <body class="application">
+
+    <!-- Preloader -->
+    <div id="spinner">
+      <center>
+	<h2>This page might take a few seconds to load... Thank you for your patience!</h2>
+	<!-- SNORLAX
+	<img src="http://vignette3.wikia.nocookie.net/pokemon/images/9/9f/143Snorlax_OS_anime.png/revision/latest?cb=20140924022259" alt=""></img>
+	-->
+      </center>
+    </div>
+    
+    <img src="/static/img/media_lab_logo.png" alt="" height="100" width="170">
+    
+    <div class="container-fluid fixed-max-width">
+
+      <h1>Daily Report for {{ member }} for {{ date }}</h1>
+      
+      <div class="row">
+	    <div class="col-sm-12" id="percentage_participation">
+	        <div class="chart-wrapper">
+	            <div class="chart-title">
+	                <h3>Your Participation Compared to Your Team Members For the Past Week</h3>
+	            </div>
+	            <div class="chart-stage height">
+	                {{ participation_div_days|safe }}
+	            </div>
+	            <div class="chart-notes">
+	                This graph represents your percentage of participation (based on the amount of time you spoke) compared to your team members for the past 7 days.
+                </div>
+	        </div>
+	    </div>
+      </div>
+
+      <div class="row">
+	    <div class="col-sm-12" id="percentage_participation">
+	        <div class="chart-wrapper">
+	            <div class="chart-title">
+	                <h3>Your Participation Compared to Your Team Members For All Weeks</h3>
+	            </div>
+	            <div class="chart-stage height">
+	                {{ participation_div_weeks|safe }}
+	            </div>
+	            <div class="chart-notes">
+	                This graph represents your percentage of participation (based on the amount of time you spoke) compared to your team members for each week so far.
+	            </div>
+	        </div>
+	    </div>
+      </div>
+
+    </div>
+
+    <footer>
+      Thank you for reviewing your report. We request that you hold one meeting once a week as a team of at least fifteen minutes, to reflect on your individual reports and determine if any specific actions are needed based on your overall experience and context.
+    </footer>
+    <br>
+
+  </body>
+
+</html>
+
