@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from .decorators import app_view, is_god, is_own_project
-from .models import Meeting, Project, Hub  # ActionDataChunk, SamplesDataChunk
+from .models import Meeting, Project, Hub, Chunk  # ActionDataChunk, SamplesDataChunk
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -182,6 +182,61 @@ def get_meeting(request, project_key):
 
 @api_view(['POST'])
 def post_meeting(request, project_key):
+
+    api_version = request.data.get('api_version')
+
+    if api_version == "2.0":
+
+        chunks = simplejson.loads(request.data.get('chunks'))
+
+        if len(chunks) == 0:
+            print "No data received from", request.META.get("HTTP_X_HUB_UUID")
+            return JsonResponse({"status": "no data"})
+
+        try:
+            meeting = Meeting.objects.prefetch_related('chunks').get(uuid=request.data.get('uuid'))
+        except Meeting.DoesNotExist:
+            meeting = Meeting()
+            meeting.project = Project.objects.get(key = project_key)
+            meeting.hub = Hub.objects.get(uuid = request.META.get("HTTP_X_HUB_UUID"))
+            post_meta = chunks[0]
+            new_meta = Chunk(event=post_meta['event'],
+                             log_index=post_meta['log_index'],
+                             log_timestamp=post_meta['log_timestamp'],
+                             data=post_meta['data'])
+            new_meta.meeting = meeting
+            new_meta.save()
+
+            meeting.final_chunk= new_meta
+
+        post_start_serial = chunks[0]['log_serial']
+
+        if post_start_serial > meeting.final_chunk.log_index + 1:
+            print "Missed a chunk? Resend Log File.", meeting.uuid
+            return JsonResponse({"status": "log mismatch"})
+
+        for post_chunk in chunks:
+            try:
+                db_chunk = meeting.chunks.get(log_index=post_chunk.log_index)
+            except Chunk.DoesNotexist:
+                db_chunk = Chunk()
+                db_chunk.log_index = post_chunk.log_index
+                db_chunk.meeting = meeting
+
+            db_chunk.event = post_chunk.event
+            db_chunk.log_timestamp = post_chunk.log_timestamp
+            db_chunk.data = post_chunk.data
+
+            db_chunk.save()
+
+        meeting.final_chunk = meeting.chunks.get(log_index=chunks[-1].log_index)
+        meeting.save()
+
+
+
+
+
+
     meeting = Meeting.objects.get(uuid=request.data.get('uuid'))
     chunks = (request.data.get('chunks'))
     meeting.is_complete = False  # Make sure we always close a meeting with a PUT.

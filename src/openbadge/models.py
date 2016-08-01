@@ -10,6 +10,8 @@ from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.core.files.storage import FileSystemStorage
 from django.db import models
+from jsonfield import JSONField
+
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -178,6 +180,11 @@ class Meeting(BaseModel):
     metadata
     """
 
+    version = models.TextField()
+
+    meta_chunk = models.ForeignKey(Chunk)
+    final_chunk = models.ForeignKey(Chunk)
+
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be something the phone can generate and give us, like [hub_uuid]-[start_time]"""
 
@@ -218,6 +225,8 @@ class Meeting(BaseModel):
 
     def get_chunks(self):
         """open and read this meeting's log_file"""
+        if self.version == "2.0":
+            return self.chunks.all()
 
         chunks = []
 
@@ -238,12 +247,18 @@ class Meeting(BaseModel):
     def get_meta(self):
         """open and read the first line of this meeting's log_file"""
 
+        if self.version == "2.0":
+            return self.meta_chunk
+
         f = self.log_file
         return simplejson.loads(
             f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
 
     def get_last_sample_time(self):
         """Reads this meetings log file and gets the timestamp of the last received chunk."""
+
+        if self.version == "2.0":
+            return datetime.datetime.fromtimestamp(self.final_chunk.log_timestamp), self.final_chunk.log_timestamp
 
         chunks = self.get_chunks()
 
@@ -263,13 +278,35 @@ class Meeting(BaseModel):
 
     def to_object(self, file):
         """Get an representation of this object for use with HTTP responses"""
-        meta = self.get_meta()
+        meta = None
 
-        meta['last_log_serial'] = self.last_update_serial
-        meta['last_log_time'] = self.last_update_time
+        if self.version == "2.0":
+
+            meta = self.get_meta()
+            final_chunk = self.final_chunk
+            meta['final_log_index'] = final_chunk.log_index
+            meta['final_log_timestamp'] = final_chunk.log_timestamp
+
+        else:
+            meta = self.get_meta()
+
+            meta['last_log_serial'] = self.last_update_serial
+            meta['last_log_time'] = self.last_update_time
 
         if file:
             return {"chunks": self.get_chunks(),
                     "metadata":meta}
 
         return {"metadata": meta}
+
+
+class Chunk(models.Model):
+    event = models.TextField(blank = True)
+    log_timestamp = models.DecimalField(max_digits=20, decimal_places=4)
+    log_index = models.IntegerField()
+    data = JSONField()
+
+    class Meta:
+        unique_together = ['log_index', 'meeting']
+
+    meeting = models.ForeignKey(Meeting, related_name="chunks")
