@@ -13,6 +13,8 @@ localsettings.py
 passwords.py
 openbadge_keys.pem
 
+homebrew.pth
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
