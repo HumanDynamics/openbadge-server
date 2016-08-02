@@ -91,7 +91,7 @@ class MeetingAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'project_name', 'hub',
                     'start_time', 'end_time',
                     'last_update', 'last_update_index',
-                    'duration', 'type', 'location',
+                    'duration',
                     'is_complete')
     actions_on_top = True
 

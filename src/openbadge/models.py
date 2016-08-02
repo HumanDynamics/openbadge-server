@@ -182,9 +182,6 @@ class Meeting(BaseModel):
 
     version = models.TextField()
 
-    meta_chunk = models.ForeignKey(Chunk)
-    final_chunk = models.ForeignKey(Chunk)
-
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be something the phone can generate and give us, like [hub_uuid]-[start_time]"""
 
@@ -202,11 +199,6 @@ class Meeting(BaseModel):
 
     ending_method = models.CharField(max_length=16, blank=True, null=True)
     """what caused the meeting to end? timeout|manual"""
-
-    # # random meeting user-submitted data
-    # type = models.CharField(max_length=32)
-    # location = models.CharField(max_length=32)
-    # description = models.TextField(blank=True)
 
     is_complete = models.BooleanField(default=False, blank=True)
     """whether we've gotten a signal that the meeting is complete (end_time != null?)"""
