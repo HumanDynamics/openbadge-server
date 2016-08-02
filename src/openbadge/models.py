@@ -194,19 +194,19 @@ class Meeting(BaseModel):
     end_time = models.DateTimeField(null=True, blank=True)
     """time that they either hit end, or that the meeting timesout."""
 
-    last_update_time = models.FloatField(null=True, blank=True)
+    last_update_timestamp = models.FloatField(null=True, blank=True)
     """log_timestamp of the last chunk received"""
 
-    last_update_serial = models.IntegerField(null=True, blank=True)
+    last_update_index = models.IntegerField(null=True, blank=True)
     """Serial Number of last log chunk received. Better be continuous!!"""
 
     ending_method = models.CharField(max_length=16, blank=True, null=True)
     """what caused the meeting to end? timeout|manual"""
 
-    # random meeting user-submitted data
-    type = models.CharField(max_length=32)
-    location = models.CharField(max_length=32)
-    description = models.TextField(blank=True)
+    # # random meeting user-submitted data
+    # type = models.CharField(max_length=32)
+    # location = models.CharField(max_length=32)
+    # description = models.TextField(blank=True)
 
     is_complete = models.BooleanField(default=False, blank=True)
     """whether we've gotten a signal that the meeting is complete (end_time != null?)"""
@@ -298,15 +298,3 @@ class Meeting(BaseModel):
                     "metadata":meta}
 
         return {"metadata": meta}
-
-
-class Chunk(models.Model):
-    event = models.TextField(blank = True)
-    log_timestamp = models.DecimalField(max_digits=20, decimal_places=4)
-    log_index = models.IntegerField()
-    data = JSONField()
-
-    class Meta:
-        unique_together = ['log_index', 'meeting']
-
-    meeting = models.ForeignKey(Meeting, related_name="chunks")

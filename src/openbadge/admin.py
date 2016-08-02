@@ -90,14 +90,14 @@ class MeetingAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
     list_display = ('uuid', 'project_name', 'hub',
                     'start_time', 'end_time',
-                    'last_update', 'last_update_serial',
+                    'last_update', 'last_update_index',
                     'duration', 'type', 'location',
                     'is_complete')
     actions_on_top = True
 
     def last_update(self, inst):
         if inst.last_update_time:
-            return datetime.fromtimestamp(inst.last_update_time)
+            return datetime.fromtimestamp(inst.last_update_timestamp)
 
     def project_name(self, inst):
         return inst.project.name
