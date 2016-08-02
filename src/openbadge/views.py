@@ -280,10 +280,16 @@ def h2_daily_report(request, member_key, date):
         participation_div_weeks = report_data['participation_div_weeks']
         participation_script_weeks = report_data['participation_script_weeks']
         for member_key, member_name in member_names.iteritems():
+            if participation_script_days == 'No graph available':
+                participation_script_days = ''
+            else:
+                participation_script_days = participation_script_days.replace(member_key, member_name)
+            if participation_script_weeks == 'No graph available':
+                participation_script_weeks = ''
+            else:
+                participation_script_weeks = participation_script_weeks.replace(member_key, member_name)
             participation_div_days = participation_div_days.replace(member_key, member_name)
-            participation_script_days = participation_script_days.replace(member_key, member_name)
             participation_div_weeks = participation_div_weeks.replace(member_key, member_name)
-            participation_script_weeks = participation_script_weeks.replace(member_key, member_name)
         date = datetime.datetime.strptime(report_data['date'], '%Y-%m-%d')
         date = date.strftime('%A, %B %d, %Y')
         return render(request, 'reports/h2_report.html', {'date': date, 'member': member.name,
