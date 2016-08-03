@@ -80,8 +80,8 @@ class ProjectAdmin(admin.ModelAdmin):
             def time_diff(x):
                 return (x.end_time - x.start_time)
 
-            return timedelta(seconds = sum(
-                [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time]) / 3600)
+            return timedelta(seconds = int(sum(
+                [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time]) / 3600))
         return "NONE"
 
 
