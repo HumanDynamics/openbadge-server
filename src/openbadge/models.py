@@ -144,7 +144,7 @@ class Hub(BaseModel):
 
     def get_completed_meetings(self):
 
-        return {meeting.uuid: {"last_log_timestamp": meeting.last_update_time,
+        return {meeting.uuid: {"last_log_timestamp": meeting.last_update_timestamp,
                                "last_log_serial": meeting.last_update_serial,
                                "is_complete": meeting.is_complete}
                 for meeting in self.meetings.all()}
@@ -283,7 +283,7 @@ class Meeting(BaseModel):
             meta = self.get_meta()
 
             meta['last_log_serial'] = self.last_update_serial
-            meta['last_log_time'] = self.last_update_time
+            meta['last_log_time'] = self.last_update_timestamp
 
         if file:
             return {"chunks": self.get_chunks(),
