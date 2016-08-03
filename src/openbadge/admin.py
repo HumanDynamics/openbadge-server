@@ -103,7 +103,7 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def start(self, inst):
         if inst.start_time:
-            return self.eastern.localize(datetime.fromtimestamp(inst.start_time))
+            return datetime.fromtimestamp(inst.start_time, self.eastern)
 
     def end(self, inst):
         if inst.end_time:
