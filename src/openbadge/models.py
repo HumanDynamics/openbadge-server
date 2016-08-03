@@ -246,27 +246,6 @@ class Meeting(BaseModel):
         return simplejson.loads(
             f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
 
-    def get_last_sample_time(self):
-        """Reads this meetings log file and gets the timestamp of the last received chunk."""
-
-        if self.version == "2.0":
-            return datetime.datetime.fromtimestamp(self.final_chunk.log_timestamp), self.final_chunk.log_timestamp
-
-        chunks = self.get_chunks()
-
-        if not chunks:
-            return (self.start_time, None)
-
-        chunk = chunks[-1]
-        # print len(chunks), chunk
-        start_timestamp = chunk['log_timestamp']
-        sample_duration = chunk['sampleDelay'] / 1000.0 if 'sampleDelay' in chunk else 0
-        num_samples = len(chunk['samples']) if 'samples' in chunk else 0
-
-        end_timestamp = start_timestamp + sample_duration * num_samples
-
-        return datetime.datetime.fromtimestamp(end_timestamp), start_timestamp
-
     def to_object(self, file):
         """Get an representation of this object for use with HTTP responses"""
         meta = None
