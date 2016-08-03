@@ -185,10 +185,10 @@ class Meeting(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be something the phone can generate and give us, like [hub_uuid]-[start_time]"""
 
-    start_time = models.DateTimeField()
+    start_time = models.FloatField(null=True, blank=True)
     """time they hit start"""
 
-    end_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.FloatField(null=True, blank=True)
     """time that they either hit end, or that the meeting timesout."""
 
     last_update_timestamp = models.FloatField(null=True, blank=True)
