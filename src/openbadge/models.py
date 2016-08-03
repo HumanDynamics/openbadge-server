@@ -217,8 +217,6 @@ class Meeting(BaseModel):
 
     def get_chunks(self):
         """open and read this meeting's log_file"""
-        if self.version == "2.0":
-            return self.chunks.all()
 
         chunks = []
 
@@ -239,29 +237,17 @@ class Meeting(BaseModel):
     def get_meta(self):
         """open and read the first line of this meeting's log_file"""
 
-        if self.version == "2.0":
-            return self.meta_chunk
-
         f = self.log_file
         return simplejson.loads(
             f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
 
     def to_object(self, file):
         """Get an representation of this object for use with HTTP responses"""
-        meta = None
 
-        if self.version == "2.0":
+        meta = self.get_meta()
 
-            meta = self.get_meta()
-            final_chunk = self.final_chunk
-            meta['final_log_index'] = final_chunk.log_index
-            meta['final_log_timestamp'] = final_chunk.log_timestamp
-
-        else:
-            meta = self.get_meta()
-
-            meta['log_index'] = self.last_update_index
-            meta['log_timestamp'] = self.last_update_timestamp
+        meta['log_index'] = self.last_update_index
+        meta['log_timestamp'] = self.last_update_timestamp
 
         if file:
             return {"chunks": self.get_chunks(),
