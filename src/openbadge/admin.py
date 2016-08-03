@@ -49,7 +49,7 @@ class HubInline(admin.TabularInline):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'id', 'number_of_members', 'number_of_meetings', 'total_meeting_hours')
+    list_display = ('name', 'key', 'id', 'number_of_members', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
     inlines = (MemberInline, HubInline, MeetingInLine)
     actions_on_top = True
@@ -75,7 +75,7 @@ class ProjectAdmin(admin.ModelAdmin):
     # number_of_meetings.short_description = 'Number of Meetings' #Renames column head
 
     @staticmethod
-    def total_meeting_hours(inst):
+    def total_meeting_time(inst):
         if inst.meetings.all():
             def time_diff(x):
                 return (x.last_update_timestamp - x.start_time)
@@ -115,6 +115,6 @@ class MeetingAdmin(admin.ModelAdmin):
     project_name.short_description = 'Project'
 
     def duration(self, inst):
-        return timedelta(seconds=inst.last_update_timestamp - inst.start_time)
+        return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))
 
     duration.admin_order_field = 'duration'
