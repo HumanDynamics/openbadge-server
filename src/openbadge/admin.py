@@ -99,7 +99,8 @@ class MeetingAdmin(admin.ModelAdmin):
     eastern = timezone("US/Eastern")
 
     def get_local_time(self, timestamp):
-        return pytz.utc.localize(datetime.utcfromtimestamp(timestamp)).astimezone(self.eastern)
+        return pytz.utc.localize(datetime.utcfromtimestamp(timestamp)).astimezone(self.eastern).strftime('%Y-%m-%d %H:%M:%S %Z%z'
+)
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
