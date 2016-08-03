@@ -96,7 +96,7 @@ class MeetingAdmin(admin.ModelAdmin):
     actions_on_top = True
 
     def last_update(self, inst):
-        if inst.last_update_time:
+        if inst.last_update_timestamp:
             return datetime.fromtimestamp(inst.last_update_timestamp)
 
     def project_name(self, inst):
