@@ -155,10 +155,7 @@ def put_meeting(request, project_key):
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
 
     if meeting.is_complete:
-        meeting.ending_method = request.data["ending_method"] if 'ending_method' in request.data else None
-        meeting.end_time_string = request.data["end_time"] if 'end_time' in request.data else None
-        meeting.end_time = parse_date(meeting.end_time_string) if meeting.end_time_string else \
-            meeting.get_last_sample_time()[0]
+        meeting.end_time = parse_date(meeting.last_update_timestamp)
 
     meeting.save()
 

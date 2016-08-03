@@ -259,8 +259,7 @@ class Meeting(BaseModel):
 
         chunk = chunks[-1]
         # print len(chunks), chunk
-        start_timestamp = chunk['timestamp']
-        start_timestamp += chunk['timestamp_ms'] / 1000.0 if 'timestamp_ms' in chunk else 0
+        start_timestamp = chunk['log_timestamp']
         sample_duration = chunk['sampleDelay'] / 1000.0 if 'sampleDelay' in chunk else 0
         num_samples = len(chunk['samples']) if 'samples' in chunk else 0
 
