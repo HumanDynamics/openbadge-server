@@ -127,6 +127,7 @@ def put_meeting(request, project_key):
     except Meeting.DoesNotExist:
         meeting = Meeting()
         meeting.uuid = meeting_uuid
+        meeting.version = meeting_data['log_version']
         meeting.project = Project.objects.get(key=project_key)
 
     try:
@@ -149,6 +150,7 @@ def put_meeting(request, project_key):
     meeting.hub = Hub.objects.get(uuid=hub_uuid)
 
     meeting.start_time = parse_date(meeting_data["start_time"])
+
 
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
 
