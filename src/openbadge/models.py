@@ -180,7 +180,7 @@ class Meeting(BaseModel):
     metadata
     """
 
-    version = models.TextField()
+    version = models.DecimalField(decimal_places=2, max_digits=5)
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be something the phone can generate and give us, like [hub_uuid]-[start_time]"""
