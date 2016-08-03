@@ -1,4 +1,4 @@
-from datetime import datetime, tzinfo
+from datetime import datetime, timedelta
 
 import simplejson
 from django.contrib import admin
@@ -89,7 +89,7 @@ class ProjectAdmin(admin.ModelAdmin):
 class MeetingAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
     list_display = ('uuid', 'project_name', 'hub',
-                    'start_time', 'end_time',
+                    'start', 'end',
                     'last_update', 'last_update_index',
                     'duration',
                     'is_complete')
@@ -99,6 +99,15 @@ class MeetingAdmin(admin.ModelAdmin):
         if inst.last_update_timestamp:
             return datetime.fromtimestamp(inst.last_update_timestamp)
 
+    def start(self, inst):
+        if inst.start_time:
+            return datetime.fromtimestamp(inst.start_time)
+
+    def end(self, inst):
+        if inst.end_time:
+            return datetime.fromtimestamp(inst.end_time)
+
+
     def project_name(self, inst):
         return inst.project.name
 
@@ -106,7 +115,6 @@ class MeetingAdmin(admin.ModelAdmin):
     project_name.short_description = 'Project'
 
     def duration(self, inst):
-        if inst.end_time:
-            return inst.end_time - inst.start_time
+        return timedelta(seconds=inst.last_update_timestamp - inst.start_time)
 
     duration.admin_order_field = 'duration'
