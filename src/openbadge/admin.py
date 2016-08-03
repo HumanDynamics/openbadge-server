@@ -95,19 +95,19 @@ class MeetingAdmin(admin.ModelAdmin):
                     'is_complete')
     actions_on_top = True
 
-    eastern = timezone("US/Pacific")
+    eastern = timezone("US/Eastern")
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return datetime.fromtimestamp(inst.last_update_timestamp)
+            return self.eastern.localize(datetime.fromtimestamp(inst.last_update_timestamp))
 
     def start(self, inst):
         if inst.start_time:
-            return datetime.fromtimestamp(inst.start_time)
+            return self.eastern.localize(datetime.fromtimestamp(inst.start_time))
 
     def end(self, inst):
         if inst.end_time:
-            return datetime.fromtimestamp(inst.end_time)
+            return self.eastern.localize(datetime.fromtimestamp(inst.end_time))
 
 
     def project_name(self, inst):
