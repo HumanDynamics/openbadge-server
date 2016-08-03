@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from pytz import timezone
+import pytz
 import simplejson
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
@@ -97,17 +98,20 @@ class MeetingAdmin(admin.ModelAdmin):
 
     eastern = timezone("US/Eastern")
 
+    def get_local_time(self, timestamp):
+        return pytz.utc.localize(datetime.fromtimestamp(timestamp)).astimezone(self.eastern)
+
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return datetime.fromtimestamp(inst.last_update_timestamp).astimezone(self.eastern)
+            return self.get_local_time(inst.last_update_timestamp)
 
     def start(self, inst):
         if inst.start_time:
-            return datetime.fromtimestamp(inst.start_time).astimezone(self.eastern)
+            return self.get_local_time(inst.start_time)
 
     def end(self, inst):
         if inst.end_time:
-            return datetime.fromtimestamp(inst.end_time).astimezone(self.eastern)
+            return self.get_local_time(inst.end_time)
 
 
     def project_name(self, inst):
