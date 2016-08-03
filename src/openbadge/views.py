@@ -149,7 +149,7 @@ def put_meeting(request, project_key):
 
     meeting.hub = Hub.objects.get(uuid=hub_uuid)
 
-    meeting.start_time = parse_date(meeting_data["start_time"]).total_seconds()
+    meeting.start_time = meeting_data["start_time"]
 
 
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
