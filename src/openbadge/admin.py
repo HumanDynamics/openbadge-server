@@ -95,7 +95,7 @@ class MeetingAdmin(admin.ModelAdmin):
                     'is_complete')
     actions_on_top = True
 
-    eastern = timezone("US/Eastern")
+    eastern = timezone("US/Pacific")
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
