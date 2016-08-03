@@ -99,15 +99,15 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return self.eastern.localize(datetime.fromtimestamp(inst.last_update_timestamp))
+            return datetime.fromtimestamp(inst.last_update_timestamp).astimezone(self.eastern)
 
     def start(self, inst):
         if inst.start_time:
-            return self.eastern.localize(datetime.fromtimestamp(inst.start_time))
+            return datetime.fromtimestamp(inst.start_time).astimezone(self.eastern)
 
     def end(self, inst):
         if inst.end_time:
-            return self.eastern.localize(datetime.fromtimestamp(inst.end_time))
+            return datetime.fromtimestamp(inst.end_time).astimezone(self.eastern)
 
 
     def project_name(self, inst):
