@@ -9,6 +9,7 @@ FILE_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 USERNAME = passwords.LINUX_USERNAME
 USER_PASSWORD = passwords.LINUX_PASSWORD
 GIT_PROJECT_NAME = passwords.GIT_PROJECT_NAME
+GIT_PROJECT_BRANCH = passwords.GIT_PROJECT_BRANCH
 MYSQL_ROOT_PASSWORD = passwords.MYSQL_ROOT_PASSWORD
 
 env.user = USERNAME
@@ -34,6 +35,7 @@ def deploy():
         run("git reset --hard")
         run("git clean -f -d")
         run("git pull")
+        run("git checkout {0}".format(GIT_PROJECT_BRANCH))
 
         sudo('pip install -r requirements.txt')
 
