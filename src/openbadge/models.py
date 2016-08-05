@@ -188,7 +188,7 @@ class Meeting(BaseModel):
     start_time = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
     """time they hit start"""
 
-    end_time = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
+    end_time = models.DecimalField(decimal_places=3, max_digits= 20, null=True, blank=True)
     """time that they either hit end, or that the meeting timesout."""
 
     last_update_timestamp = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
