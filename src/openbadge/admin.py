@@ -79,7 +79,9 @@ class ProjectAdmin(admin.ModelAdmin):
     def total_meeting_time(inst):
         if inst.meetings.all():
             def time_diff(x):
-                return (x.last_update_timestamp - x.start_time)
+                if x.last_update_timestamp and x.start_time:
+                    return (x.last_update_timestamp - x.start_time)
+                return 0
 
             return timedelta(seconds = int(sum(
                 [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time])))
