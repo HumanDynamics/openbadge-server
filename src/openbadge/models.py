@@ -98,7 +98,7 @@ def _to_timestamp(dt):
 
 
 def upload_to(self, filename):
-    return "/".join(('logs', str(self.project.key), self.uuid + os.path.splitext(filename)[1]))
+    return "/".join(('logs', str(self.project.key), self.project.key + "_" + self.uuid + os.path.splitext(filename)[1]))
 
 
 class Project(BaseModel):
