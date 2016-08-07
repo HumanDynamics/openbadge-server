@@ -191,7 +191,7 @@ class Meeting(BaseModel):
     end_time = models.DecimalField(decimal_places=3, max_digits= 20, null=True, blank=True)
     """time that they either hit end, or that the meeting timesout."""
 
-    last_update_timestamp = models.DecimalField(decimal_places=3, max_digits= 20, null=True)
+    last_update_timestamp = models.DecimalField(decimal_places=3, max_digits= 20, null=True, blank=True)
     """log_timestamp of the last chunk received"""
 
     last_update_index = models.IntegerField(null=True, blank=True)
