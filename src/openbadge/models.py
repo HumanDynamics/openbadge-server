@@ -122,7 +122,7 @@ class Project(BaseModel):
                 'key': self.key,
                 'name': self.name,
                 'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
-                'members': {member.name: member.to_dict() for member in self.members.all()}
+                'members': {member.name: member.to_dict() for member in self.project.members.all()}
                 }
 
 
