@@ -140,7 +140,11 @@ class Hub(BaseModel):
     """ng-device generated uuid"""
 
     def get_object(self):
-        return {"name": self.name, "meetings": self.get_completed_meetings(), "is_god": self.god}
+        return {"name": self.name,
+                "meetings": self.get_completed_meetings(),
+                "is_god": self.god,
+                'badge_map':{member.badge: {"name": member.name, "key": member.key} for member in self.project.members.all()},
+                'members':{member.name: member.to_dict() for member in self.members.all()}}
 
     def get_completed_meetings(self):
 
