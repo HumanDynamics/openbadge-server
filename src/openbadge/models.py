@@ -145,9 +145,9 @@ class Hub(BaseModel):
                 "is_god": self.god,
                 'badge_map':{member.badge: {"name": member.name, "key": member.key}
                              for member in self.project.members.all()
-                             if int(member.last_update.strftime("%s")) > last_update},
+                             if int(member.date_updated.strftime("%s")) > last_update},
                 'members':{member.name: member.to_dict() for member in self.project.members.all()
-                            if int(member.last_update.strftime("%s")) > last_update}
+                            if int(member.date_updated.strftime("%s")) > last_update}
                 }
 
     def get_completed_meetings(self):
