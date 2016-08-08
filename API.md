@@ -3,20 +3,16 @@
 ##Overview
 The basic idea in this backend is that there should be only one way to do anything. 
 This sometimes means requiring two or more API calls for something that ought to take
-one, but it is my belief that this makes it simpler. The exception to this is in first creation
-of a project, where one may supply the hubs and badges to initialize, skipping over 
-the `PUT /:projectID/hubs` and `PUT /:projectID/badges` endpoints.
+one, but it is my belief that this makes it simpler. Specifically, at the start
+of the app, one should both GET projects and GT hubs, to get the long-term and 
+temporal data respectively. 
 
 All standard connections will start with a `GET` to `/projects`, and henceforth 
-use the `projectID` returned by that request to communicate with the server, in the form of
-`PUT`'s, `GET`'s, and `POST`'s to `/:projectID/[meetings, hubs, badges]`
+use the `projectKEY` returned by that request to communicate with the server, in the form of
+`PUT`'s, `GET`'s, and `POST`'s to `/:projectKEY/[meetings, hubs, badges]`
 
-There exist a collection of `God` level endpoints. These require a special key that will
-not be available to any hubs meant for use by the end user. All other endpoints are restricted
-to hubs that are members of the project being accessed. 
-
-In general Headers are used exclusively for Authentication, either via a `X-GODKEY` for God-level
-endpoints, or by the `badgeID` (ng-Device's `uuid`). The exeption to this is in `GET`'s, which 
+In general Headers are used exclusively for Authentication, via the 
+`X-BADGE_UUID` (ng-Device's `uuid`). The exception to this is in `GET`'s, which 
 sometimes use headers to specify what is to be gotten.
 
 
@@ -28,21 +24,21 @@ sometimes use headers to specify what is to be gotten.
 ####Project Level Endpoints
 Method                |        Path            | Summary                       | Accessible To
 ----------------------|------------------------|-------------------------------|------------------------------
-[GET](#getproject)    | /projects              | get project's badges/members  | Project's Hubs
+[GET](#getproject)    | /projects              | get project's badges/members should need to be called only infrequently (when significant things change) | Project's Hubs
 
 ####Meeting Level Endpoints
 Method                |        Path            | Summary                       | Accessible To
 ----------------------|------------------------|-------------------------------|------------------------------
-[PUT](#putmeeting)    | /:projectID/meetings   | initialize a meeting          | Project's Hubs
-[GET](#getmeeting)    | /:projectID/meetings   | get the meetings for a project| Project's Hubs
-[POST](#postmeeting)  | /:projectID/meetings   | add data to a meeting        | Project's Hubs
+[PUT](#putmeeting)    | /:projectKEY/meetings   | initialize a meeting          | Project's Hubs
+[GET](#getmeeting)    | /:projectKEY/meetings   | get the meetings for a project, either just metadata -r whole file| Project's Hubs
+[POST](#postmeeting)  | /:projectKEY/meetings   | add data to a meeting        | Project's Hubs
 
 
 ####Hub Level Endpoints
 Method                |        Path            | Summary                       | Accessible To
 ----------------------|------------------------|-------------------------------|------------------------------
-[PUT](#puthub)        | /:anyNumber/hubs       | add hub to defualt project    | All    
-[GET](#gethub)        | /:projectID/hubs       | get hub's metadata and projects| Project's Hubs
+[PUT](#puthub)        | /:anyNumber/hubs       | add hub to default project    | All    
+[GET](#gethub)        | /:projectKEY/hubs       | get hub's metadata and projects, and all othhr data that can change during a meeting (members, god-state, etc.)| Project's Hubs
 
 
 
@@ -59,7 +55,7 @@ Method                |        Path            | Summary                       |
 <a name="getproject"></a>
 ###GET /projects
 
-Get badge ownership info and `project_id` for a hub
+Get badge ownership info and project identification info for a hub's project. 
 
 **Headers Passed**
 
@@ -69,61 +65,44 @@ X-HUB-UUID   | text    |
 
 *Response Codes*
 - 200 - got project info
-- 404 - hubID not found?
+- 404 - hubID not found
 
 **Returned JSON**
 
 ```json
 {
-  "project_id": 3,
-  "name": "Human Dynamics Main",
+  "project_id": 1,
+  "key": "O3KCU5CQXP",
+  "name": "My Proj",
   "members": {
-    "Bill Gates": {
-      "badge": "DB:C8:1B:F8:B8:0F",
-      "name": "Bill Gates",
-      "id": 9
-    },
     "Jackson Kearl": {
-      "badge": "D2:3C:F6:B9:87:24",
+      "badge": "6E:4A:85:C4:C2:87",
       "name": "Jackson Kearl",
-      "id": 5
+      "id": 1
     },
     "Cynthia Zhou": {
-      "badge": "FA:DF:C3:8C:99:3C",
+      "badge": "7A:FF:38:51:0B:AC",
       "name": "Cynthia Zhou",
-      "id": 7
+      "id": 3
     },
     "Oren Lederman": {
-      "badge": "E3:09:E5:88:38:B2",
+      "badge": "65:7D:D4:5D:9D:3B",
       "name": "Oren Lederman",
-      "id": 6
-    },
-    "Steve Jobs": {
-      "badge": "F2:74:78:84:E2:76",
-      "name": "Steve Jobs",
-      "id": 8
+      "id": 2
     }
   },
   "badge_map": {
-    "FA:DF:C3:8C:99:3C": {
+    "7A:FF:38:51:0B:AC": {
       "name": "Cynthia Zhou",
-      "key": "EE2FRYT3LT"
+      "key": "K9VTVNXVVB"
     },
-    "E3:09:E5:88:38:B2": {
+    "65:7D:D4:5D:9D:3B": {
       "name": "Oren Lederman",
-      "key": "Z01MPNJJ9Y"
+      "key": "CCW9N7Y9B9"
     },
-    "F2:74:78:84:E2:76": {
-      "name": "Steve Jobs",
-      "key": "XBACZK85G6"
-    },
-    "DB:C8:1B:F8:B8:0F": {
-      "name": "Bill Gates",
-      "key": "PC8FI0C9IU"
-    },
-    "D2:3C:F6:B9:87:24": {
+    "6E:4A:85:C4:C2:87": {
       "name": "Jackson Kearl",
-      "key": "0R4PW5FXP5"
+      "key": "OSL86K9XGD"
     }
   }
 }
@@ -152,9 +131,9 @@ X-HUB-UUID   | text    |
 
 
 <a name="putmeeting"></a>
-###PUT /:projectID/meetings
+###PUT /:projectKEY/meetings
 
-Create a meeting with given logfile.
+Create a meeting with given logfile, or update the logfile of a given project. 
 
 **Headers Passed**
 
@@ -188,9 +167,9 @@ X-HUB-UUID   | text    |
 <a name="getmeeting"></a>
 ###GET /:projectID/meetings
 
-Get all meetigns in a project, with or without thier respective files. 
+Get all meetings in a project, with or without their respective files. 
 
-If X-GET-FILES.lower() is equal to "true", this will return a UUID-accessible Associated Array of metadata and chunk
+If X-GET-FILES is equal to "true", this will return a UUID-accessible Associated Array of metadata and events
 as separate entries in a dictionary. Otherwise, it will return a UUID-accessible Associated Array of metadata objects
 
 **Headers Passed**
@@ -306,7 +285,8 @@ X-GET-FILES  | text    |
 <a name="postmeeting"></a>
 ###POST /:projectID/meetings
 
-Add chunks to a meeting
+Add chunks to a meeting. Will return with a `status: mismatch` if the logs
+are not properly serial.
 
 **Headers Passed**
 
@@ -374,13 +354,16 @@ X-APP-UUID   | text    |
 <a name="gethub"></a>
 ###GET /:projectID/hubs
 
-Get hub's name and meetings.
+Get hub's name and meetings. If provided with an POSIX X-LAST-MEMBER-UPDATE, also get the 
+members that have been added to this hub's project since last update,
+as both a badge_map and list of members. Otherwise returns the full set of members.
 
 **Headers Passed**
 
 Key          | Type    |
 -------------|---------|
 X-HUB-UUID   | text    |
+X-LAST-MEMBER-UPDATE | POSIX Timestamp |
 
 
 *Response Codes*
@@ -389,19 +372,70 @@ X-HUB-UUID   | text    |
 - 404 - hubUUID not found
 
 **Returned JSON**
+Here, the X-LAST-MEMBER-UPDATE is such that 2 members are `new`.
+```json
+{
+  "is_god": true,
+  "meetings": {
+    "c65c943da5487d51_1470636479534": {
+      "last_log_timestamp": "1470636586.948",
+      "last_log_serial": 110,
+      "is_complete": true
+    },
+    "c65c943da5487d51_1470636747445": {
+      "last_log_timestamp": "1470636829.338",
+      "last_log_serial": 97,
+      "is_complete": true
+    }
+  },
+  "name": "Cyan Android",
+  "members": {
+    "D B": {
+      "badge": "DB:C8:1B:F8:B8:0F",
+      "name": "D B",
+      "id": 17
+    },
+    "D 2": {
+      "badge": "D2:3C:F6:B9:87:24",
+      "name": "D 2",
+      "id": 21
+    }
+  },
+  "badge_map": {
+    "DB:C8:1B:F8:B8:0F": {
+      "name": "D B",
+      "key": "31C60MMBJO"
+    },
+    "D2:3C:F6:B9:87:24": {
+      "name": "D 2",
+      "key": "FQGNXLRNCV"
+    }
+  }
+}
+```
+Here, the X-LAST-MEMBER-UPDATE is such that no members are `new`.
 
 ```json
 {
+  "is_god": true,
   "meetings": {
-    "12345": {"last_log_timestamp": some UNIX now-epoch int,
-              "last_log_serial": 43,
-              "is_complete": T/F
+    "c65c943da5487d51_1470636479534": {
+      "last_log_timestamp": "1470636586.948",
+      "last_log_serial": 110,
+      "is_complete": true
+    },
+    "c65c943da5487d51_1470636747445": {
+      "last_log_timestamp": "1470636829.338",
+      "last_log_serial": 97,
+      "is_complete": true
+    }
   },
-  "name": "East Conference Room"
+  "name": "Cyan Android",
+  "members": {},
+  "badge_map": {}
 }
+
 ```
-
-
 
 
 
