@@ -258,11 +258,12 @@ def get_hubs(request, project_key):
     if not hub_uuid:
         return HttpResponseBadRequest()
     try:
-        hub = Hub.objects.get(uuid=hub_uuid, last_update = last_update)
+        hub = Hub.objects.get(uuid=hub_uuid)
     except Hub.DoesNotExist:
         return HttpResponseNotFound()
-
-    return JsonResponse(hub.get_object())
+    if not last_update:
+        return JsonResponse(hub.get_object())
+    return JsonResponse(hub.get_object(last_update))
 
 
 @is_own_project
