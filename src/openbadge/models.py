@@ -140,8 +140,9 @@ class Hub(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
-    def get_object(self, last_update = 0):
-        return {"name": self.name,
+    def get_object(self, last_update = None):
+        if last_update:
+            return {"name": self.name,
                 "meetings": self.get_completed_meetings(),
                 "is_god": self.god,
                 'badge_map':{member.badge: {"name": member.name, "key": member.key}
@@ -150,6 +151,11 @@ class Hub(BaseModel):
                 'members':{member.name: member.to_dict() for member in self.project.members.all()
                             if int(member.date_updated.strftime("%s")) > last_update}
                 }
+        else:
+            return {"name": self.name,
+                    "meetings": self.get_completed_meetings(),
+                    "is_god": self.god
+                    }
 
     def get_completed_meetings(self):
 
