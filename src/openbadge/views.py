@@ -263,7 +263,7 @@ def get_hubs(request, project_key):
         return HttpResponseNotFound()
     if not last_update:
         return JsonResponse(hub.get_object())
-    return JsonResponse(hub.get_object(int(last_update)-10)) # account for some amount of async behaviour
+    return JsonResponse(hub.get_object(float(last_update)-10)) # account for some amount of async behaviour
 
 
 @is_own_project
