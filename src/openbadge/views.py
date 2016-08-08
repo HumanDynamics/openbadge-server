@@ -254,10 +254,11 @@ def put_hubs(request, project_key):
 @api_view(['GET'])
 def get_hubs(request, project_key):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+    last_update = request.META.get("HTTP_X_LAST_MEMBER_UPDATE")
     if not hub_uuid:
         return HttpResponseBadRequest()
     try:
-        hub = Hub.objects.get(uuid=hub_uuid)
+        hub = Hub.objects.get(uuid=hub_uuid, last_update = last_update)
     except Hub.DoesNotExist:
         return HttpResponseNotFound()
 

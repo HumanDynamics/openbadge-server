@@ -5,7 +5,7 @@ import pytz
 import random
 import simplejson
 import string
-
+from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.core.files.storage import FileSystemStorage
@@ -139,12 +139,16 @@ class Hub(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
-    def get_object(self):
+    def get_object(self, last_update = 0):
         return {"name": self.name,
                 "meetings": self.get_completed_meetings(),
                 "is_god": self.god,
-                'badge_map':{member.badge: {"name": member.name, "key": member.key} for member in self.project.members.all()},
-                'members':{member.name: member.to_dict() for member in self.project.members.all()}}
+                'badge_map':{member.badge: {"name": member.name, "key": member.key}
+                             for member in self.project.members.all()
+                             if int(member.last_update.strftime("%s")) > last_update},
+                'members':{member.name: member.to_dict() for member in self.project.members.all()
+                            if int(member.last_update.strftime("%s")) > last_update}
+                }
 
     def get_completed_meetings(self):
 
