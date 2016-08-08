@@ -149,7 +149,8 @@ class Hub(BaseModel):
                              for member in self.project.members.all()
                              if int(member.date_updated.strftime("%s")) > last_update},
                 'members':{member.name: member.to_dict() for member in self.project.members.all()
-                            if int(member.date_updated.strftime("%s")) > last_update}
+                            if int(member.date_updated.strftime("%s")) > last_update},
+                'last_updates':{int(member.date_updated.strftime("%s")) for member in self.project.members.all()}
                 }
         else:
             return {"name": self.name,
