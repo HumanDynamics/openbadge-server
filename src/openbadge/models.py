@@ -27,6 +27,8 @@ class BaseModel(models.Model):
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+    last_update = models.DateTimeField(auto_now=True)
+
 
     def generate_key(self, length=10):
         if not self.key:
