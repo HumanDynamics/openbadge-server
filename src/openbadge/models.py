@@ -144,7 +144,7 @@ class Hub(BaseModel):
                 "meetings": self.get_completed_meetings(),
                 "is_god": self.god,
                 'badge_map':{member.badge: {"name": member.name, "key": member.key} for member in self.project.members.all()},
-                'members':{member.name: member.to_dict() for member in self.members.all()}}
+                'members':{member.name: member.to_dict() for member in self.project.members.all()}}
 
     def get_completed_meetings(self):
 
