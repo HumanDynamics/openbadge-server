@@ -2,13 +2,22 @@ from functools import wraps
 import datetime
 import analysis
 import simplejson
+
 from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import render
+
 from rest_framework.decorators import api_view
+from rest_framework import viewsets
+from rest_framework.response import Response
+
 from .decorators import app_view, is_god, is_own_project
-from .models import Meeting, Project, Hub # Chunk  # ActionDataChunk, SamplesDataChunk
+from .models import Meeting, Project, Hub  # Chunk  # ActionDataChunk, SamplesDataChunk
+
+from .models import Member
+from .serializers import MemberSerializer
+
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -23,6 +32,14 @@ def json_response(**kwargs):
 
 def context(**extra):
     return dict(**extra)
+
+
+class MemberViewSet(viewsets.ModelViewSet):
+    queryset = Member.objects.all()
+    serializer_class = MemberSerializer
+    lookup_field = 'key'
+
+
 
 
 @app_view
@@ -115,7 +132,6 @@ def put_meeting(request, project_key):
     meeting_meta = simplejson.loads(log_file.readline())
     log_file.seek(0)
 
-
     meeting_data = meeting_meta['data']
     meeting_uuid = meeting_data['uuid']
 
@@ -150,7 +166,6 @@ def put_meeting(request, project_key):
     meeting.hub = Hub.objects.get(uuid=hub_uuid)
 
     meeting.start_time = meeting_data["start_time"]
-
 
     meeting.is_complete = request.data["is_complete"] == 'true' if 'is_complete' in request.data else False
 
