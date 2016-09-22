@@ -26,7 +26,6 @@ urlpatterns = [
     url(r'^(?P<project_key>\w+)/members', views.members, name='members'),
 
     url(r'^badges/$', badges_list, name='badge-list'),
-    url(r'badges/(?P<pk>\d+)', badges_details, name='badge-details'),
     url(r'badges/(?P<key>\w+)', badges_details, name='badge-details'),
 
     # Reports
