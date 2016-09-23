@@ -16,10 +16,9 @@ class MemberSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
 
         if validated_data.get('last_audio_ts') < instance.last_audio_ts or \
-                validated_data.get('last_audio_ts_fract') < instance.last_audio_ts_fract or \
                 validated_data.get('last_proximity_ts') < instance.last_proximity_ts:
 
-            raise serializers.ValidationError('Found newer last_audio_ts, last_audio_ts_fract, or last_proximity_ts '
+            raise serializers.ValidationError('Found newer last_audio_ts, or last_proximity_ts '
                                                'in the existing Badge')
 
         instance.last_audio_ts = validated_data.get('last_audio_ts', instance.last_audio_ts)
