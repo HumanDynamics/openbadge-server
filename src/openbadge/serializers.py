@@ -8,23 +8,23 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ('id', 'project', 'name', 'email', 'badge', 'init_audio_ts', 'init_audio_ts_fract',
-                  'init_proximity_ts', 'key',
+        fields = ('id', 'project', 'name', 'email', 'badge', 'last_audio_ts', 'last_audio_ts_fract',
+                  'last_proximity_ts', 'key',
                   )
         read_only_fields = ('project', 'id', 'key', 'badge', 'name', 'email')
 
     def update(self, instance, validated_data):
 
-        if validated_data.get('init_audio_ts') < instance.init_audio_ts or \
-                validated_data.get('init_audio_ts_fract') < instance.init_audio_ts_fract or \
-                validated_data.get('init_proximity_ts') < instance.init_proximity_ts:
+        if validated_data.get('last_audio_ts') < instance.last_audio_ts or \
+                validated_data.get('last_audio_ts_fract') < instance.last_audio_ts_fract or \
+                validated_data.get('last_proximity_ts') < instance.last_proximity_ts:
 
-            raise serializers.ValidationError('Found newer init_audio_ts, init_audio_ts_fract, or init_proximity_ts '
+            raise serializers.ValidationError('Found newer last_audio_ts, last_audio_ts_fract, or last_proximity_ts '
                                                'in the existing Badge')
 
-        instance.init_audio_ts = validated_data.get('init_audio_ts', instance.init_audio_ts)
-        instance.init_audio_ts_fract = validated_data.get('init_audio_ts_fract', instance.init_audio_ts_fract)
-        instance.init_proximity_ts = validated_data.get('init_proximity_ts', instance.init_proximity_ts)
+        instance.last_audio_ts = validated_data.get('last_audio_ts', instance.last_audio_ts)
+        instance.last_audio_ts_fract = validated_data.get('last_audio_ts_fract', instance.last_audio_ts_fract)
+        instance.last_proximity_ts = validated_data.get('last_proximity_ts', instance.last_proximity_ts)
 
         instance.save()
 

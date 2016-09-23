@@ -179,9 +179,9 @@ class Member(BaseModel):
     badge = models.CharField(max_length=64)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
-    init_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
-    init_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
-    init_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
 
