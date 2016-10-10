@@ -142,6 +142,9 @@ class Hub(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    """IP address of the hub (if relevant)"""
+
     def get_object(self, last_update = None):
         if last_update:
             return {"name": self.name,

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Member, Project
+from .models import Member, Project, Hub
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -28,3 +28,12 @@ class MemberSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+class HubSerializer(serializers.ModelSerializer):
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+
+    class Meta:
+        model = Hub
+        fields = ('id', 'project', 'name', 'god', 'uuid', 'ip_address', 'key',
+                  )
+        read_only_fields = ('id', 'project', 'name', 'key', 'god', 'uuid')

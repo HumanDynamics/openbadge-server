@@ -16,7 +16,7 @@ from .decorators import app_view, is_god, is_own_project
 from .models import Meeting, Project, Hub  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
-from .serializers import MemberSerializer
+from .serializers import MemberSerializer, HubSerializer
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -38,6 +38,11 @@ class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
     lookup_field = 'key'
+
+class HubViewSet(viewsets.ModelViewSet):
+    queryset = Hub.objects.all()
+    serializer_class = HubSerializer
+    lookup_field = 'name'
 
 
 
