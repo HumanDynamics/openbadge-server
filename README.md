@@ -5,7 +5,12 @@
 ## Installation
 ----------------
 
-For a dev server, you need first to install [Virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) using Pip, [Autoenv](https://github.com/kennethreitz/autoenv) using Pip, and [MySQL](https://dev.mysql.com/doc/refman/5.6/en/osx-installation-pkg.html) using the preinstalled package or Homebrew. You also probably want to install [PyCharm Educational Edition](https://www.jetbrains.com/pycharm-educational/) if you don't have it (it's free for academic accounts!).
+For a dev server, you need first to install:
+* [Virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) using Pip
+* [Autoenv](https://github.com/kennethreitz/autoenv) using Pip
+* [MySQL](https://dev.mysql.com/doc/refman/5.6/en/osx-installation-pkg.html) using the preinstalled package or Homebrew. 
+
+You also probably want to install [PyCharm Educational Edition](https://www.jetbrains.com/pycharm-educational/) if you don't have it (it's free for academic accounts!).
 
 Once you have those, be sure to check out the code from this repository. CD into the base directory, and Autoenv should show a message about executing the .env file. Choose `yes`, since it has some very useful shortcuts we'll use.
 
