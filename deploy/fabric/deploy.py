@@ -36,7 +36,7 @@ def deploy():
         run("git clean -f -d")
         run("git pull")
         run("git checkout {0}".format(GIT_PROJECT_BRANCH))
-
+        run("git pull")
         sudo('pip install -r requirements.txt')
 
         sudo("python src/manage.py collectstatic --noinput", user="www-data")
