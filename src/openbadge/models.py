@@ -5,13 +5,16 @@ import pytz
 import random
 import simplejson
 import string
+from math import floor
+
+from decimal import Decimal
+
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from jsonfield import JSONField
-
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -27,7 +30,6 @@ class BaseModel(models.Model):
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
-
 
     def generate_key(self, length=10):
         if not self.key:
@@ -140,6 +142,9 @@ class Hub(BaseModel):
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """ng-device generated uuid"""
 
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    """IP address of the hub (if relevant)"""
+
     def get_object(self, last_update = None):
         if last_update:
             return {"name": self.name,
@@ -177,7 +182,31 @@ class Member(BaseModel):
     badge = models.CharField(max_length=64)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
+    last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+
     project = models.ForeignKey(Project, related_name="members")
+
+    @classmethod
+    def datetime_to_epoch(cls, d):
+        """
+        Converts given datetime to epoch seconds and ms
+        :param d: datetime
+        :return:
+        """
+        epoch_seconds = (d - datetime.datetime(1970, 1, 1)).total_seconds()
+        long_epoch_seconds = long(floor(epoch_seconds))
+        ts_fract = d.microsecond / 1000;
+        return (long_epoch_seconds, ts_fract)
+
+    @classmethod
+    def now_utc_epoch(cls):
+        """
+        Returns current UTC as epoch seconds and ms
+        :return: long_epoch_seconds, ts_fract
+        """
+        return cls.datetime_to_epoch(timezone.datetime.now_utc())
 
     def to_dict(self):
         return dict(id=self.id,

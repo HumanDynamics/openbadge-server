@@ -106,6 +106,9 @@ def setup_server():
     sudo('touch /var/log/django/django.log')
     sudo('chown www-data:www-data /var/log/django/django.log')
     sudo('chmod g+w /var/log/django/')
+    sudo('touch /var/log/uwsgi.log')
+    sudo('chmod a+w /var/log/uwsgi.log')
+
     sudo('service nginx restart')
 
     put_passwords_file()
