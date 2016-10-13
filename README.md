@@ -97,14 +97,23 @@ Now you're all set and you should be able to log in to your admin console on you
 
 # Custom Commands
 ---------------
+# General note
+The description below show how to execute commands in the local (dev) instance of the server. When executing on the
+production server, you should run them as the www-data user, and add --pythonpath=/opt to the command. For example:
+
+    sudo -u www-data /opt/OpenBadge-Server/src/manage.py importcsv --pythonpath=/opt --filename=/home/deploy/temp_groups.csv
+
+Note - "--pythonpath=/opt" MUST come after the management command you'll be running
+
+
 # Importing users from a CSV file
 
-The file must have a header row, and the columns must be:
+The file must have a header row, and the columns must be (with no spaces!):
 
-    email, group, name, badge
-    {email1}, {group1}, {name1}, {badge1}
-    {email2}, {group2}, {name2}, {badge2}
-    {email3}, {group3}, {name3}, {badge3}
+    email,group,name,badge
+    {email1},{group1},{name1},{badge1}
+    {email2},{group2},{name2},{badge2}
+    {email3},{group3},{name3},{badge3}
     ...
 
 Where "badge" is the MAC address, and "group" isn't currently used
