@@ -20,12 +20,10 @@ import urllib
 
 import json
 import pandas as pd
-import mpld3, seaborn as sns
 import numpy as np
-import copy
 import itertools
-import matplotlib.pyplot as plt
-from matplotlib.dates import DayLocator, HourLocator,MinuteLocator,DateFormatter, drange
+
+import time
 
 import time
 
@@ -135,74 +133,61 @@ def send_email(user, pwd, recipient, subject, body, body_plain = None):
         print "failed to send mail"
 
 
-def load_users_from_csv(filename):
+def load_users_from_csv(project_key, filename):
     '''
     Assumes a CSV with a header row and has the columns:
     email, group, name, badge
     '''
 
-    num_new_groups = 0
     num_new_members = 0
+    project_keys = [ project.key for project in Project.objects.all() ]
+    print(project_keys)
+    if project_key not in project_keys:
+        print("No such project: {}".format(project_key))
+        return -1
 
-    groups = {group.name: group for group in Project.objects.all()}
+    project = Project.objects.get(key=project_key)
     members = {member.email: member for member in Member.objects.all()}
-    new_group_keys = []
+    init_timestamp = int(time.time())
+
     with open(filename) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
 
             # only create new users if we don't have one with the same email
             if row['email'] not in members.keys():
-
-                # create a new group for the member if we don't have one already
-                print(row)
-                if row['group'] not in groups.keys():
-                    group = Project(name=row['group'])
-                    group.save()
-                    new_group_keys.append(group.key)
-
-                    print("Created new group {}".format(group.key))
-                    groups[group.name] = group
-                    num_new_groups += 1
-
                 # create the new user
-                group = groups[row['group']]
                 member = Member(name=row['name'],
-                                     email=row['email'],
-                                     badge=row['badge'],
-                                     group=group)
+                                email=row['email'],
+                                badge=row['badge'],
+                                last_audio_ts=init_timestamp,
+                                last_proximity_ts=init_timestamp,
+                                project=project)
                 member.save()
                 members[member.email] = member
                 num_new_members += 1
 
-    return num_new_members, num_new_groups, new_group_keys
+    return num_new_members
 
-#
-# def set_visualization_ranges(group_key,filename):
-#     '''
-#     Assumes a CSV with a header row and has the columns:
-#     start,end
-#     where the dates are in this format - 2016-06-07 16:37:12
-#     Note - time is in UTC time
-#     '''
-#     group = Project.objects.get(key=group_key)
-#
-#     vrs = VisualizationRange.objects.filter(group=group)
-#     for a in vrs:
-#         print(a.to_dict())
-#         a.delete()
-#
-#     num_new_vr = 0
-#     with open(filename) as csvfile:
-#         reader = csv.DictReader(csvfile)
-#         for row in reader:
-#             startTime =  datetime.datetime.strptime(row['start'], "%Y-%m-%d %H:%M:%S")
-#             endtime =  datetime.datetime.strptime(row['end'], "%Y-%m-%d %H:%M:%S")
-#             vr = VisualizationRange.objects.create(group=group, start=startTime,end=endtime)
-#             vr.save()
-#             num_new_vr += 1
-#
-#     return num_new_vr
+
+def set_members_timestamps(project_key, init_timestamp):
+    '''
+   sets the timestamp for all members of a given project
+    '''
+
+    project_keys = [project.key for project in Project.objects.all()]
+    if project_key not in project_keys:
+        print("No such project: {}".format(project_key))
+        return -1
+
+    project = Project.objects.get(key=project_key)
+
+    qs = Member.objects.all()
+    qs.update(last_audio_ts=init_timestamp)
+    qs.update(last_audio_ts_fract=0)
+    qs.update(last_proximity_ts=init_timestamp)
+
+    return len(qs)
 
 
 def get_week_dates(week_num):

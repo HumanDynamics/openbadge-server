@@ -95,10 +95,39 @@ After that, you just need to configure Django.
 Now you're all set and you should be able to log in to your admin console on your server!
 
 
-## Custom Commands
+# Custom Commands
 ---------------
+# Importing users from a CSV file
 
-# Sending Weekly Summary Emails
+The file must have a header row, and the columns must be:
+
+    email, group, name, badge
+    {email1}, {group1}, {name1}, {badge1}
+    {email2}, {group2}, {name2}, {badge2}
+    {email3}, {group3}, {name3}, {badge3}
+    ...
+
+Where "badge" is the MAC address, and "group" isn't currently used
+
+To run it, `cd` into the project directory, then run this command:
+
+    python src/manage.py importcsv --project_key={DB project key} --filename={FILENAME OF CSV}
+
+Note - the timestamps for these members will be set to the time the script was executed
+
+# Resetting the last timestamps
+
+If you need to set the timestamp to the current date, you can use the set_timestamps command
+
+`cd` into the project directory, then run this command:
+
+    python src/manage.py set_timestamps --project_key={DB project key}
+
+Note - if you want to set the timestamp to a specific value, you can use --timestamp=<epoch time>
+
+# Old/unsupported custom Commands
+---------------
+## Sending Weekly Summary Emails
 
 First `cd` into the project directory.
 
@@ -110,7 +139,7 @@ To send it to one or more specific groups, run this instead:
 
     python src/manage.py send_weekly_email --week_num {positive_integer} --group_keys {group_key_1} {group_key_2} ...
 
-# Generate Weekly Summary Charts
+## Generate Weekly Summary Charts
 
 To generate charts for the weekly summary for all meetings for a specified group within a specified week (starting from Mon June 13, 2016, e.g. Week 2: Mon 2016-06-20 to Sun 2016-06-26), `cd` into the project directory, then run this command:
 
@@ -121,29 +150,8 @@ To generate charts for all meetings for all groups, run this command:
     python src/manage.py generatecharts --week_num {positive_integer}
 
 Reports for each group can be viewed through `{hostname}/weekly_group_report/{group_key}/{week_num}`
-    
-# Importing users from a CSV file
 
-The file must have a header row, and the columns must be:
-
-    email, group, name, badge
-    {email1}, {group1}, {name1}, {badge1}
-    {email2}, {group2}, {name2}, {badge2}
-    {email3}, {group3}, {name3}, {badge3}
-    ...
-
-Optionally, you can also set the visualization ranges for the groups bu providing an additional CSV file. The file
-must include a header row, and follow the structure below:
-    start,end
-    {start1},{end1}
-
-where the dates are in UTC timezone, and in the following structure: 2016-06-07 16:37:12
-
-To run it, `cd` into the project directory, then run this command:
-
-    python src/manage.py importcsv --filename={FILENAME OF CSV} --ranges_filename={FILENAME of visualization rages}
-
-# Setting visualization ranges
+## Setting visualization ranges
 
 Similarly to the previous command, you can override the visualization ranges for a given group.
 
@@ -152,7 +160,7 @@ To run it, `cd` into the project directory, then run this command:
     python src/manage.py set_visualization_ranges --group_key={group key} --filename={FILENAME of visualization rages}
 
 
-# Re-sending post-meeting email
+## Re-sending post-meeting email
 
 Occasionally, users complain that they have not received the end-of-meeting email. You can resend this email using the following command.
 
@@ -161,8 +169,10 @@ To run it, `cd` into the project directory, then run this command:
     python src/manage.py resend_meeting_email --meeting_uuid {meeting_uuid} --member_key {member_key}
 
 
-## Backing up a Server's Database
+# Database related commands
 ---------------
+
+## Backing up a Server's Database
 
 There is a backup and restoration script that can be used to back up the database and media to S3, and then restore it in the same or a different location.
 
@@ -178,7 +188,6 @@ Then it'll be backed up! To double check it all, you can run this command:
 
 
 ## Overwriting a Server's Database from a Backup
----------------
 
 ## WARNING: DO NOT RUN THIS ON PRODUCTION!
 
@@ -216,9 +225,7 @@ It will ask for you to confirm a couple times, then do the restoration.
 Finally, **Be sure you turn DEBUG = False** on again in settings.py.
 
 
-## Notes
+# Notes
 ---------------
 
 If you use autoenv, there are many shortcut aliases included to make your life simpler. They change too often to put them in the README, but check out the .env file to see what they are.
-
-TODO: add media_lab_logo.png to media/img directory in production server.
