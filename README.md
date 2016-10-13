@@ -123,7 +123,7 @@ If you need to set the timestamp to the current date, you can use the set_timest
 
     python src/manage.py set_timestamps --project_key={DB project key}
 
-Note - if you want to set the timestamp to a specific value, you can use --timestamp=<epoch time>
+Note - if you want to set the timestamp to a specific value, you can use --timestamp={epoch time}
 
 # Old/unsupported custom Commands
 ---------------
