@@ -101,7 +101,7 @@ Now you're all set and you should be able to log in to your admin console on you
 The description below show how to execute commands in the local (dev) instance of the server. When executing on the
 production server, you should run them as the www-data user, and add --pythonpath=/opt to the command. For example:
 
-    sudo -u www-data /opt/OpenBadge-Server/src/manage.py importcsv --pythonpath=/opt --filename=/home/deploy/temp_groups.csv
+    sudo -u www-data /opt/OpenBadge-Server/src/manage.py importcsv --pythonpath=/opt --project_key=AAAA --filename=/home/deploy/temp_groups.csv
 
 Note - "--pythonpath=/opt" MUST come after the management command you'll be running
 
