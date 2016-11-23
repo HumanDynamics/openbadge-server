@@ -145,6 +145,9 @@ class Hub(BaseModel):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     """IP address of the hub (if relevant)"""
 
+    heartbeat_ts = models.DecimalField(
+            max_digits=20, decimal_places=3, default=Decimal(0))
+
     def get_object(self, last_update = None):
         if last_update:
             return {"name": self.name,
