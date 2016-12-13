@@ -1,5 +1,6 @@
 from functools import wraps
 import sys
+import os
 import datetime
 import analysis
 import simplejson
@@ -21,7 +22,7 @@ from .serializers import MemberSerializer, HubSerializer
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-DATA_DIR = "./data/"
+DATA_DIR = os.path.expanduser("~/openbadge-server/data/")
 
 
 class HttpResponseUnauthorized(HttpResponse):
