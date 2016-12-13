@@ -1,4 +1,5 @@
 from functools import wraps
+import sys
 import datetime
 import analysis
 import simplejson
@@ -13,13 +14,14 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from .decorators import app_view, is_god, is_own_project
-from .models import Meeting, Project, Hub  # Chunk  # ActionDataChunk, SamplesDataChunk
+from .models import Meeting, Project, Hub, DataLog  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
 from .serializers import MemberSerializer, HubSerializer
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+DATA_DIR = "./data/"
 
 
 class HttpResponseUnauthorized(HttpResponse):
@@ -92,7 +94,6 @@ def projects(request):
 def put_project(request):
     return json_response(status="Not Implemented")
 
-
 @api_view(['GET'])
 def get_project(request):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -100,7 +101,6 @@ def get_project(request):
 
     if not hub_uuid:
         return HttpResponseBadRequest()
-
     try:
         hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
     except Hub.DoesNotExist:
@@ -185,7 +185,6 @@ def put_meeting(request, project_key):
 
     return JsonResponse({'detail': 'meeting created'})
 
-
 @api_view(['GET'])
 def get_meeting(request, project_key):
     try:
@@ -236,6 +235,66 @@ def post_meeting(request, project_key):
         meeting.last_update_index = update_index   # simplejson.loads(chunks[-1])['last_log_serial']
 
     meeting.save()
+
+    return JsonResponse({"status": "success"})
+
+###########################
+# Data Log Level Endpoints #
+###########################
+
+@is_own_project
+@app_view
+@api_view(['PUT', 'GET', 'POST'])
+def datalogs(request, project_key):
+    if request.method == 'GET':
+        return get_datalog(request, project_key)
+    elif request.method == 'POST':
+        return post_datalog(request, project_key)
+    return HttpResponseNotFound()
+
+
+@api_view(['GET'])
+def get_datalog(request, project_key):
+    try:
+        get_file = str(request.META.get("HTTP_X_GET_FILE")).lower() == "true"
+
+        return JsonResponse(project.get_meetings(get_file))
+
+    except Project.DoesNotExist:
+        return HttpResponseNotFound()
+
+@api_view(['POST'])
+def post_datalog(request, project_key):
+
+    hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+    hub = Hub.objects.get(uuid=hub_uuid)
+    if not request.data.get("chunks"):
+        return JsonResponse({"details": "No data provided!"})
+
+    chunks = simplejson.loads(request.data.get("chunks"))
+    data_type = request.data.get("data_type")
+    datalog_uuid = hub.name + "_" + data_type
+    try:
+        datalog = DataLog.objects.get(uuid=datalog_uuid)
+        if datalog.hub.uuid != hub_uuid:
+            return HttpResponseUnauthorized()
+    except DataLog.DoesNotExist:
+        datalog = DataLog()
+        datalog.uuid = datalog_uuid
+        datalog.data_type = data_type
+        datalog.hub = Hub.objects.get(uuid=hub_uuid)
+
+    log = DATA_DIR + datalog_uuid + ".log"
+    with open(log, 'a') as f:
+        for chunk in chunks:
+            datalog.update_time = chunk['log_timestamp']
+            chunk_obj = simplejson.dumps(chunk) + "\n"
+            f.write(chunk_obj)
+
+    print "wrote chunks to ", datalog
+
+
+    datalog.save()
 
     return JsonResponse({"status": "success"})
 
