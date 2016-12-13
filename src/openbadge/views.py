@@ -209,6 +209,7 @@ def post_meeting(request, project_key):
 
     print meeting.hub.name + " appending",
     chunks = simplejson.loads(chunks)
+    print chunks
     if len(chunks) == 0:
         print " NO CHUNKS",
     else:
@@ -225,7 +226,6 @@ def post_meeting(request, project_key):
             chunk_obj = simplejson.loads(chunk)
             update_time = chunk_obj['log_timestamp']
             update_index = chunk_obj['log_index']
-            print update_index,
             f.write(chunk)
 
     print "to", meeting
@@ -272,9 +272,14 @@ def post_datalog(request, project_key):
     if not request.data.get("chunks"):
         return JsonResponse({"details": "No data provided!"})
 
-    chunks = simplejson.loads(request.data.get("chunks"))
+    chunks = request.data.get("chunks")
+    if not isinstance(chunks, dict) and not isinstance(chunks, list):
+        chunks = simplejson.loads(chunks)
     data_type = request.data.get("data_type")
+    chunks_received = len(chunks)
+
     datalog_uuid = hub.name + "_" + data_type
+
     try:
         datalog = DataLog.objects.get(uuid=datalog_uuid)
         if datalog.hub.uuid != hub_uuid:
@@ -286,18 +291,22 @@ def post_datalog(request, project_key):
         datalog.hub = Hub.objects.get(uuid=hub_uuid)
 
     log = DATA_DIR + datalog_uuid + ".log"
+    chunks_written = 0
     with open(log, 'a') as f:
         for chunk in chunks:
             datalog.update_time = chunk['log_timestamp']
-            chunk_obj = simplejson.dumps(chunk) + "\n"
-            f.write(chunk_obj)
+            chunk_str = simplejson.dumps(chunk) + "\n"
+            f.write(chunk_str)
+            chunks_written += 1
 
-    print "wrote chunks to ", datalog
+    print "wrote chunks to ", log
 
 
     datalog.save()
 
-    return JsonResponse({"status": "success"})
+    return JsonResponse({"status": "success", 
+                "chunks_written": chunks_written,
+                "chunks_received": chunks_received})
 
 
 #######################
