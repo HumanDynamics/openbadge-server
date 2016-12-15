@@ -247,37 +247,27 @@ def post_meeting(request, project_key):
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def datalogs(request, project_key):
-    if request.method == 'GET':
-        return get_datalog(request, project_key)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         return post_datalog(request, project_key)
-    return HttpResponseNotFound()
-
-
-@api_view(['GET'])
-def get_datalog(request, project_key):
-    try:
-        get_file = str(request.META.get("HTTP_X_GET_FILE")).lower() == "true"
-
-        return JsonResponse(project.get_meetings(get_file))
-
-    except Project.DoesNotExist:
+    else:
         return HttpResponseNotFound()
 
 @api_view(['POST'])
 def post_datalog(request, project_key):
 
+    # using this header for consistency with meeting api
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
     hub = Hub.objects.get(uuid=hub_uuid)
+
     if not request.data.get("chunks"):
         return JsonResponse({"details": "No data provided!"})
 
     chunks = request.data.get("chunks")
+    # I don't like this but it works for now
     if not isinstance(chunks, dict) and not isinstance(chunks, list):
         chunks = simplejson.loads(chunks)
     data_type = request.data.get("data_type")
     chunks_received = len(chunks)
-
     datalog_uuid = hub.name + "_" + data_type
 
     try:
@@ -291,6 +281,8 @@ def post_datalog(request, project_key):
         datalog.hub = Hub.objects.get(uuid=hub_uuid)
 
     log = DATA_DIR + datalog_uuid + ".log"
+    # we keep track of chunks written and received as a
+    # very basic way to ensure data integrity
     chunks_written = 0
     with open(log, 'a') as f:
         for chunk in chunks:
@@ -300,8 +292,6 @@ def post_datalog(request, project_key):
             chunks_written += 1
 
     print "wrote chunks to ", log
-
-
     datalog.save()
 
     return JsonResponse({"status": "success", 

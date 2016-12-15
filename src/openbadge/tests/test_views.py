@@ -155,6 +155,9 @@ class TestDatalog(TestCase):
 
      
     def test_post_datalogs_multiple_hubs(self):
+        """
+        Make sure each hub gets a new file and data is added appropriately
+        """
         # make sure there's no existing test logs 
         self.delete_logs()
         data_types = [ "audio", "proximity" ]
