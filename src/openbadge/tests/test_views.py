@@ -55,11 +55,11 @@ class TestDatalog(TestCase):
         """
         Create and return a post request with 
         the specifed data_type/chunks
-        For sending to post_datalogs
+        For sending to post_datafiles
         """
         data = { "data_type": data_type, "chunks": json.dumps(chunks) }
         request = self.factory.post(
-                    '/project_key/datalogs', 
+                    '/project_key/datafiles', 
                     data,
                     HTTP_X_HUB_UUID=hub,
                     HTTP_X_APPKEY=APP_KEY)
@@ -76,7 +76,7 @@ class TestDatalog(TestCase):
         expected_chunks = self.load_chunks(test_data)
 
         request = self.create_post_request(hub, data_type, expected_chunks) 
-        resp = views.post_datalog(request, 'test-project')
+        resp = views.post_datafile(request, 'test-project')
         resp_json = json.loads(resp.content)
 
         self.assertTrue(os.path.exists(log_location))
@@ -98,7 +98,7 @@ class TestDatalog(TestCase):
         chunks_to_write = self.load_chunks(test_data)
         
         request = self.create_post_request(hub, data_type, chunks_to_write) 
-        resp = views.post_datalog(request, 'test-project') 
+        resp = views.post_datafile(request, 'test-project') 
         resp_json = json.loads(resp.content)
         actual_chunks = self.load_chunks(log_location)
         
@@ -115,7 +115,7 @@ class TestDatalog(TestCase):
                          chunks_to_write[len(chunks_to_write) - 1])
         
         
-    def test_post_datalogs_creation(self):
+    def test_post_datafiles_creation(self):
         """ 
         Test file creation 
         """
@@ -137,7 +137,7 @@ class TestDatalog(TestCase):
                 )
                 self.delete_logs()
 
-    def test_post_datalogs_append(self):
+    def test_post_datafiles_append(self):
         # test to make sure that new incoming data is appended to the file 
         data_type = "audio"
         hub_uuid = hub_name = self.hubs[0]
@@ -154,7 +154,7 @@ class TestDatalog(TestCase):
                     INPUT_FILE.format("single", data_type))
 
      
-    def test_post_datalogs_multiple_hubs(self):
+    def test_post_datafiles_multiple_hubs(self):
         """
         Make sure each hub gets a new file and data is added appropriately
         """

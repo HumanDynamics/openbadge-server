@@ -15,7 +15,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from .decorators import app_view, is_god, is_own_project
-from .models import Meeting, Project, Hub, DataLog  # Chunk  # ActionDataChunk, SamplesDataChunk
+from .models import Meeting, Project, Hub, DataFile  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
 from .serializers import MemberSerializer, HubSerializer
@@ -246,14 +246,14 @@ def post_meeting(request, project_key):
 @is_own_project
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
-def datalogs(request, project_key):
+def datafiles(request, project_key):
     if request.method == 'POST':
-        return post_datalog(request, project_key)
+        return post_datafile(request, project_key)
     else:
         return HttpResponseNotFound()
 
 @api_view(['POST'])
-def post_datalog(request, project_key):
+def post_datafile(request, project_key):
 
     # using this header for consistency with meeting api
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -268,33 +268,33 @@ def post_datalog(request, project_key):
         chunks = simplejson.loads(chunks)
     data_type = request.data.get("data_type")
     chunks_received = len(chunks)
-    datalog_uuid = hub.name + "_" + data_type
+    datafile_uuid = hub.name + "_" + data_type
 
     try:
-        datalog = DataLog.objects.get(uuid=datalog_uuid)
-        if datalog.hub.uuid != hub_uuid:
+        datafile = DataFile.objects.get(uuid=datafile_uuid)
+        if datafile.hub.uuid != hub_uuid:
             return HttpResponseUnauthorized()
-    except DataLog.DoesNotExist:
-        datalog = DataLog()
-        datalog.uuid = datalog_uuid
-        datalog.data_type = data_type
-        datalog.hub = Hub.objects.get(uuid=hub_uuid)
+    except DataFile.DoesNotExist:
+        datafile = DataFile()
+        datafile.uuid = datafile_uuid
+        datafile.data_type = data_type
+        datafile.hub = Hub.objects.get(uuid=hub_uuid)
 
-    log = DATA_DIR + datalog_uuid + ".log"
+    log = DATA_DIR + datafile_uuid + ".log"
     # we keep track of chunks written and received as a
     # very basic way to ensure data integrity
     chunks_written = 0
     with open(log, 'a') as f:
         for chunk in chunks:
-            datalog.update_time = chunk['log_timestamp']
+            datafile.update_time = chunk['log_timestamp']
             chunk_str = simplejson.dumps(chunk) + "\n"
             f.write(chunk_str)
             chunks_written += 1
 
     print "wrote chunks to ", log
-    datalog.save()
+    datafile.save()
 
-    return JsonResponse({"status": "success", 
+    return JsonResponse({"status": "success",
                 "chunks_written": chunks_written,
                 "chunks_received": chunks_received})
 

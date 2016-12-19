@@ -273,7 +273,8 @@ class Meeting(BaseModel):
                 chunk = simplejson.loads(line)
                 chunks.append(chunk)
             except Exception:
-                #TODO this is kind of scary
+                #TODO this means we have some broken data or something,
+                # do we want to log an error or do something about it
                 pass
 
         f.seek(0)
@@ -300,7 +301,7 @@ class Meeting(BaseModel):
 
         return {"metadata": meta}
 
-class DataLog(BaseModel):
+class DataFile(BaseModel):
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be a concactenation of the hub name and data type"""
@@ -308,14 +309,19 @@ class DataLog(BaseModel):
     data_type = models.CharField(max_length=64)
     """Is this an audio or proximity data log?"""
 
-    last_update_timestamp = models.DecimalField(decimal_places=3, max_digits= 20, null=True, blank=True)
+    # at this point we don't even really care about this, maybe worth storing though
+    last_update_timestamp = models.DecimalField(
+        decimal_places=3,
+        max_digits= 20,
+        null=True,
+        blank=True)
     """Log_timestamp of the last chunk received"""
 
-    log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
+    log_file = models.FileField(upload_to=upload_to, storage=FileSystemStorage(), blank=True)
     """Local reference to log file"""
 
     hub = models.ForeignKey(Hub, related_name="data")
-    """The Hub this DataLog belongs to"""
+    """The Hub this DataFile belongs to"""
 
     def __unicode__(self):
         return unicode(self.hub.name) + "_" + str(self.data_type) + "_data"
@@ -324,6 +330,8 @@ class DataLog(BaseModel):
         """open and read this meeting's log_file"""
         #TODO i wonder... this could get messy with sufficiently large files
         # should probably put a cap on it
+        # are we ever even going to want to do this? maybe not. probably not.
+        # should probably get rid of it. @oren
 
         chunks = []
 
@@ -335,24 +343,33 @@ class DataLog(BaseModel):
                 chunks.append(chunk)
             except Exception:
                 #TODO this is not nice
+                # do we:
+                #  log it
+                #  cry about it
+                #  call someone
+                # hmm
                 pass
 
         f.seek(0)
         return chunks
 
     def get_meta(self):
-        """creates a json object of the metadata for this DataLog"""
-        return { 'last_update_index': self.last_update_index,
-                 'log_timestamp': self.last_update_timestamp,
-                 'hub': self.hub.name }
+        """creates a json object of the metadata for this DataFile"""
+        return { 
+            'last_update_index': self.last_update_index,
+            'log_timestamp': self.last_update_timestamp,
+            'hub': self.hub.name 
+        }
 
 
 
     def to_object(self, file):
         """Get a representation of this object for use with HTTP responses"""
         if file:
-            return { "chunks": self.get_chunks(),
-                     "metadata": self.get_meta() }
+            return { 
+                "chunks": self.get_chunks(),
+                "metadata": self.get_meta() 
+            }
         else:
             # is this ever going to happen?
             # should probably throw/log an error or something instead
