@@ -8,9 +8,8 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ('id', 'project', 'name', 'email', 'badge', 'last_audio_ts', 'last_audio_ts_fract',
-                  'last_proximity_ts', 'key',
-                  )
+        fields = ('id', 'project', 'name', 'email', 'badge', 'last_audio_ts',
+                  'last_audio_ts_fract', 'last_proximity_ts', 'key')
         read_only_fields = ('project', 'id', 'key', 'badge', 'name', 'email')
 
     def update(self, instance, validated_data):
@@ -34,6 +33,7 @@ class HubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hub
-        fields = ('id', 'project', 'name', 'god', 'uuid', 'ip_address', 'key',
-                  )
-        read_only_fields = ('id', 'project', 'name', 'key', 'god', 'uuid')
+        fields = ('id', 'project', 'name', 'heartbeat',
+                  'god', 'uuid', 'ip_address', 'key')
+        read_only_fields = ('id', 'project', 'name',
+                            'heartbeat', 'key', 'god', 'uuid')

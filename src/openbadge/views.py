@@ -1,5 +1,5 @@
 from functools import wraps
-import datetime
+from django.utils import timezone
 import analysis
 import simplejson
 
@@ -17,6 +17,7 @@ from .models import Meeting, Project, Hub  # Chunk  # ActionDataChunk, SamplesDa
 
 from .models import Member
 from .serializers import MemberSerializer, HubSerializer
+from .permissions import AppkeyRequired, HubUuidRequired
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -37,11 +38,14 @@ def context(**extra):
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
+    permission_classes = [AppkeyRequired, HubUuidRequired]
     lookup_field = 'key'
+
 
 class HubViewSet(viewsets.ModelViewSet):
     queryset = Hub.objects.all()
     serializer_class = HubSerializer
+    permission_classes = [AppkeyRequired]
     lookup_field = 'name'
 
 

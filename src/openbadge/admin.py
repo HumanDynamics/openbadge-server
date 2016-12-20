@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from pytz import timezone
+from pytz import timezone 
 import pytz
+from django.utils import timezone as tz_util
 import simplejson
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
@@ -16,6 +17,8 @@ def register(model):
 
     return inner
 
+def get_local_time(utctime):
+    return tz_util.localtime(utctime).strftime('%Y-%m-%d %H:%M:%S %Z')
 
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
@@ -44,8 +47,13 @@ class MeetingInLine(admin.TabularInline):
 
 class HubInline(admin.TabularInline):
     model = Hub
-    readonly_fields = ("key",)
 
+    fields = ("name", "god", "uuid", "last_seen", "ip_address", "key")
+    readonly_fields = ("key", "last_seen")
+
+    def last_seen(self, obj):
+        return get_local_time(obj.heartbeat)
+        
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
