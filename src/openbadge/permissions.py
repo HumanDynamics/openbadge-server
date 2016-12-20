@@ -21,8 +21,6 @@ class HubUuidRequired(permissions.BasePermission):
 
     def has_permission(self, request, view):
         hub_uuid = request.META.get("HTTP_X_HUB_UUID")
-        if hub_uuid is None:
-            return False
         try:        
             hub = Hub.objects.get(uuid=hub_uuid)
         except Hub.DoesNotExist:

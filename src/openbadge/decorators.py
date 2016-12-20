@@ -1,5 +1,6 @@
 from functools import wraps
 
+from django.utils import timezone
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from .models import Hub
@@ -10,7 +11,14 @@ class HttpResponseUnauthorized(HttpResponse):
 
 
 def is_own_project(f):
-    """ensures a hub that accesses a given /:projectID/whatever is a member of the project with that ID, **OR GOD**"""
+    """
+    Ensures a hub that accesses a given /:projectID/whatever
+    is a member of the project with that ID, **OR GOD**
+
+    Requires a valid hub uuid to be passed in the request header
+
+    Updates the hub's heartbeat field
+    """
 
     @wraps(f)
     def wrap(request, project_key, *args, **kwargs):
@@ -24,6 +32,10 @@ def is_own_project(f):
             hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
         except Hub.DoesNotExist:
             return HttpResponseNotFound()
+
+        hub.heartbeat = timezone.localtime(timezone.now())
+        hub.save()
+
         hub_project_key = hub.project.key
         if str(hub_project_key) == str(project_key):
             return f(request, project_key, *args, **kwargs)
