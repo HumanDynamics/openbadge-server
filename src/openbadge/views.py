@@ -245,7 +245,7 @@ def post_meeting(request, project_key):
 
 @is_own_project
 @app_view
-@api_view(['PUT', 'GET', 'POST'])
+@api_view(['POST'])
 def datafiles(request, project_key):
     if request.method == 'POST':
         return post_datafile(request, project_key)
@@ -260,7 +260,12 @@ def post_datafile(request, project_key):
     hub = Hub.objects.get(uuid=hub_uuid)
 
     if not request.data.get("chunks"):
-        return JsonResponse({"details": "No data provided!"})
+        return JsonResponse({
+            "status": "failed",
+            "details": "No data provided!",
+            "chunks_written": 0,
+            "chunks_received": 0
+        })
 
     chunks = request.data.get("chunks")
     # I don't like this but it works for now
@@ -287,8 +292,7 @@ def post_datafile(request, project_key):
     with open(log, 'a') as f:
         for chunk in chunks:
             datafile.update_time = chunk['log_timestamp']
-            chunk_str = simplejson.dumps(chunk) + "\n"
-            f.write(chunk_str)
+            f.write(simplejson.dumps(chunk) + "\n")
             chunks_written += 1
 
     print "wrote chunks to ", log
