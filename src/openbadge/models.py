@@ -187,6 +187,7 @@ class Member(BaseModel):
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
 

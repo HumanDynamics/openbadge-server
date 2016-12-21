@@ -9,7 +9,7 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ('id', 'project', 'name', 'email', 'badge', 'last_audio_ts',
-                  'last_audio_ts_fract', 'last_proximity_ts', 'key')
+                  'last_audio_ts_fract', 'last_proximity_ts', 'last_voltage', 'key')
         read_only_fields = ('project', 'id', 'key', 'badge', 'name', 'email')
 
     def update(self, instance, validated_data):
@@ -23,6 +23,7 @@ class MemberSerializer(serializers.ModelSerializer):
         instance.last_audio_ts = validated_data.get('last_audio_ts', instance.last_audio_ts)
         instance.last_audio_ts_fract = validated_data.get('last_audio_ts_fract', instance.last_audio_ts_fract)
         instance.last_proximity_ts = validated_data.get('last_proximity_ts', instance.last_proximity_ts)
+        instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
 
         instance.save()
 
