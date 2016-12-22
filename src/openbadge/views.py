@@ -254,7 +254,9 @@ def datafiles(request, project_key):
 
 @api_view(['POST'])
 def post_datafile(request, project_key):
-
+    #TODO What is the memory limit for loading files?
+    #TODO Split chunks on hub
+    
     # using this header for consistency with meeting api
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
     hub = Hub.objects.get(uuid=hub_uuid)
@@ -269,11 +271,14 @@ def post_datafile(request, project_key):
 
     chunks = request.data.get("chunks")
     # I don't like this but it works for now
+    # sometimes we don't get json objects from the request object
+    # (with tests, but I don't know if it happens anywhere else?)
     if not isinstance(chunks, dict) and not isinstance(chunks, list):
         chunks = simplejson.loads(chunks)
+
     data_type = request.data.get("data_type")
     chunks_received = len(chunks)
-    datafile_uuid = hub.name + "_" + data_type
+    datafile_uuid = hub.uuid + "_" + data_type
 
     try:
         datafile = DataFile.objects.get(uuid=datafile_uuid)
@@ -284,12 +289,13 @@ def post_datafile(request, project_key):
         datafile.uuid = datafile_uuid
         datafile.data_type = data_type
         datafile.hub = Hub.objects.get(uuid=hub_uuid)
+        datafile.path = DATA_DIR + datafile_uuid + ".txt"
 
-    log = DATA_DIR + datafile_uuid + ".log"
+    
     # we keep track of chunks written and received as a
     # very basic way to ensure data integrity
     chunks_written = 0
-    with open(log, 'a') as f:
+    with open(datafile.path, 'a') as f:
         for chunk in chunks:
             datafile.update_time = chunk['log_timestamp']
             f.write(simplejson.dumps(chunk) + "\n")
