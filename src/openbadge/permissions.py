@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.conf import settings
 from rest_framework import permissions
+import time
 
 from .models import Hub
 
@@ -26,6 +27,6 @@ class HubUuidRequired(permissions.BasePermission):
         except Hub.DoesNotExist:
            return False 
         
-        hub.heartbeat = timezone.localtime(timezone.now())
+        hub.last_seen_ts = int(time.time())
         hub.save()
         return True

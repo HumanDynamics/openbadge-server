@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from pytz import timezone 
 import pytz
-from django.utils import timezone as tz_util
 import simplejson
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
@@ -17,8 +17,10 @@ def register(model):
 
     return inner
 
-def get_local_time(utctime):
-    return tz_util.localtime(utctime).strftime('%Y-%m-%d %H:%M:%S %Z')
+def get_local_time(self, timestamp):
+    return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
+        .astimezone(settings.TIMEZONE)\
+        .strftime('%Y-%m-%d %H:%M:%S %Z%z')
 
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
@@ -52,7 +54,7 @@ class HubInline(admin.TabularInline):
     readonly_fields = ("key", "last_seen")
 
     def last_seen(self, obj):
-        return get_local_time(obj.heartbeat)
+        return get_local_time(obj.last_seen_ts)
         
 
 @register(Project)
@@ -106,24 +108,18 @@ class MeetingAdmin(admin.ModelAdmin):
                     'is_complete')
     actions_on_top = True
 
-    eastern = timezone("US/Eastern")
-
-    def get_local_time(self, timestamp):
-        return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
-            .astimezone(self.eastern)\
-            .strftime('%Y-%m-%d %H:%M:%S %Z%z')
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return self.get_local_time(inst.last_update_timestamp)
+            return get_local_time(inst.last_update_timestamp)
 
     def start(self, inst):
         if inst.start_time:
-            return self.get_local_time(inst.start_time)
+            return get_local_time(inst.start_time)
 
     def end(self, inst):
         if inst.end_time:
-            return self.get_local_time(inst.end_time)
+            return get_local_time(inst.end_time)
 
 
     def project_name(self, inst):

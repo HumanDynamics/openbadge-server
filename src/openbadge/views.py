@@ -1,5 +1,6 @@
 from functools import wraps
 from django.utils import timezone
+import time
 import analysis
 import simplejson
 
@@ -40,6 +41,20 @@ class MemberViewSet(viewsets.ModelViewSet):
     serializer_class = MemberSerializer
     permission_classes = [AppkeyRequired, HubUuidRequired]
     lookup_field = 'key'
+
+    def retrieve(self, request, *args, **kwargs):
+    """ 
+    Get the badge specified by the provided key
+
+    Also update the last time the badge was seen
+    """
+        badge = self.get_object()
+        #NOTE I don't really like doing this in the retrieve method, 
+        # But it was by far the easiest way
+        badge.last_seen_ts = int(time.time())
+        badge.save() 
+        serializer = self.get_serializer(badge)
+        return Response(serializer.data)
 
 
 class HubViewSet(viewsets.ModelViewSet):

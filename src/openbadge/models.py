@@ -145,7 +145,8 @@ class Hub(BaseModel):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     """IP address of the hub (if relevant)"""
 
-    heartbeat = models.DateTimeField(null=True, auto_now_add=True)
+    last_seen_ts = models.IntegerField(null=True, blank=True)
+    """The last time the hub was seen by the server (in epoch time)"""
 
     def get_object(self, last_update = None):
         if last_update:
@@ -188,6 +189,7 @@ class Member(BaseModel):
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
+    last_seen_ts = models.IntegerField(null=True, blank=True)
 
     project = models.ForeignKey(Project, related_name="members")
 

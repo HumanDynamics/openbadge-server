@@ -13,6 +13,7 @@ import os
 import socket
 
 import passwords
+from pytz import timezone 
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -229,6 +230,8 @@ PIPELINE_CSS = {
 
 APP_KEY = passwords.APP_KEY
 GOD_KEY = passwords.GOD_KEY
+TIMEZONE = timezone("US/Eastern")
+#TIMEZONE = timezone("US/Central")
 
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
 

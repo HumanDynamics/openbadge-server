@@ -1,4 +1,5 @@
 from functools import wraps
+import time
 
 from django.utils import timezone
 from django.conf import settings
@@ -33,7 +34,7 @@ def is_own_project(f):
         except Hub.DoesNotExist:
             return HttpResponseNotFound()
 
-        hub.heartbeat = timezone.localtime(timezone.now())
+        hub.last_seen_ts = int(time.time())
         hub.save()
 
         hub_project_key = hub.project.key
