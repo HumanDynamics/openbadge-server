@@ -18,6 +18,7 @@ hubs_list = views.HubViewSet.as_view({
     # 'post': 'create',
 })
 
+
 hubs_details = views.HubViewSet.as_view({
     'get': 'retrieve',
     'put': 'update',
@@ -35,6 +36,7 @@ urlpatterns = [
     url(r'^(?P<project_key>\w+)/meetings$', views.meetings, name='meetings'),
     url(r'^(?P<project_key>\w+)/hubs$', views.hubs, name='hubs'),
     url(r'^(?P<project_key>\w+)/members', views.members, name='members'),
+    url(r'^(?P<project_key>\w+)/datafiles', views.datafiles, name='datafiles'),
 
     url(r'^badges/$', badges_list, name='badge-list'),
     url(r'badges/(?P<key>\w+)', badges_details, name='badge-details'),
@@ -42,6 +44,7 @@ urlpatterns = [
     url(r'^hubs/$', hubs_list, name='hub-list'),
     #url(r'hubs/(?P<name>\w+)', hubs_details, name='hub-details'),
     url(r'hubs/(?P<name>[\w-]+)', hubs_details, name='hub-details'),
+    url(r'hubs/(?P<name>[\w-]+)/upload', hubs_details, name='hub-details'),
 
 
     # Reports

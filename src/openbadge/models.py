@@ -278,6 +278,8 @@ class Meeting(BaseModel):
                 chunk = simplejson.loads(line)
                 chunks.append(chunk)
             except Exception:
+                #TODO this means we have some broken data or something,
+                # do we want to log an error or do something about it
                 pass
 
         f.seek(0)
@@ -303,3 +305,51 @@ class Meeting(BaseModel):
                     "metadata":meta}
 
         return {"metadata": meta}
+
+class DataFile(BaseModel):
+
+
+    uuid = models.CharField(max_length=64, db_index=True, unique=True)
+    """this will be a concatenation of the hub uuid and data type"""
+
+    data_type = models.CharField(max_length=64)
+    """Is this an audio or proximity data log?"""
+
+    # at this point we don't even really care about this, maybe worth storing though
+    last_update_timestamp = models.DecimalField(
+        decimal_places=3,
+        max_digits= 20,
+        null=True,
+        blank=True)
+    """Log_timestamp of the last chunk received"""
+
+    path = models.CharField(max_length=64, unique=True)
+    """Local reference to log file"""
+
+    hub = models.ForeignKey(Hub, related_name="data")
+    """The Hub this DataFile belongs to"""
+
+    def __unicode__(self):
+        return unicode(self.hub.name) + "_" + str(self.data_type) + "_data"
+
+    def get_meta(self):
+        """creates a json object of the metadata for this DataFile"""
+        return { 
+            'last_update_index': self.last_update_index,
+            'log_timestamp': self.last_update_timestamp,
+            'hub': self.hub.name 
+        }
+
+
+    def to_object(self, file):
+        """Get a representation of this object for use with HTTP responses"""
+        if file:
+            return { 
+                "chunks": self.get_chunks(),
+                "metadata": self.get_meta() 
+            }
+        else:
+            # is this ever going to happen?
+            # should probably throw/log an error or something instead
+            return { "metadata": meta }
+    
