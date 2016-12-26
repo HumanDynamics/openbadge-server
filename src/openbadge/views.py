@@ -23,7 +23,6 @@ from .permissions import AppkeyRequired, HubUuidRequired
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-DATA_DIR = os.path.expanduser("~/openbadge-server/data/")
 
 
 class HttpResponseUnauthorized(HttpResponse):
@@ -45,11 +44,11 @@ class MemberViewSet(viewsets.ModelViewSet):
     lookup_field = 'key'
 
     def retrieve(self, request, *args, **kwargs):
-    """ 
-    Get the badge specified by the provided key
+        """ 
+        Get the badge specified by the provided key
 
-    Also update the last time the badge was seen
-    """
+        Also update the last time the badge was seen
+        """
         badge = self.get_object()
         #NOTE I don't really like doing this in the retrieve method, 
         # But it was by far the easiest way
@@ -272,8 +271,6 @@ def datafiles(request, project_key):
 
 @api_view(['POST'])
 def post_datafile(request, project_key):
-    #TODO What is the memory limit for loading files?
-    #TODO Split chunks on hub
     
     # using this header for consistency with meeting api
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -307,24 +304,31 @@ def post_datafile(request, project_key):
         datafile.uuid = datafile_uuid
         datafile.data_type = data_type
         datafile.hub = Hub.objects.get(uuid=hub_uuid)
-        datafile.path = DATA_DIR + datafile_uuid + ".txt"
+        folder = "".join((settings.DATA_DIR, hub.project.key))
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        datafile.filepath = "{}/{}.txt".format(folder, datafile_uuid)
+        
 
     
     # we keep track of chunks written and received as a
     # very basic way to ensure data integrity
     chunks_written = 0
-    with open(datafile.path, 'a') as f:
+    with open(datafile.filepath, 'a') as f:
         for chunk in chunks:
+            # storing this for the sake of if right now, 
+            # maybe useful in the future?
             datafile.update_time = chunk['log_timestamp']
             f.write(simplejson.dumps(chunk) + "\n")
             chunks_written += 1
 
-    print "wrote chunks to ", log
     datafile.save()
 
-    return JsonResponse({"status": "success",
-                "chunks_written": chunks_written,
-                "chunks_received": chunks_received})
+    return JsonResponse({
+        "status": "success",
+        "chunks_written": chunks_written,
+        "chunks_received": chunks_received
+    })
 
 
 #######################

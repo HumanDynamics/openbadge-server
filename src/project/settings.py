@@ -231,7 +231,6 @@ PIPELINE_CSS = {
 APP_KEY = passwords.APP_KEY
 GOD_KEY = passwords.GOD_KEY
 TIMEZONE = timezone("US/Eastern")
-#TIMEZONE = timezone("US/Central")
 
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
 
@@ -245,6 +244,7 @@ REST_FRAMEWORK = {
 SEND_POST_MEETING_SURVEY = False
 POST_MEETING_SURVEY_URL = "https://mit.co1.qualtrics.com/jfe/form/SV_0MR67T0jZVKamwJ"
 
+DATA_DIR = "data/"
 
 try:
     HOSTNAME = socket.gethostname()

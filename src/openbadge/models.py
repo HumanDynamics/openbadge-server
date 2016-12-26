@@ -5,7 +5,7 @@ import pytz
 import random
 import simplejson
 import string
-from math import floor
+
 
 from decimal import Decimal
 
@@ -15,6 +15,7 @@ from django.contrib.auth import models as auth_models
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from jsonfield import JSONField
+from math import floor
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -145,7 +146,7 @@ class Hub(BaseModel):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     """IP address of the hub (if relevant)"""
 
-    last_seen_ts = models.IntegerField(null=True, blank=True)
+    last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """The last time the hub was seen by the server (in epoch time)"""
 
     def get_object(self, last_update = None):
@@ -180,8 +181,8 @@ class Hub(BaseModel):
 class Member(BaseModel):
     """Definition of a Member, who belongs to a Project, and owns a badge"""
 
-    name = models.CharField(max_length=64)
     email = models.EmailField(unique=True)
+    name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
@@ -189,7 +190,7 @@ class Member(BaseModel):
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
-    last_seen_ts = models.IntegerField(null=True, blank=True)
+    last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
 
@@ -323,14 +324,14 @@ class DataFile(BaseModel):
         blank=True)
     """Log_timestamp of the last chunk received"""
 
-    path = models.CharField(max_length=64, unique=True)
+    filepath = models.CharField(max_length=65, unique=True, blank=True)
     """Local reference to log file"""
 
     hub = models.ForeignKey(Hub, related_name="data")
     """The Hub this DataFile belongs to"""
 
     def __unicode__(self):
-        return unicode(self.hub.name) + "_" + str(self.data_type) + "_data"
+        return unicode(self.hub.name + "_" + str(self.data_type) + "_data")
 
     def get_meta(self):
         """creates a json object of the metadata for this DataFile"""

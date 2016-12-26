@@ -16,9 +16,11 @@ HUB_NAME_PREFIX = "test_pls_delete_{}"
 DATA_FILE_LOCATION = PROJECT_DIR.format("data/{}_{}.log")
 
 def _hub_name(hub_name):
+    # prefix all hub names with identifier
+    # for easier cleanup after testing
     return HUB_NAME_PREFIX.format(hub_name)
 
-class TestDatalog(TestCase):
+class TestDatafile(TestCase):
     
 
     def setUp(self):
@@ -175,3 +177,4 @@ class TestDatalog(TestCase):
 
         for data_file in data_files:
             self.assertTrue(os.path.exists(data_file))
+

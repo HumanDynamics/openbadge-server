@@ -17,10 +17,15 @@ def register(model):
 
     return inner
 
-def get_local_time(self, timestamp):
-    return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
-        .astimezone(settings.TIMEZONE)\
-        .strftime('%Y-%m-%d %H:%M:%S %Z%z')
+class GetLocalTimeMixin(object):
+
+    def get_local_time(self, timestamp):
+        if timestamp == 0:
+            return "(None)"
+        else:
+            return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
+                .astimezone(settings.TIMEZONE)\
+                .strftime('%Y-%m-%d %H:%M:%S %Z')
 
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
@@ -36,25 +41,33 @@ class SerializedFieldWidget(AdminTextareaWidget):
         return super(SerializedFieldWidget, self).render(name, simplejson.dumps(value, indent=4), attrs)
 
 
-class MemberInline(admin.TabularInline):
+class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
-    readonly_fields = ("key",)
     extra = 3
+    fields = ('key', 'name', 'email', 'badge', 
+              'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
+              'last_audio_ts_fract', 'last_proximity_ts')
+    readonly_fields = ('key', 'last_seen', 'last_audio')
+    
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
 
+    def last_audio(self, obj):
+        return self.get_local_time(obj.last_audio_ts)
 
 class MeetingInLine(admin.TabularInline):
     model = Meeting
     readonly_fields = ("uuid",)
 
 
-class HubInline(admin.TabularInline):
+class HubInline(admin.TabularInline, GetLocalTimeMixin):
     model = Hub
 
     fields = ("name", "god", "uuid", "last_seen", "ip_address", "key")
-    readonly_fields = ("key", "last_seen")
+    readonly_fields = ("key", 'last_seen')
 
     def last_seen(self, obj):
-        return get_local_time(obj.last_seen_ts)
+        return self.get_local_time(obj.last_seen_ts)
         
 
 @register(Project)
