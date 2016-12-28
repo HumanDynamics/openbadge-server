@@ -148,6 +148,9 @@ class Hub(BaseModel):
 
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """The last time the hub was seen by the server (in epoch time)"""
+    
+    last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    """ The clock time of the hub at the time of the last API request """
 
     def get_object(self, last_update = None):
         if last_update:

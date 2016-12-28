@@ -16,17 +16,24 @@ class AppkeyRequired(permissions.BasePermission):
 class HubUuidRequired(permissions.BasePermission):
     """
     Requires a valid Hub UUID be passed in the header
-    
     Also updates the heartbeat value for the hub that matches the UUID given
+    If HTTP_X_HUB_TIME is passed in the headers, updates last_hub_time
     """
 
     def has_permission(self, request, view):
         hub_uuid = request.META.get("HTTP_X_HUB_UUID")
-        try:        
+        hub_time = request.META.get("HTTP_X_HUB_TIME")
+        try:
             hub = Hub.objects.get(uuid=hub_uuid)
         except Hub.DoesNotExist:
-           return False 
-        
+           return False
+
         hub.last_seen_ts = int(time.time())
+        if hub_time is not None:
+            hub.last_hub_time_ts = hub_time
+
         hub.save()
+
         return True
+
+

@@ -14,7 +14,7 @@ from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from .decorators import app_view, is_god, is_own_project
+from .decorators import app_view, is_god, is_own_project, require_hub_uuid
 from .models import Meeting, Project, Hub, DataFile  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
@@ -134,6 +134,7 @@ def get_project(request):
 ###########################
 
 @is_own_project
+@require_hub_uuid
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def meetings(request, project_key):
@@ -261,6 +262,7 @@ def post_meeting(request, project_key):
 ###########################
 
 @is_own_project
+@require_hub_uuid
 @app_view
 @api_view(['POST'])
 def datafiles(request, project_key):
@@ -362,6 +364,7 @@ def put_hubs(request, project_key):
 
 
 @is_own_project
+@require_hub_uuid
 @api_view(['GET'])
 def get_hubs(request, project_key):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -378,6 +381,7 @@ def get_hubs(request, project_key):
 
 
 @is_own_project
+@require_hub_uuid
 @is_god
 @api_view(['POST'])
 def post_hubs(request, project_key):
@@ -389,6 +393,7 @@ def post_hubs(request, project_key):
 #########################
 
 @is_own_project
+@require_hub_uuid
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def members(request, project_key):
