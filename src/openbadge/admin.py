@@ -63,14 +63,17 @@ class MeetingInLine(admin.TabularInline):
 class HubInline(admin.TabularInline, GetLocalTimeMixin):
     model = Hub
 
-    fields = ("name", "god", "uuid", "last_seen", "last_hub_time", "ip_address", "key")
-    readonly_fields = ("key", 'last_seen', "last_hub_time")
+    fields = ("name", "god", "uuid", "last_seen", "last_hub_time", "time_difference_in_seconds", "ip_address", "key")
+    readonly_fields = ("key", 'last_seen', "last_hub_time", "time_difference_in_seconds")
 
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
 
     def last_hub_time(self, obj):
         return self.get_local_time(obj.last_hub_time_ts)
+
+    def time_difference_in_seconds(self, obj):
+        return abs(obj.last_seen_ts - obj.last_hub_time_ts)
         
 
 @register(Project)

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import time
 
 from .models import Member, Project, Hub
 
@@ -14,19 +15,25 @@ class MemberSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
 
-        if validated_data.get('last_audio_ts') < instance.last_audio_ts or \
-                validated_data.get('last_proximity_ts') < instance.last_proximity_ts:
+        # if we have an older audio_ts, update it
+        if validated_data.get('last_audio_ts') > instance.last_audio_ts:
+            instance.last_audio_ts = validated_data.get('last_audio_ts',
+                                                instance.last_audio_ts)
+            instance.last_audio_ts_fract = validated_data.get('last_audio_ts_fract',
+                                                instance.last_audio_ts_fract)
 
-            raise serializers.ValidationError('Found newer last_audio_ts, or last_proximity_ts '
-                                               'in the existing Badge')
+        # if we have an older proximity_ts, update it
+        if validated_data.get('last_proximity_ts') > instance.last_proximity_ts:
+            instance.last_proximity_ts = validated_data.get('last_proximity_ts', instance.last_proximity_ts)
 
-        instance.last_audio_ts = validated_data.get('last_audio_ts', instance.last_audio_ts)
-        instance.last_audio_ts_fract = validated_data.get('last_audio_ts_fract', instance.last_audio_ts_fract)
-        instance.last_proximity_ts = validated_data.get('last_proximity_ts', instance.last_proximity_ts)
+        # if we have an older last_seen_ts, update it
+        if validated_data.get('last_seen_ts') > instance.last_seen_ts:
+            instance.last_seen_ts = time.time()
+
+        # update voltage regardless
         instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
 
         instance.save()
-
         return instance
 
 class HubSerializer(serializers.ModelSerializer):
@@ -34,7 +41,7 @@ class HubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hub
-        fields = ('id', 'project', 'name', 'heartbeat',
+        fields = ('id', 'project', 'name', 'last_seen_ts',
                   'god', 'uuid', 'ip_address', 'key')
         read_only_fields = ('id', 'project', 'name',
                             'heartbeat', 'key', 'god', 'uuid')
