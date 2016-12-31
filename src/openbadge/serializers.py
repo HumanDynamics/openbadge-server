@@ -26,12 +26,10 @@ class MemberSerializer(serializers.ModelSerializer):
         if validated_data.get('last_proximity_ts') > instance.last_proximity_ts:
             instance.last_proximity_ts = validated_data.get('last_proximity_ts', instance.last_proximity_ts)
 
-        # if we have an older last_seen_ts, update it
+        # if we have an older last_seen_ts, update it and voltage
         if validated_data.get('last_seen_ts') > instance.last_seen_ts:
-            instance.last_seen_ts = time.time()
-
-        # update voltage regardless
-        instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
+            instance.last_seen_ts = validated_data.get('last_seen_ts', instance.last_seen_ts)
+            instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
 
         instance.save()
         return instance
