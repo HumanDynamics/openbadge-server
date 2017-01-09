@@ -244,7 +244,7 @@ REST_FRAMEWORK = {
 SEND_POST_MEETING_SURVEY = False
 POST_MEETING_SURVEY_URL = "https://mit.co1.qualtrics.com/jfe/form/SV_0MR67T0jZVKamwJ"
 
-DATA_DIR = "data/"
+DATA_DIR = os.path.join(BASE_DIR, "../data")
 
 try:
     HOSTNAME = socket.gethostname()

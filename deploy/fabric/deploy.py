@@ -102,6 +102,8 @@ def setup_server():
     sudo('chown www-data:www-data /opt/staticfiles')
     sudo('mkdir -p /opt/media')
     sudo('chown www-data:www-data /opt/media')
+    sudo('mkdir -p /opt/data')
+    sudo('chown www-data:www-data /opt/data')
 
     sudo('mkdir -p /var/log/django/')
     sudo('chown www-data:www-data /var/log/django/')

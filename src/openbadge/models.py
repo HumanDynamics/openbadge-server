@@ -310,8 +310,8 @@ class Meeting(BaseModel):
 
         return {"metadata": meta}
 
-class DataFile(BaseModel):
 
+class DataFile(BaseModel):
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be a concatenation of the hub uuid and data type"""
@@ -327,33 +327,33 @@ class DataFile(BaseModel):
         blank=True)
     """Log_timestamp of the last chunk received"""
 
-    filepath = models.CharField(max_length=65, unique=True, blank=True)
-    """Local reference to log file"""
-
     hub = models.ForeignKey(Hub, related_name="data")
     """The Hub this DataFile belongs to"""
+
+    project = models.ForeignKey(Project, related_name="datafiles")
+    """The project this DataFile belongs to (because hub might move to a different project"""
 
     def __unicode__(self):
         return unicode(self.hub.name + "_" + str(self.data_type) + "_data")
 
     def get_meta(self):
         """creates a json object of the metadata for this DataFile"""
-        return { 
+        return {
             'last_update_index': self.last_update_index,
             'log_timestamp': self.last_update_timestamp,
-            'hub': self.hub.name 
+            'hub': self.hub.name
         }
 
 
     def to_object(self, file):
         """Get a representation of this object for use with HTTP responses"""
         if file:
-            return { 
+            return {
                 "chunks": self.get_chunks(),
-                "metadata": self.get_meta() 
+                "metadata": self.get_meta()
             }
         else:
             # is this ever going to happen?
             # should probably throw/log an error or something instead
             return { "metadata": meta }
-    
+
