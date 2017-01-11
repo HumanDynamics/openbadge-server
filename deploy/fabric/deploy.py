@@ -95,11 +95,15 @@ def setup_server():
         put('{0}/uwsgi-conf'.format(os.path.dirname(FILE_DIRECTORY)), '/etc/init/uwsgi.conf', use_sudo=True)
 
         sudo('[ -d `command -v systemctl` ] || systemctl daemon-reload') # run systemctl only if it exists
+        sudo('[ -d `command -v systemctl` ] || systemctl enable uwsgi')  # run systemctl only if it exists
+        sudo('[ -d `command -v systemctl` ] || systemctl enable nginx')  # run systemctl only if it exists
 
     sudo('mkdir -p /opt/staticfiles')
     sudo('chown www-data:www-data /opt/staticfiles')
     sudo('mkdir -p /opt/media')
     sudo('chown www-data:www-data /opt/media')
+    sudo('mkdir -p /opt/data')
+    sudo('chown www-data:www-data /opt/data')
 
     sudo('mkdir -p /var/log/django/')
     sudo('chown www-data:www-data /var/log/django/')

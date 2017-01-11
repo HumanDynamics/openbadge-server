@@ -1,5 +1,7 @@
 from functools import wraps
-import datetime
+import time
+import sys
+import os
 import analysis
 import simplejson
 
@@ -12,11 +14,12 @@ from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from .decorators import app_view, is_god, is_own_project
-from .models import Meeting, Project, Hub  # Chunk  # ActionDataChunk, SamplesDataChunk
+from .decorators import app_view, is_god, is_own_project, require_hub_uuid
+from .models import Meeting, Project, Hub, DataFile  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
 from .serializers import MemberSerializer, HubSerializer
+from .permissions import AppkeyRequired, HubUuidRequired
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -37,11 +40,24 @@ def context(**extra):
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
+    permission_classes = [AppkeyRequired, HubUuidRequired]
     lookup_field = 'key'
+
+    def retrieve(self, request, *args, **kwargs):
+        """ 
+        Get the badge specified by the provided key
+
+        Also update the last time the badge was seen
+        """
+        badge = self.get_object()
+        serializer = self.get_serializer(badge)
+        return Response(serializer.data)
+
 
 class HubViewSet(viewsets.ModelViewSet):
     queryset = Hub.objects.all()
     serializer_class = HubSerializer
+    permission_classes = [AppkeyRequired]
     lookup_field = 'name'
 
 
@@ -92,7 +108,6 @@ def projects(request):
 def put_project(request):
     return json_response(status="Not Implemented")
 
-
 @api_view(['GET'])
 def get_project(request):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -100,7 +115,6 @@ def get_project(request):
 
     if not hub_uuid:
         return HttpResponseBadRequest()
-
     try:
         hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
     except Hub.DoesNotExist:
@@ -116,6 +130,7 @@ def get_project(request):
 ###########################
 
 @is_own_project
+@require_hub_uuid
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def meetings(request, project_key):
@@ -185,7 +200,6 @@ def put_meeting(request, project_key):
 
     return JsonResponse({'detail': 'meeting created'})
 
-
 @api_view(['GET'])
 def get_meeting(request, project_key):
     try:
@@ -209,6 +223,7 @@ def post_meeting(request, project_key):
 
     print meeting.hub.name + " appending",
     chunks = simplejson.loads(chunks)
+    print chunks
     if len(chunks) == 0:
         print " NO CHUNKS",
     else:
@@ -225,7 +240,6 @@ def post_meeting(request, project_key):
             chunk_obj = simplejson.loads(chunk)
             update_time = chunk_obj['log_timestamp']
             update_index = chunk_obj['log_index']
-            print update_index,
             f.write(chunk)
 
     print "to", meeting
@@ -238,6 +252,82 @@ def post_meeting(request, project_key):
     meeting.save()
 
     return JsonResponse({"status": "success"})
+
+###########################
+# Data Log Level Endpoints #
+###########################
+
+@is_own_project
+@require_hub_uuid
+@app_view
+@api_view(['POST'])
+def datafiles(request, project_key):
+    if request.method == 'POST':
+        return post_datafile(request, project_key)
+    else:
+        return HttpResponseNotFound()
+
+@api_view(['POST'])
+def post_datafile(request, project_key):
+    
+    # using this header for consistency with meeting api
+    hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+    hub = Hub.objects.get(uuid=hub_uuid)
+
+    if not request.data.get("chunks"):
+        return JsonResponse({
+            "status": "failed",
+            "details": "No data provided!",
+            "chunks_written": 0,
+            "chunks_received": 0
+        })
+
+    chunks = request.data.get("chunks")
+    # I don't like this but it works for now
+    # sometimes we don't get json objects from the request object
+    # (with tests, but I don't know if it happens anywhere else?)
+    if not isinstance(chunks, dict) and not isinstance(chunks, list):
+        chunks = simplejson.loads(chunks)
+
+    data_type = request.data.get("data_type")
+    chunks_received = len(chunks)
+    datafile_uuid = hub.uuid + "_" + data_type
+
+    try:
+        datafile = DataFile.objects.get(uuid=datafile_uuid)
+        if datafile.hub.uuid != hub_uuid:
+            return HttpResponseUnauthorized()
+    except DataFile.DoesNotExist:
+        datafile = DataFile()
+        datafile.uuid = datafile_uuid
+        datafile.data_type = data_type
+        datafile.hub = Hub.objects.get(uuid=hub_uuid)
+        datafile.project = Project.objects.get(key=project_key)
+
+    folder = os.path.join(settings.DATA_DIR,datafile.project.key)
+    if not os.path.exists(folder):
+        os.makedirs(folder) #recursive mkdir
+
+    filepath = os.path.join(folder,datafile_uuid+".txt")
+    
+    # we keep track of chunks written and received as a
+    # very basic way to ensure data integrity
+    chunks_written = 0
+    with open(filepath, 'a') as f:
+        for chunk in chunks:
+            # storing this for the sake of if right now, 
+            # maybe useful in the future?
+            datafile.update_time = chunk['log_timestamp']
+            f.write(simplejson.dumps(chunk) + "\n")
+            chunks_written += 1
+
+    datafile.save()
+
+    return JsonResponse({
+        "status": "success",
+        "chunks_written": chunks_written,
+        "chunks_received": chunks_received
+    })
 
 
 #######################
@@ -271,6 +361,7 @@ def put_hubs(request, project_key):
 
 
 @is_own_project
+@require_hub_uuid
 @api_view(['GET'])
 def get_hubs(request, project_key):
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
@@ -287,6 +378,7 @@ def get_hubs(request, project_key):
 
 
 @is_own_project
+@require_hub_uuid
 @is_god
 @api_view(['POST'])
 def post_hubs(request, project_key):
@@ -298,6 +390,7 @@ def post_hubs(request, project_key):
 #########################
 
 @is_own_project
+@require_hub_uuid
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def members(request, project_key):

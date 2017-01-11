@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
-from pytz import timezone
+from pytz import timezone 
 import pytz
 import simplejson
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
@@ -16,6 +17,15 @@ def register(model):
 
     return inner
 
+class GetLocalTimeMixin(object):
+
+    def get_local_time(self, timestamp):
+        if timestamp == 0:
+            return "(None)"
+        else:
+            return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
+                .astimezone(settings.TIMEZONE)\
+                .strftime('%Y-%m-%d %H:%M:%S %Z')
 
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
@@ -31,21 +41,40 @@ class SerializedFieldWidget(AdminTextareaWidget):
         return super(SerializedFieldWidget, self).render(name, simplejson.dumps(value, indent=4), attrs)
 
 
-class MemberInline(admin.TabularInline):
+class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
-    readonly_fields = ("key",)
     extra = 3
+    fields = ('key', 'name', 'email', 'badge', 
+              'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
+              'last_audio_ts_fract', 'last_proximity_ts')
+    readonly_fields = ('key', 'last_seen', 'last_audio')
+    
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
 
+    def last_audio(self, obj):
+        return self.get_local_time(obj.last_audio_ts)
 
 class MeetingInLine(admin.TabularInline):
     model = Meeting
     readonly_fields = ("uuid",)
 
 
-class HubInline(admin.TabularInline):
+class HubInline(admin.TabularInline, GetLocalTimeMixin):
     model = Hub
-    readonly_fields = ("key",)
 
+    fields = ("name", "god", "uuid", "last_seen", "last_hub_time", "time_difference_in_seconds", "ip_address", "key")
+    readonly_fields = ("key", 'last_seen', "last_hub_time", "time_difference_in_seconds")
+
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
+    def last_hub_time(self, obj):
+        return self.get_local_time(obj.last_hub_time_ts)
+
+    def time_difference_in_seconds(self, obj):
+        return abs(obj.last_seen_ts - obj.last_hub_time_ts)
+        
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -98,24 +127,18 @@ class MeetingAdmin(admin.ModelAdmin):
                     'is_complete')
     actions_on_top = True
 
-    eastern = timezone("US/Eastern")
-
-    def get_local_time(self, timestamp):
-        return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
-            .astimezone(self.eastern)\
-            .strftime('%Y-%m-%d %H:%M:%S %Z%z')
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return self.get_local_time(inst.last_update_timestamp)
+            return get_local_time(inst.last_update_timestamp)
 
     def start(self, inst):
         if inst.start_time:
-            return self.get_local_time(inst.start_time)
+            return get_local_time(inst.start_time)
 
     def end(self, inst):
         if inst.end_time:
-            return self.get_local_time(inst.end_time)
+            return get_local_time(inst.end_time)
 
 
     def project_name(self, inst):

@@ -5,7 +5,7 @@ import pytz
 import random
 import simplejson
 import string
-from math import floor
+
 
 from decimal import Decimal
 
@@ -15,6 +15,7 @@ from django.contrib.auth import models as auth_models
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from jsonfield import JSONField
+from math import floor
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -145,6 +146,12 @@ class Hub(BaseModel):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     """IP address of the hub (if relevant)"""
 
+    last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    """The last time the hub was seen by the server (in epoch time)"""
+    
+    last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    """ The clock time of the hub at the time of the last API request """
+
     def get_object(self, last_update = None):
         if last_update:
             return {"name": self.name,
@@ -177,14 +184,16 @@ class Hub(BaseModel):
 class Member(BaseModel):
     """Definition of a Member, who belongs to a Project, and owns a badge"""
 
-    name = models.CharField(max_length=64)
     email = models.EmailField(unique=True)
+    name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
+    last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
 
@@ -273,6 +282,8 @@ class Meeting(BaseModel):
                 chunk = simplejson.loads(line)
                 chunks.append(chunk)
             except Exception:
+                #TODO this means we have some broken data or something,
+                # do we want to log an error or do something about it
                 pass
 
         f.seek(0)
@@ -298,3 +309,51 @@ class Meeting(BaseModel):
                     "metadata":meta}
 
         return {"metadata": meta}
+
+
+class DataFile(BaseModel):
+
+    uuid = models.CharField(max_length=64, db_index=True, unique=True)
+    """this will be a concatenation of the hub uuid and data type"""
+
+    data_type = models.CharField(max_length=64)
+    """Is this an audio or proximity data log?"""
+
+    # at this point we don't even really care about this, maybe worth storing though
+    last_update_timestamp = models.DecimalField(
+        decimal_places=3,
+        max_digits= 20,
+        null=True,
+        blank=True)
+    """Log_timestamp of the last chunk received"""
+
+    hub = models.ForeignKey(Hub, related_name="data")
+    """The Hub this DataFile belongs to"""
+
+    project = models.ForeignKey(Project, related_name="datafiles")
+    """The project this DataFile belongs to (because hub might move to a different project"""
+
+    def __unicode__(self):
+        return unicode(self.hub.name + "_" + str(self.data_type) + "_data")
+
+    def get_meta(self):
+        """creates a json object of the metadata for this DataFile"""
+        return {
+            'last_update_index': self.last_update_index,
+            'log_timestamp': self.last_update_timestamp,
+            'hub': self.hub.name
+        }
+
+
+    def to_object(self, file):
+        """Get a representation of this object for use with HTTP responses"""
+        if file:
+            return {
+                "chunks": self.get_chunks(),
+                "metadata": self.get_meta()
+            }
+        else:
+            # is this ever going to happen?
+            # should probably throw/log an error or something instead
+            return { "metadata": meta }
+

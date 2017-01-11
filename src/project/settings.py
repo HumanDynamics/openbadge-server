@@ -13,6 +13,7 @@ import os
 import socket
 
 import passwords
+from pytz import timezone 
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -229,6 +230,7 @@ PIPELINE_CSS = {
 
 APP_KEY = passwords.APP_KEY
 GOD_KEY = passwords.GOD_KEY
+TIMEZONE = timezone("US/Eastern")
 
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(hours=24)
 
@@ -242,6 +244,7 @@ REST_FRAMEWORK = {
 SEND_POST_MEETING_SURVEY = False
 POST_MEETING_SURVEY_URL = "https://mit.co1.qualtrics.com/jfe/form/SV_0MR67T0jZVKamwJ"
 
+DATA_DIR = os.path.join(BASE_DIR, "../data")
 
 try:
     HOSTNAME = socket.gethostname()

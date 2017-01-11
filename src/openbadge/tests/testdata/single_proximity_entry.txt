@@ -1,0 +1,1 @@
+{"type": "proximity received", "log_timestamp": 1476928194.236, "data": {"member": "D0:38:68:E7:54:D7", "timestamp": 1476928187.0, "voltage": 3.18, "rssi_distances": {"1": {"count": 29, "rssi": -76}, "34260": {"count": 6, "rssi": -48}}, "badge_address": "D0:38:68:E7:54:D7"}, "log_index": -1}
