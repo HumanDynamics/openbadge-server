@@ -12,6 +12,7 @@ staticfiles/
 localsettings.py
 passwords.py
 openbadge_keys.pem
+.env
 
 homebrew.pth
 

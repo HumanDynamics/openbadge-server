@@ -1,1 +1,0 @@
-0 2 * * * sudo -u www-data fab -f /opt/OpenBadge-Server/deploy/fabric/db_backup.py backup_db >> /var/log/django/django.log 2>&1

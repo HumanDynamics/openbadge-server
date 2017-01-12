@@ -1,0 +1,21 @@
+# PostgreSQL
+POSTGRES_PASSWORD=
+POSTGRES_USER=
+
+# General settings
+DJANGO_DEBUG=True
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_SECRET_KEY=
+DJANGO_ALLOWED_HOSTS=.media.mit.edu
+
+# Security! Better to use DNS for this task, but you can use redirect
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# django-allauth
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+
+# Other settings
+APP_KEY=
+GOD_KEY=dummy
+
