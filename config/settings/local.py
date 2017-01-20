@@ -26,6 +26,11 @@ DEBUG = env.bool('DJANGO_DEBUG', default=True)
 SECRET_KEY = env('DJANGO_SECRET_KEY', default='jq#=@k)t^w9_lht4fd^zdudd7i1qu6j(!xj1m+*o1j(ri-*!@8')
 
 
+# STATIC FILE CONFIGURATION
+# ------------------------------------------------------------------------------
+# See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
+STATIC_ROOT = str(ROOT_DIR('staticfiles'))
+
 
 # CACHING
 # ------------------------------------------------------------------------------
@@ -54,7 +59,6 @@ DEBUG_TOOLBAR_CONFIG = {
 
 # django-extensions
 # ------------------------------------------------------------------------------
-INSTALLED_APPS += ('django_extensions', )
 
 # TESTING
 # ------------------------------------------------------------------------------

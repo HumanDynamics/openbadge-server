@@ -2,7 +2,6 @@ from functools import wraps
 import time
 import sys
 import os
-import analysis
 import simplejson
 
 from dateutil.parser import parse as parse_date
@@ -195,8 +194,6 @@ def put_meeting(request, project_key):
 
     meeting.save()
 
-    if meeting.is_complete and settings.SEND_POST_MEETING_SURVEY:
-        analysis.post_meeting_analysis(meeting)
 
     return JsonResponse({'detail': 'meeting created'})
 

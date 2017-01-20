@@ -21,6 +21,14 @@ RUN sed -i 's/\r//' /entrypoint.sh \
     && chmod +x /gunicorn.sh \
     && chown django /gunicorn.sh
 
+RUN mkdir /www \
+    && mkdir /www/static \
+    && chown django /www/static
+
+RUN mkdir /data \
+    && chown django /data
+
 WORKDIR /app
+
 
 ENTRYPOINT ["/entrypoint.sh"]

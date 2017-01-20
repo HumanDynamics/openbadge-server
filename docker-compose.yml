@@ -1,11 +1,14 @@
 version: '2'
 
 volumes:
+  hub_data: {}
   postgres_data: {}
   postgres_backup: {}
+  redis_data: {}
 
 services:
   postgres:
+    restart: always
     build: ./compose/postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -13,25 +16,45 @@ services:
     env_file: .env
 
   django:
+    restart: always
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile
+    expose:
+      - "5000"
     user: django
     depends_on:
       - postgres
+    links:
+      - postgres
       - redis
+    volumes:
+      - hub_data:/data
+      - /www/static
     command: /gunicorn.sh
     env_file: .env
 
   nginx:
     build: ./compose/nginx
+    restart: always
     depends_on:
       - django
-
+    volumes_from:
+      - django
+    volumes_from:
+      - django
+    links:
+      - django
     ports:
       - "0.0.0.0:80:80"
-
-
   redis:
+    restart: always
     image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 

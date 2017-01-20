@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.7/howto/deployment/wsgi/
 
 import os, sys
 sys.path.append("/opt")
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.common")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
