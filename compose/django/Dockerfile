@@ -1,6 +1,7 @@
 
 FROM python:2.7
 ENV PYTHONUNBUFFERED 1
+ENV PYTHON_PATH /app/openbadge-server
 
 # Requirements have to be pulled and installed here, otherwise caching won't work
 COPY ./requirements /requirements

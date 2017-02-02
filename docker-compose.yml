@@ -13,12 +13,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backup:/backups
-    env_file: .env
+    env_file: ./compose/postgres/.env
 
   django:
     restart: always
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=mysecretpass
+      - PYTHONPATH=/app/openbadge-server
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile
@@ -34,7 +37,6 @@ services:
       - hub_data:/data
       - /www/static
     command: /gunicorn.sh
-    env_file: .env
 
   nginx:
     build: ./compose/nginx
