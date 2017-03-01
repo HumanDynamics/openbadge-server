@@ -1,0 +1,18 @@
+# PostgreSQL
+POSTGRES_USER=postgresuser
+
+# General settings
+DJANGO_DEBUG=True
+DJANGO_SETTINGS_MODULE="config.settings.production"
+
+# Security! Better to use DNS for this task, but you can use redirect
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# django-allauth
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+
+# Other settings
+APP_KEY="QEFq39fe()#Qkfk9-q3DK(dq3k9#QdJQDJQD#JDQ#"
+GOD_KEY=dummy
+

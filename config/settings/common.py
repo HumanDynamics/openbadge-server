@@ -22,26 +22,26 @@ environ.Env.read_env(ROOT_DIR("config/settings/env_settings"))
 # APP CONFIGURATION
 # ------------------------------------------------------------------------------
 THIRD_PARTY_APPS = (
-        'pipeline',
-        'grappelli',
-        'rest_framework',
-        'rest_framework.authtoken',
-        'rest_framework_expiring_authtoken',
-        )
+    'pipeline',
+    'grappelli',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_expiring_authtoken',
+)
 DJANGO_APPS = (
-        'django.contrib.admin',
-        'django.contrib.contenttypes',
-        'django.contrib.auth',
-        'django.contrib.sessions',
-        'django.contrib.messages',
-        'django.contrib.staticfiles',
-        )
+    'django.contrib.admin',
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+)
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
-        # custom apps go here
-        'openbadge',
-        )
+    # custom apps go here
+    'openbadge',
+)
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = THIRD_PARTY_APPS + DJANGO_APPS + LOCAL_APPS
@@ -49,16 +49,16 @@ INSTALLED_APPS = THIRD_PARTY_APPS + DJANGO_APPS + LOCAL_APPS
 # MIDDLEWARE CONFIGURATION
 # ------------------------------------------------------------------------------
 MIDDLEWARE_CLASSES = (
-        # TODO project.middleware ???
-        'config.middleware.ExceptionLoggingMiddleware',
-        'django.contrib.sessions.middleware.SessionMiddleware',
-        'django.middleware.common.CommonMiddleware',
-        'django.middleware.csrf.CsrfViewMiddleware',
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-        'django.contrib.messages.middleware.MessageMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    )
+    # TODO project.middleware ???
+    'config.middleware.ExceptionLoggingMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+)
 
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ STATICFILES_FINDERS = (
 # MEDIA CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = str(APPS_DIR('media'))
+MEDIA_ROOT = "/data/media/"
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'

@@ -30,5 +30,6 @@ CACHES = {
 STATIC_ROOT = '/www/static'
 
 DATA_DIR="/data/"
+MEETINGS_DIR="data"
 
 

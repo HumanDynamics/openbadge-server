@@ -64,6 +64,7 @@ DEBUG_TOOLBAR_CONFIG = {
 # ------------------------------------------------------------------------------
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 DATA_DIR="../data/"
+MEETINGS_DIR="../meetings/"
 
 
 # Your local stuff: Below this line define 3rd party library settings
