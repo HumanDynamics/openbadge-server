@@ -17,7 +17,7 @@ ROOT_DIR = environ.Path(__file__) - 3  # (openbadge-server/config/settings/commo
 APPS_DIR = ROOT_DIR.path('openbadge-server')
 
 env = environ.Env()
-environ.Env.read_env(ROOT_DIR("config/settings/env_settings"))
+#environ.Env.read_env(ROOT_DIR("config/settings/env_settings"))
 
 # APP CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -51,6 +51,7 @@ INSTALLED_APPS = THIRD_PARTY_APPS + DJANGO_APPS + LOCAL_APPS
 MIDDLEWARE_CLASSES = (
     # TODO project.middleware ???
     'config.middleware.ExceptionLoggingMiddleware',
+    'config.middleware.XForwardedForMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,23 +64,20 @@ MIDDLEWARE_CLASSES = (
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-        'sites': 'openbadge-server.contrib.sites.migrations'
-        }
+    'sites': 'openbadge-server.contrib.sites.migrations'
+}
 
 # DEBUG
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool('DJANGO_DEBUG', False)
 
-
-
-
 # DATABASE CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-        'default': env.db('DATABASE_URL', default='postgres:///openbadge-server'),
-    }
+    'default': env.db('DATABASE_URL', default='postgres:///openbadge-server'),
+}
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 
@@ -107,15 +105,15 @@ USE_L10N = True
 USE_TZ = True
 
 CONTEXT_PROCESSORS = (
-        "django.core.context_processors.request",
-        "django.contrib.auth.context_processors.auth",
-        "django.template.context_processors.debug",
-        "django.template.context_processors.i18n",
-        "django.template.context_processors.media",
-        "django.template.context_processors.static",
-        "django.template.context_processors.tz",
-        "django.contrib.messages.context_processors.messages",
-        )
+    "django.core.context_processors.request",
+    "django.contrib.auth.context_processors.auth",
+    "django.template.context_processors.debug",
+    "django.template.context_processors.i18n",
+    "django.template.context_processors.media",
+    "django.template.context_processors.static",
+    "django.template.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+)
 
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
@@ -188,3 +186,7 @@ ALLOWED_HOSTS = passwords.ALLOWED_HOSTS
 APP_KEY = passwords.APP_KEY
 GOD_KEY = passwords.GOD_KEY
 
+# Security! Better to use DNS for this task, but you can use redirect
+DJANGO_SECURE_SSL_REDIRECT=False
+# django-allauth
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True

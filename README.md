@@ -4,6 +4,8 @@
 
 ## Installation
 ----------------
+NOTE: This is outdated
+
 
 For a dev server, you need first to install:
 * [Virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) using Pip

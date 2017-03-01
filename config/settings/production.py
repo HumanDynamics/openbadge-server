@@ -29,6 +29,7 @@ CACHES = {
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
 STATIC_ROOT = '/www/static'
 
+# Collected data directory:
 DATA_DIR="/data/"
 MEETINGS_DIR="data"
 

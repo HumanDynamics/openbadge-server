@@ -10,8 +10,9 @@ services:
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
       - postgres_backup_dev:/backups
-    environment:
-      - POSTGRES_USER=openbadge-server
+    env_file: 
+      - ./compose/common.env
+      - ./compose/postgres/.env
 
   django:
     build:
@@ -20,10 +21,9 @@ services:
     command: /start-dev.sh
     depends_on:
       - postgres
-    environment:
-      - POSTGRES_USER=openbadge-server
-      - USE_DOCKER=yes
-      - PYTHONPATH=$PYTHONPATH:.:/app:/app/openbadge-server
+    env_file: 
+      - ./compose/common.env
+      - ./compose/django/.env
     volumes:
       - .:/app
       - ../data:/data
