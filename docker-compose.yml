@@ -20,7 +20,7 @@ services:
     restart: always
     env_file: 
       - ./compose/common.env
-      - ./compose/django/.env
+      - ./compose/django/env_settings
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile
