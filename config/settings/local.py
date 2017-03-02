@@ -19,12 +19,6 @@ from .common import *  # noqa
 DEBUG = env.bool('DJANGO_DEBUG', default=True)
 
 
-# SECRET CONFIGURATION
-# ------------------------------------------------------------------------------
-# See: https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
-# Note: This key only used for development and testing.
-SECRET_KEY = env('DJANGO_SECRET_KEY', default='jq#=@k)t^w9_lht4fd^zdudd7i1qu6j(!xj1m+*o1j(ri-*!@8')
-
 
 # STATIC FILE CONFIGURATION
 # ------------------------------------------------------------------------------

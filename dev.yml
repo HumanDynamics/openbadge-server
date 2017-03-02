@@ -12,7 +12,6 @@ services:
       - postgres_backup_dev:/backups
     env_file: 
       - ./compose/common.env
-      - ./compose/postgres/.env
 
   django:
     build:
@@ -23,7 +22,7 @@ services:
       - postgres
     env_file: 
       - ./compose/common.env
-      - ./compose/django/.env
+      - ./compose/django/env_settings
     volumes:
       - .:/app
       - ../data:/data

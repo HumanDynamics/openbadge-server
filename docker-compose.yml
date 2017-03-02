@@ -13,6 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backup:/backups
+        #TODO remove env files
     env_file: 
       - ./compose/common.env
 
