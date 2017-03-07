@@ -100,9 +100,11 @@ class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
 def _to_timestamp(dt):
     return (dt - datetime.datetime(1970, 1, 1).replace(tzinfo=pytz.UTC)).total_seconds()
 
-
 def upload_to(self, filename):
-    return "/".join(('logs', str(self.project.key), self.project.key + "_" + self.uuid + os.path.splitext(filename)[1]))
+    return "/".join((
+        "data",
+        str(self.project.key),
+        self.project.key + "_" + self.uuid + os.path.splitext(filename)[1]))
 
 
 class Project(BaseModel):
