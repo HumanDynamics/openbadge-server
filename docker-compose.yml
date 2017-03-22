@@ -20,9 +20,12 @@ services:
 
   django:
     restart: always
-    env_file: 
-      - ./compose/common.env
-      - ./compose/django/env_settings
+    environment: 
+      - POSTGRES_DBNAME=postgres
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=mysecretpass
+      - PYTHONPATH=/app/openbadge-server
+      - DJANGO_SETTINGS_MODULE=config.settings.production
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile

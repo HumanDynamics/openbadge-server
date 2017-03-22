@@ -1,2 +1,0 @@
-PYTHONPATH=/app/openbadge-server
-DJANGO_SETTINGS_MODULE=config.settings.production

@@ -10,8 +10,10 @@ services:
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
       - postgres_backup_dev:/backups
-    env_file: 
-      - ./compose/common.env
+    environment: 
+      - POSTGRES_DBNAME=postgres
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=mysecretpass
 
   django:
     build:
@@ -20,9 +22,12 @@ services:
     command: /start-dev.sh
     depends_on:
       - postgres
-    env_file: 
-      - ./compose/common.env
-      - ./compose/django/env_settings
+    environment: 
+      - POSTGRES_DBNAME=postgres
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=mysecretpass
+      - PYTHONPATH=/app/openbadge-server
+      - DJANGO_SETTINGS_MODULE=config.settings.local
     volumes:
       - .:/app
       - ../data:/data
