@@ -13,9 +13,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backup:/backups
-        #TODO remove env files
-    env_file: 
-      - ./compose/common.env
+    environment: 
+      - POSTGRES_DBNAME=postgres
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=mysecretpass
 
   django:
     restart: always

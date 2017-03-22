@@ -4,52 +4,53 @@
 
 ## Installation
 ----------------
-NOTE: This is outdated
+
+You will need to install Docker CE to run the openbadge server. Follow the instructions here: https://docs.docker.com/engine/installation/
 
 
-For a dev server, you need first to install:
-* [Virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) using Pip
-* [Autoenv](https://github.com/kennethreitz/autoenv) using Pip
-* [MySQL](https://dev.mysql.com/doc/refman/5.6/en/osx-installation-pkg.html) using the preinstalled package or Homebrew. 
+You will likely want to use docker-machine to provision either local or remote hosts. 
 
-You also probably want to install [PyCharm Educational Edition](https://www.jetbrains.com/pycharm-educational/) if you don't have it (it's free for academic accounts!).
+To provision a local host for development, follow the instructions here: https://docs.docker.com/machine/get-started/
 
-Once you have those, be sure to check out the code from this repository. CD into the base directory, and Autoenv should show a message about executing the .env file. Choose `yes`, since it has some very useful shortcuts we'll use.
+You can also use docker-machine to provision remote hosts from the command line, e.g. on AWS or DigitalOcean 
 
-Now, create a virtual environment:
+Once your machine is provisioned, you must make it active by running: 
+    `eval $(docker-machine env <machine-name>)`
 
-    virtualenv env
+You can check to see if this was sucessful by running `docker-machine ls`.
+There should be an asterisk under the 'active' column in the output for the machine you activated.
 
-With that created, you'll want to CD to a different directory and then back to the root project directory. This is to restart the Autoenv script with the environment you just created. Now, every time you CD into the base directory, it loads your virtual environment automatically.
+Now, you can run the following:
 
-First thing is to install the required libraries:
+`docker-compose build`
 
-    In Ubuntu, first run: sudo apt-get install build-essential libssl-dev libffi-dev python-dev; pip install pycrypto
-    pip install -r requirements.txt
+After the build completes, run:
 
-You then will need to install MySQL Python, which isn't included in the requirements because the production server needs to not have it:
+`docker-compose up`
 
-    In Ubuntu, first run: sudo apt-get install python-mysqldb libmysqlclient-dev
-    pip install MySQL-python
+You can run migrations now using the following command: 
 
-From here on out you'll need to set up your MySQL database:
-
-    fab -f deploy/fabric/deploy.py configure_local_db
-    or, if you have a root passwod set for mySQL, fab -f deploy/fabric/deploy.py configure_local_db:root_password=YOU_PASSWORD
-
-With that in place, you can now set up the database tables. You can use the shortcut provided in .env:
-
-    sudo mkdir /var/log/django
-    sudo chmod 777 -R  /var/log/django
-    migrate
+`docker-compose run django python manage.py migrate`
 
 You'll also want to create your super user. There's currently no shortcut for this:
 
-    python src/manage.py createsuperuser --settings=project.localsettings
+`docker-compose run django python manage.py createsuperuser`
 
-That should be it! At this point, all you need to do is run the server, then log into your admin to put data into it.
 
-    runserver
+
+You probably want to install [PyCharm Educational Edition](https://www.jetbrains.com/pycharm-educational/) if you don't have it (it's free for academic accounts!).
+
+Migrate
+    migrate
+
+
+That should be it! At this point, your server should be up and running.
+
+Your openbadge server should be running on the machine you provisioned with docker-machine now. To check the IP:
+`docker-machine ip <machine-name>`
+
+You can access the server with this IP. If it is a virtual host running on your machine, you will need to set up port forwarding to your virtual machine in order to access it outside of your computer.
+
 
 
 ## Deployment
@@ -136,52 +137,10 @@ If you need to set the timestamp to the current date, you can use the set_timest
 
 Note - if you want to set the timestamp to a specific value, you can use --timestamp={epoch time}
 
-# Old/unsupported custom Commands
----------------
-## Sending Weekly Summary Emails
-
-First `cd` into the project directory.
-
-To send an email containing the weekly summary to all groups, run this command:
-
-    python src/manage.py send_weekly_email --week_num {positive_integer}
-
-To send it to one or more specific groups, run this instead:
-
-    python src/manage.py send_weekly_email --week_num {positive_integer} --group_keys {group_key_1} {group_key_2} ...
-
-## Generate Weekly Summary Charts
-
-To generate charts for the weekly summary for all meetings for a specified group within a specified week (starting from Mon June 13, 2016, e.g. Week 2: Mon 2016-06-20 to Sun 2016-06-26), `cd` into the project directory, then run this command:
-
-    python src/manage.py generatecharts --week_num {positive_integer} --group_keys {group_key_1} {group_key_2} ...
-
-To generate charts for all meetings for all groups, run this command:
-
-    python src/manage.py generatecharts --week_num {positive_integer}
-
-Reports for each group can be viewed through `{hostname}/weekly_group_report/{group_key}/{week_num}`
-
-## Setting visualization ranges
-
-Similarly to the previous command, you can override the visualization ranges for a given group.
-
-To run it, `cd` into the project directory, then run this command:
-
-    python src/manage.py set_visualization_ranges --group_key={group key} --filename={FILENAME of visualization rages}
-
-
-## Re-sending post-meeting email
-
-Occasionally, users complain that they have not received the end-of-meeting email. You can resend this email using the following command.
-
-To run it, `cd` into the project directory, then run this command:
-
-    python src/manage.py resend_meeting_email --meeting_uuid {meeting_uuid} --member_key {member_key}
-
 
 # Database related commands
 ---------------
+#NOTE this is outdated
 
 ## Backing up a Server's Database
 
@@ -235,8 +194,3 @@ It will ask for you to confirm a couple times, then do the restoration.
 
 Finally, **Be sure you turn DEBUG = False** on again in settings.py.
 
-
-# Notes
----------------
-
-If you use autoenv, there are many shortcut aliases included to make your life simpler. They change too often to put them in the README, but check out the .env file to see what they are.
