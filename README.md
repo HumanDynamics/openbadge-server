@@ -20,7 +20,9 @@ Once your machine is provisioned, you must make it active by running:
 You can check to see if this was sucessful by running `docker-machine ls`.
 There should be an asterisk under the 'active' column in the output for the machine you activated.
 
-Now, you can run the following:
+For development, you will want to swap out 'docker-compose' in the following instructions for 'docker-compose -f dev.yml'
+
+Now, you can run the following (all from the base directory of the project):
 
 `docker-compose build`
 
@@ -36,16 +38,6 @@ You'll also want to create your super user. There's currently no shortcut for th
 
 `docker-compose run django python manage.py createsuperuser`
 
-
-
-You probably want to install [PyCharm Educational Edition](https://www.jetbrains.com/pycharm-educational/) if you don't have it (it's free for academic accounts!).
-
-Migrate
-    migrate
-
-
-That should be it! At this point, your server should be up and running.
-
 Your openbadge server should be running on the machine you provisioned with docker-machine now. To check the IP:
 `docker-machine ip <machine-name>`
 
@@ -56,51 +48,27 @@ You can access the server with this IP. If it is a virtual host running on your 
 ## Deployment
 ----------------
 
-In order to deploy the server to production, you need four files that are not checked in. Get `github_rsa`, `github_rsa.pub`, `sshkey`, and `sshkey.pub` from someone via email, and put them in the directory `deploy/fabric/keys`.
+In order to deploy the server to production, you will need to decide where you wish to deploy to. If you are deploying to a remote cloud-based server, for example DigitalOcean, all you will need to do is provision a host with docker-machine. You can follow the instructions furnished by the service provider to set up the host with docker-machine.
 
-At that point all you need to deploy the code to production is to run the command:
+If you intend to deploy to an existing host, you will need three things: A user, an ssh key for said user, and the IP of the machine. To connect to the host via docker using docker-machine, run the following:
 
-    fab -f deploy/fabric/deploy.py -H {HOSTNAME} deploy
+`docker-machine create --driver generic --generic-ssh-user <username> --generic-ssh-key <ssh-key-location> --generic-ip-address <ip-address> <machine-name>`
 
+Docker-machine will automatically install docker and all related prereqs on the host.
+ 
+After you have provisioned your host, all you need to do is follow the instructions seen above. 
 
 ## Production Server Setup
 ----------------
+If the project has already been set up with SSH keys, be sure to get them from someone. 
 
-If the repository is public, you will not need to create a Github access token. Otherwise, if it is private, follow [the instructions here](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) to get a Personal Access Key.
-
-If the project has already been set up with SSH keys, be sure to get them from someone. Just put the keys in the deploy/fabric/keys/ directory. If you don't have any keys there, they will be created automatically when you create a deploy user.
-
-Ensure you have a `passwords.py` file located on the root of this project's directory, and that it has the proper usernames and passwords in it. It should have the exact variables and format of `src/project/passwords.py.template`, only the passwords and usernames should be filled in.
-
-
-Now that we have the correct files, create a deploy user on your server:
-
-    fab -f deploy/fabric/create_deploy_user.py -H {{ YOUR USERNAME HERE }}@{{ YOUR HOSTNAME HERE }} create
-    
-Or, if you are using an SSHConfig HostName alias, just use this:
-
-    fab -f deploy/fabric/create_deploy_user.py -H {{ HOSTNAME }} create
-
-To make sure it worked, run this command to test that the user was created:
-
-    fab -f deploy/fabric/deploy.py -H {{ YOUR HOSTNAME HERE }} test
-
-Then just run the command:
-
-    fab -f deploy/fabric/deploy.py -H {{ YOUR HOSTNAME HERE }} setup_server
-
-This command is safe to run on a server that's already been set up, though you should avoid it if possible.
-
-After that, you just need to configure Django.
-
-    fab -f deploy/fabric/deploy.py -H {{ YOUR HOSTNAME HERE }} create_superuser
-    
-Now you're all set and you should be able to log in to your admin console on your server!
-
+Ensure you have a `passwords.py` file located in the config subdirectory of this project's directory, and that it has the proper usernames and passwords in it. It should have the exact variables and format of `config/passwords.py.template`, only the passwords and usernames should be filled in. Also, be sure to change the environment variables in docker-compose.yml to match your environment.
 
 # Custom Commands
 ---------------
+#NOTE: OUTDATED
 # General note
+
 The description below show how to execute commands in the local (dev) instance of the server. When executing on the
 production server, you should run them as the www-data user, and add --pythonpath=/opt to the command. For example:
 
