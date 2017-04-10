@@ -49,8 +49,6 @@ services:
       - django
     volumes_from:
       - django
-    volumes_from:
-      - django
     links:
       - django
     ports:
