@@ -91,6 +91,6 @@ Finally, run the following command to start the server (the "-d" option will kee
 ## Misc commands
 * docker-compose down : disables the server
 * docker-compose down -v : disables the server and deletes the volume data (use with caution...)
-* docker-compose build --force-rm --no-cache --pull : rebuilds without using cached images. Useful when you change the 
+* docker-compose build --force-rm --no-cache --pull : rebuilds without using cached images. Useful when you change the
 configuration files
 * docker volume ls : list of existing volumes
