@@ -55,7 +55,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     def last_audio(self, obj):
         return self.get_local_time(obj.last_audio_ts)
 
-class MeetingInLine(admin.TabularInline):
+class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
     model = Meeting
     readonly_fields = ("uuid",)
 
@@ -118,7 +118,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 @register(Meeting)
-class MeetingAdmin(admin.ModelAdmin):
+class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
     readonly_fields = ("key",)
     list_display = ('uuid', 'project_name', 'hub',
                     'start', 'end',
@@ -130,15 +130,15 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def last_update(self, inst):
         if inst.last_update_timestamp:
-            return get_local_time(inst.last_update_timestamp)
+            return self.get_local_time(inst.last_update_timestamp)
 
     def start(self, inst):
         if inst.start_time:
-            return get_local_time(inst.start_time)
+            return self.get_local_time(inst.start_time)
 
     def end(self, inst):
         if inst.end_time:
-            return get_local_time(inst.end_time)
+            return self.get_local_time(inst.end_time)
 
 
     def project_name(self, inst):

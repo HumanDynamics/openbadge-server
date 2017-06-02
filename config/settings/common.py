@@ -11,13 +11,12 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 from __future__ import absolute_import, unicode_literals
 
 import environ
-import config.passwords as passwords
 
 ROOT_DIR = environ.Path(__file__) - 3  # (openbadge-server/config/settings/common.py - 3 = openbadge-server/)
 APPS_DIR = ROOT_DIR.path('openbadge-server')
 
 env = environ.Env()
-#environ.Env.read_env(ROOT_DIR("config/settings/env_settings"))
+environ.Env.read_env(ROOT_DIR(".env"))
 
 # APP CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -181,10 +180,10 @@ AUTH_USER_MODEL = 'openbadge.OpenBadgeUser'
 AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
 
 #passwords.py stuff
-SECRET_KEY = passwords.DJANGO_SECRET_KEY
-ALLOWED_HOSTS = passwords.ALLOWED_HOSTS
-APP_KEY = passwords.APP_KEY
-GOD_KEY = passwords.GOD_KEY
+SECRET_KEY = env("DJANGO_SECRET_KEY")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+APP_KEY = env("APP_KEY")
+GOD_KEY = env("GOD_KEY")
 
 # Security! Better to use DNS for this task, but you can use redirect
 DJANGO_SECURE_SSL_REDIRECT=False
