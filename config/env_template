@@ -1,13 +1,12 @@
+# Django settings
+DJANGO_SECRET_KEY=your_key
+DJANGO_ALLOWED_HOSTS=your_host_ip_or_name
 
-# General settings
-DJANGO_DEBUG=False
-DJANGO_SECRET_KEY=
-DJANGO_ALLOWED_HOSTS=.media.mit.edu
+# Postgres settings
+POSTGRES_DB=openbadge
+POSTGRES_USER=openbadge
+POSTGRES_PASSWORD=your_postgres_password
 
-# Security! Better to use DNS for this task, but you can use redirect
-DJANGO_SECURE_SSL_REDIRECT=False
-
-# django-allauth
-DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
-
-
+# Badge server settings
+APP_KEY=your_app_key
+GOD_KEY=dummy

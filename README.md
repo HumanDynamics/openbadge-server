@@ -4,15 +4,15 @@ The OpenBadge server now uses Docker for development and deployment. This docume
 You can find further examples in the Docker website.
 
 ## Configuration
-Configuration is done using a .env file. Create a new one using the env_template files, and edit the following fields.
-Important! do not commit the .env to a github repository, but keep a copy somewhere safe.
+Configuration is done using a .env file. Create a new one by copying config/env_template to the root project dir and renaming it to .env. Then, edit the following fields:
 * POSTGRES_DBNAME - name of database schema (can leave as is)
 * POSTGRES_USER - name of postgres user to use (can leave as is)
 * POSTGRES_PASSWORD - unique password to use for the postgres user
-* POSTGRES_ROOT_PASSWORD - unique password to use for the postgres root user
 * DJANGO_SECRET_KEY - A secret key for a particular Django installation. This is used to provide cryptographic signing, and should be set to a unique, unpredictable value
 * ALLOWED_HOSTS - A list of strings representing the host/domain names that this Django site can serve. This is a security measure to prevent HTTP Host header attacks.
 * APP_KEY - a unique key used by the OpenBadge server to authenticate hubs
+
+Important! do not commit the .env to a github repository, but keep a copy somewhere safe.
 
 ## Setting up your working environment
 First, you will need to install Docker CE to run the openbadge server. Follow the instructions here:
@@ -87,3 +87,10 @@ You'll also want to create your super user (Django admin account):
 Finally, run the following command to start the server (the "-d" option will keep the service up as a daemon):
 
 `docker-compose up -d`
+
+## Misc commands
+* docker-compose down : disables the server
+* docker-compose down -v : disables the server and deletes the volume data (use with caution...)
+* docker-compose build --force-rm --no-cache --pull : rebuilds without using cached images. Useful when you change the 
+configuration files
+* docker volume ls : list of existing volumes

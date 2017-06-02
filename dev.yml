@@ -10,24 +10,22 @@ services:
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
       - postgres_backup_dev:/backups
-    environment: 
-      - POSTGRES_DBNAME=postgres
-      - POSTGRES_USER=postgresuser
-      - POSTGRES_PASSWORD=mysecretpass
+    env_file:
+      - .env
 
   django:
+    environment:
+      - PYTHONPATH=/app/openbadge-server
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - USE_DOCKER=yes
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile-dev
     command: /start-dev.sh
     depends_on:
       - postgres
-    environment: 
-      - POSTGRES_DBNAME=postgres
-      - POSTGRES_USER=postgresuser
-      - POSTGRES_PASSWORD=mysecretpass
-      - PYTHONPATH=/app/openbadge-server
-      - DJANGO_SETTINGS_MODULE=config.settings.local
     volumes:
       - .:/app
       - ../data:/data
