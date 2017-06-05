@@ -177,7 +177,7 @@ AUTHENTICATION_BACKENDS = (
 AUTH_USER_MODEL = 'openbadge.OpenBadgeUser'
 
 # SLUGLIFIER
-AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
+
 
 #passwords.py stuff
 SECRET_KEY = env("DJANGO_SECRET_KEY")

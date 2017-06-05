@@ -3,7 +3,7 @@ import datetime
 import os
 import pytz
 import random
-import simplejson
+import json as simplejson
 import string
 
 
@@ -80,6 +80,13 @@ def fix_email(cls):
 
     return cls
 
+def upload_to(self, filename):
+    location =  "/".join((
+        "data",
+        str(self.project.key),
+        self.project.key + "_" + self.uuid + os.path.splitext(filename)[1]))
+    return location
+
 
 class OverwriteStorage(FileSystemStorage):
     def get_available_name(self, name):
@@ -100,13 +107,6 @@ class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
 def _to_timestamp(dt):
     return (dt - datetime.datetime(1970, 1, 1).replace(tzinfo=pytz.UTC)).total_seconds()
 
-def upload_to(self, filename):
-    return "/".join((
-        "data",
-        str(self.project.key),
-        self.project.key + "_" + self.uuid + os.path.splitext(filename)[1]))
-
-
 class Project(BaseModel):
     """
     Definition of the Project, which is an `organization`-level collection of hubs, badges, and meetings
@@ -119,17 +119,32 @@ class Project(BaseModel):
         return unicode(self.name)
 
     def get_meetings(self, file):
-        return {'meetings': {meeting.uuid: meeting.to_object(file) for meeting in self.meetings.all()}}
+        return {
+            'meetings': {
+                meeting.key: meeting.to_object(file) for meeting in self.meetings.all()
+            }
+        }
+
+    def get_meeting(self, file, meeting_uuid):
+        meeting = self.meetings.get(uuid=meeting_uuid)
+        return { meeting.key: meeting.to_object(file) }
 
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
-
-        return {'project_id': self.id,
-                'key': self.key,
-                'name': self.name,
-                'badge_map': {member.badge: {"name": member.name, "key": member.key} for member in self.members.all()},
-                'members': {member.name: member.to_dict() for member in self.members.all()}
-                }
+        return {
+            'project_id': self.id,
+            'key': self.key,
+            'name': self.name,
+            'badge_map': {
+                member.badge: {
+                    "name": member.name,
+                    "key": member.key
+                } for member in self.members.all()
+            },
+            'members': {
+                member.name: member.to_dict() for member in self.members.all()
+            }
+        }
 
 
 class Hub(BaseModel):
@@ -156,27 +171,36 @@ class Hub(BaseModel):
 
     def get_object(self, last_update = None):
         if last_update:
-            return {"name": self.name,
+            return {
+                "name": self.name,
                 "meetings": self.get_completed_meetings(),
                 "is_god": self.god,
-                'badge_map':{member.badge: {"name": member.name, "key": member.key}
-                             for member in self.project.members.all()
-                             if int(member.date_updated.strftime("%s")) > last_update},
-                'members':{member.name: member.to_dict() for member in self.project.members.all()
+                'badge_map': {
+                    member.badge: {
+                        "name": member.name,
+                        "key": member.key
+                    } for member in self.project.members.all()
+                        if int(member.date_updated.strftime("%s")) > last_update
+                },
+                'members': {
+                    member.name: member.to_dict() for member in self.project.members.all()
                             if int(member.date_updated.strftime("%s")) > last_update},
                 }
         else:
-            return {"name": self.name,
-                    "meetings": self.get_completed_meetings(),
-                    "is_god": self.god
-                    }
+            return {
+                "name": self.name,
+                "meetings": self.get_completed_meetings(),
+                "is_god": self.god
+            }
 
     def get_completed_meetings(self):
-
-        return {meeting.uuid: {"last_log_timestamp": meeting.last_update_timestamp,
-                               "last_log_serial": meeting.last_update_index,
-                               "is_complete": meeting.is_complete}
-                for meeting in self.meetings.all()}
+        return {
+            meeting.key: {
+                "last_log_timestamp": meeting.last_update_timestamp,
+                "last_log_serial": meeting.last_update_index,
+                "is_complete": meeting.is_complete
+            } for meeting in self.meetings.all() if meeting.is_complete
+        }
 
     def __unicode__(self):
         """This method is called in the drop-down for choosing the hub a project is associated with"""
@@ -260,7 +284,6 @@ class Meeting(BaseModel):
 
     log_file = models.FileField(upload_to=upload_to, storage=OverwriteStorage(), blank=True)
     """Local reference to log file"""
-
     project = models.ForeignKey(Project, related_name="meetings")
     """The Project this Meeting belongs to"""
 
@@ -277,7 +300,8 @@ class Meeting(BaseModel):
 
         f = self.log_file
 
-        f.readline()  # the first line will be info about the meeting, all subsequent lines are chunks
+        f.readline()  # the first line will be info about the meeting
+        
 
         for line in f.readlines():
             try:
@@ -292,28 +316,55 @@ class Meeting(BaseModel):
         return chunks
 
     def get_meta(self):
-        """open and read the first line of this meeting's log_file"""
+        """return the metadata for this meeting object"""
 
         f = self.log_file
-        return simplejson.loads(
-            f.readline())  # the first line will be info about the meeting, all subsequent lines are chunks
+        meta = simplejson.loads(f.readline())
+        line_type = meta["type"]
+        meta["members"] = []
+
+        # the following few lines are members joining
+        line = simplejson.loads(f.readline())
+        #TODO meetings with no data break this
+        while "received" not in line["type"] and "ended" not in line["type"]:
+            if "member" in line["type"] and line["data"]["change"] == "join":
+                meta["members"].append(line["data"]["member_key"])
+            try:
+                line = simplejson.loads(f.readline())
+            except ValueError as e:
+                break
+
+        #grab some additional metadata from the object
+        meta['key'] = self.key
+        meta['log_index'] = self.last_update_index
+        meta['log_timestamp'] = self.last_update_timestamp
+        meta['is_complete'] = self.is_complete
+        meta['project'] = self.project.key
+
+        if self.is_complete:
+            meta['end_time'] = float(self.end_time)
+
+        #return file pointer to beginning
+        f.seek(0)
+        return meta
 
     def to_object(self, file):
         """Get an representation of this object for use with HTTP responses"""
 
         meta = self.get_meta()
 
-        meta['log_index'] = self.last_update_index
-        meta['log_timestamp'] = self.last_update_timestamp
-
         if file:
-            return {"chunks": self.get_chunks(),
-                    "metadata":meta}
+            return {
+                "chunks": self.get_chunks(),
+                "metadata":meta
+            }
 
-        return {"metadata": meta}
+        return { "metadata": meta }
 
 class DataFile(BaseModel):
-
+    """
+    Manage a single data file - data is provided by the Python Hubs
+    """
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
     """this will be a concatenation of the hub uuid and data type"""
@@ -335,27 +386,28 @@ class DataFile(BaseModel):
     hub = models.ForeignKey(Hub, related_name="data")
     """The Hub this DataFile belongs to"""
 
+    project = models.ForeignKey(Project, related_name="data")
+    """The Project this DataFile belongs to"""
+
     def __unicode__(self):
         return unicode(self.hub.name + "_" + str(self.data_type) + "_data")
 
     def get_meta(self):
         """creates a json object of the metadata for this DataFile"""
-        return { 
+        return {
             'last_update_index': self.last_update_index,
             'log_timestamp': self.last_update_timestamp,
-            'hub': self.hub.name 
+            'hub': self.hub.name
         }
 
 
     def to_object(self, file):
         """Get a representation of this object for use with HTTP responses"""
         if file:
-            return { 
+            return {
                 "chunks": self.get_chunks(),
-                "metadata": self.get_meta() 
+                "metadata": self.get_meta()
             }
         else:
-            # is this ever going to happen?
-            # should probably throw/log an error or something instead
             return { "metadata": meta }
     

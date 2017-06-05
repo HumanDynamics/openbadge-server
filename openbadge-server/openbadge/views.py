@@ -128,21 +128,22 @@ def get_project(request):
 # Meeting Level Endpoints #
 ###########################
 
-@is_own_project
-@require_hub_uuid
+
 @app_view
 @api_view(['PUT', 'GET', 'POST'])
 def meetings(request, project_key):
     if request.method == 'PUT':
         return put_meeting(request, project_key)
     elif request.method == 'GET':
-        return get_meeting(request, project_key)
+        return get_meetings(request, project_key)
     elif request.method == 'POST':
         return post_meeting(request, project_key)
     return HttpResponseNotFound()
 
 
 @api_view(['PUT'])
+@is_own_project
+@require_hub_uuid
 def put_meeting(request, project_key):
     log_file = request.FILES.get("file")
 
@@ -195,14 +196,23 @@ def put_meeting(request, project_key):
     meeting.save()
 
 
-    return JsonResponse({'detail': 'meeting created'})
+    return JsonResponse({'detail': 'meeting created', "meeting_key": meeting.key})
 
+@app_view
 @api_view(['GET'])
-def get_meeting(request, project_key):
+def get_meeting(request, project_key, meeting_key):
     try:
         project = Project.objects.prefetch_related("meetings").get(key=project_key)
         get_file = str(request.META.get("HTTP_X_GET_FILE")).lower() == "true"
+        return JsonResponse(project.get_meeting(get_file, meeting_key))
+    except Project.DoesNotExist:
+        return HttpResponseNotFound()
 
+@api_view(['GET'])
+def get_meetings(request, project_key):
+    try:
+        project = Project.objects.prefetch_related("meetings").get(key=project_key)
+        get_file = str(request.META.get("HTTP_X_GET_FILE")).lower() == "true"
         return JsonResponse(project.get_meetings(get_file))
 
     except Project.DoesNotExist:
@@ -210,6 +220,8 @@ def get_meeting(request, project_key):
 
 
 @api_view(['POST'])
+@require_hub_uuid
+@is_own_project
 def post_meeting(request, project_key):
 
     meeting = Meeting.objects.get(uuid=request.data.get('uuid'))
@@ -248,7 +260,7 @@ def post_meeting(request, project_key):
 
     meeting.save()
 
-    return JsonResponse({"status": "success"})
+    return JsonResponse({"status": "success", "meeting_key": meeting.key})
 
 ###########################
 # Data Log Level Endpoints #
@@ -293,19 +305,19 @@ def post_datafile(request, project_key):
     try:
         datafile = DataFile.objects.get(uuid=datafile_uuid)
         if datafile.hub.uuid != hub_uuid:
+            # a hub cannot post data to another hub's file
             return HttpResponseUnauthorized()
     except DataFile.DoesNotExist:
         datafile = DataFile()
         datafile.uuid = datafile_uuid
         datafile.data_type = data_type
         datafile.hub = Hub.objects.get(uuid=hub_uuid)
+        datafile.project = Project.objects.get(key=hub.project_key)
         
     folder = "".join((settings.DATA_DIR, hub.project.key))
     if not os.path.exists(folder):
         os.makedirs(folder)
     filepath = "{}/{}.txt".format(folder, datafile_uuid)
-        
-
     
     # we keep track of chunks written and received as a
     # very basic way to ensure data integrity
