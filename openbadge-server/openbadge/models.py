@@ -386,7 +386,7 @@ class DataFile(BaseModel):
     hub = models.ForeignKey(Hub, related_name="data")
     """The Hub this DataFile belongs to"""
 
-    project = models.ForeignKey(Project, related_name="data")
+    project = models.ForeignKey(Project, null=True, related_name="data")
     """The Project this DataFile belongs to"""
 
     def __unicode__(self):
