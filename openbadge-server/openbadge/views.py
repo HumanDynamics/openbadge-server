@@ -312,7 +312,7 @@ def post_datafile(request, project_key):
         datafile.uuid = datafile_uuid
         datafile.data_type = data_type
         datafile.hub = Hub.objects.get(uuid=hub_uuid)
-        datafile.project = Project.objects.get(key=hub.project_key)
+        datafile.project = Project.objects.get(key=project_key)
         # check if file destination exists, create if not
         folder = "".join((settings.DATA_DIR, hub.project.key))
         if not os.path.exists(folder):
