@@ -313,16 +313,16 @@ def post_datafile(request, project_key):
         datafile.data_type = data_type
         datafile.hub = Hub.objects.get(uuid=hub_uuid)
         datafile.project = Project.objects.get(key=hub.project_key)
-        
-    folder = "".join((settings.DATA_DIR, hub.project.key))
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    filepath = "{}/{}.txt".format(folder, datafile_uuid)
+        # check if file destination exists, create if not
+        folder = "".join((settings.DATA_DIR, hub.project.key))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        datafile.filepath = "{}/{}.txt".format(folder, datafile_uuid)
     
     # we keep track of chunks written and received as a
     # very basic way to ensure data integrity
     chunks_written = 0
-    with open(filepath, 'a') as f:
+    with open(datafile.filepath, 'a') as f:
         for chunk in chunks:
             # storing this for the sake of if right now, 
             # maybe useful in the future?
