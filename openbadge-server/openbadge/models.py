@@ -82,7 +82,7 @@ def fix_email(cls):
 
 def upload_to(self, filename):
     location =  "/".join((
-        "data",
+        settings.DATA_DIR.strip("/"),
         str(self.project.key),
         self.project.key + "_" + self.uuid + os.path.splitext(filename)[1]))
     return location

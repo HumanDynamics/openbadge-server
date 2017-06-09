@@ -11,6 +11,8 @@ RUN pip install -r /requirements/production.txt \
 
 COPY . /app
 RUN chown -R django /app
+RUN chown -R django /media
+RUN chmod u+w /media
 
 COPY ./compose/django/gunicorn.sh /gunicorn.sh
 COPY ./compose/django/entrypoint.sh /entrypoint.sh
@@ -27,6 +29,7 @@ RUN mkdir /www \
 
 RUN mkdir /data \
     && chown django /data
+
 
 WORKDIR /app
 

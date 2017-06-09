@@ -2,6 +2,7 @@ version: '2'
 
 volumes:
   hub_data: {}
+  hub_media: {}
   postgres_data: {}
   postgres_backup: {}
   redis_data: {}
@@ -35,7 +36,8 @@ services:
       - postgres
       - redis
     volumes:
-      - hub_data:/data
+      - hub_media:/media/
+      - hub_data:/data/
       - /www/static
     command: /gunicorn.sh
 
