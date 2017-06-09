@@ -1,6 +1,6 @@
 # Django settings
 DJANGO_SECRET_KEY=your_key
-DJANGO_ALLOWED_HOSTS=your_host_ip_or_name
+ALLOWED_HOSTS=your_host_ip_or_name
 
 # Postgres settings
 POSTGRES_DB=openbadge
