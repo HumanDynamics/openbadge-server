@@ -5,6 +5,7 @@ import pytz
 import random
 import json as simplejson
 import string
+import time
 
 
 from decimal import Decimal
@@ -212,12 +213,12 @@ class Member(BaseModel):
 
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
-    badge = models.CharField(max_length=64)
+    badge = models.CharField(max_length=64, unique=True)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
-    last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=round(Decimal(time.time()), 0))
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
-    last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=round(Decimal(time.time()), 0))
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 

@@ -4,13 +4,14 @@ from django.views.generic.base import TemplateView
 
 badges_list = views.MemberViewSet.as_view({
     'get': 'list',
-    # 'post': 'create',
+    'post': 'create',
 })
 
 badges_details = views.MemberViewSet.as_view({
     'get': 'retrieve',
     'put': 'update',
     'patch': 'partial_update',
+    #'post': 'create',
 })
 
 hubs_list = views.HubViewSet.as_view({

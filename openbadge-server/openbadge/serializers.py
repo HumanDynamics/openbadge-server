@@ -11,7 +11,7 @@ class MemberSerializer(serializers.ModelSerializer):
         model = Member
         fields = ('id', 'project', 'name', 'email', 'badge', 'last_seen_ts', 'last_audio_ts',
                   'last_audio_ts_fract', 'last_proximity_ts', 'last_voltage', 'key')
-        read_only_fields = ('project', 'id', 'key', 'badge', 'name', 'email')
+        read_only_fields = ('project', 'id', 'key')
 
     def update(self, instance, validated_data):
 
@@ -33,6 +33,7 @@ class MemberSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
 
 class HubSerializer(serializers.ModelSerializer):
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())

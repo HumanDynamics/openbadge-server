@@ -12,6 +12,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework import status
 
 from .decorators import app_view, is_god, is_own_project, require_hub_uuid
 from .models import Meeting, Project, Hub, DataFile  # Chunk  # ActionDataChunk, SamplesDataChunk
@@ -37,10 +38,24 @@ def context(**extra):
 
 
 class MemberViewSet(viewsets.ModelViewSet):
-    queryset = Member.objects.all()
+    #queryset = Member.objects.all()
     serializer_class = MemberSerializer
     permission_classes = [AppkeyRequired, HubUuidRequired]
     lookup_field = 'key'
+
+    def get_queryset(self):
+        """
+        Filters the members list based on the hub's project
+        :return:
+        """
+
+        # hub information is validated in the permission class
+        hub_uuid = self.request.META.get("HTTP_X_HUB_UUID")
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+        project = hub.project
+
+        # Return only badges from the relevant project
+        return Member.objects.filter(project=project)
 
     def retrieve(self, request, *args, **kwargs):
         """ 
@@ -51,6 +66,25 @@ class MemberViewSet(viewsets.ModelViewSet):
         badge = self.get_object()
         serializer = self.get_serializer(badge)
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a new member under the call hub project
+        """
+        hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+        project = hub.project
+
+        # request.data is from the POST object. Adding the project id
+        data = request.data.dict()
+        data['project'] = project.id
+
+        serializer = MemberSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()  # will call .create()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class HubViewSet(viewsets.ModelViewSet):
