@@ -32,6 +32,13 @@ class HubUuidRequired(permissions.BasePermission):
         if hub_time is not None:
             hub.last_hub_time_ts = hub_time
 
+        remote_addr = request.META.get("REMOTE_ADDR")
+        x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded is not None:
+            hub.ip_address = x_forwarded
+        elif remote_addr is not None:
+            hub.ip_address = remote_addr
+
         hub.save()
 
         return True

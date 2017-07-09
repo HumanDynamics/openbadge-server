@@ -462,3 +462,16 @@ def get_members(request, project_key):
 def post_members(request, project_key):
 
     return JsonResponse({"status": "Not Implemented"})
+
+
+#########################
+# Test #
+#########################
+@api_view(['GET'])
+def showip(request):
+    remote_addr = request.META.get("REMOTE_ADDR")
+    x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded is not None:
+        return JsonResponse({"HTTP_X_FORWARDED_FOR": x_forwarded})
+    else:
+        return JsonResponse({"REMOTE_ADDR":remote_addr})
