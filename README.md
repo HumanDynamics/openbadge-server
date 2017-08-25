@@ -39,6 +39,8 @@ Finally, run the following command to start the server:
 
 `docker-compose -f dev.yml up`
 
+In order to check whether the server is working, login to the admin console: http://localhost:8000/admin
+
 ### Using a virtual machine for development
 You can also create a local Virtual Machine and provision it - https://docs.docker.com/machine/get-started/
 
@@ -87,6 +89,8 @@ You'll also want to create your super user (Django admin account):
 Finally, run the following command to start the server (the "-d" option will keep the service up as a daemon):
 
 `docker-compose up -d`
+
+In order to check whether the server is working, login to the admin console: http://your-server-address/admin
 
 ## Misc commands
 * docker-compose down : disables the server
