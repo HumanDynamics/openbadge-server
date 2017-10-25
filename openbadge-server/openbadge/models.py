@@ -328,6 +328,9 @@ class Meeting(BaseModel):
         line_type = meta["type"]
         meta["members"] = []
 
+        # seek to beginning in case something weird happened when writing file
+        # on the app (odd behavior has been seen)
+        f.seek(0)
         # the following few lines are members joining
         line = simplejson.loads(f.readline())
         #TODO meetings with no data break this
