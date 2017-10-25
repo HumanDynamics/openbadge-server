@@ -183,9 +183,17 @@ def put_meeting(request, project_key):
 
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
 
+    # make sure we're at the very start
+    log_file.seek(0)
+    # NOTE SOMETIMES THE MEETING GETS WRITTEN OUT OF ORDER
+    # keep looking until we get to the meeting created line
+    # this was the source (i hope) of a very frustrating bug
     meeting_meta = simplejson.loads(log_file.readline())
+    while meeting_meta["type"] != "meeting started":
+        meeting_meta = simplejson.loads(log_file.readline())
     log_file.seek(0)
 
+    print meeting_meta
     meeting_data = meeting_meta['data']
     meeting_uuid = meeting_data['uuid']
 
@@ -210,8 +218,8 @@ def put_meeting(request, project_key):
         last_log = simplejson.loads(last)
         meeting.last_update_index = last_log['log_index']
         meeting.last_update_timestamp = last_log['log_timestamp']
-    except IOError:
-        pass
+    except IOError as e:
+        print e
 
     log_file.seek(0)
 
