@@ -195,12 +195,15 @@ class Hub(BaseModel):
             }
 
     def get_completed_meetings(self):
+        # TODO: returns all meetings, not just completed meetings.
+        # need to change name to match functionality but don't want to break anything...
         return {
             meeting.key: {
                 "last_log_timestamp": meeting.last_update_timestamp,
                 "last_log_serial": meeting.last_update_index,
-                "is_complete": meeting.is_complete
-            } for meeting in self.meetings.all() if meeting.is_complete
+                "is_complete": meeting.is_complete,
+                "uuid": meeting.uuid
+            } for meeting in self.meetings.all()
         }
 
     def __unicode__(self):
