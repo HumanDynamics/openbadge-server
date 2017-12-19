@@ -128,7 +128,10 @@ class Project(BaseModel):
         }
 
     def get_meeting(self, file, meeting_uuid):
-        meeting = self.meetings.get(uuid=meeting_uuid)
+        if len(meeting_uuid) == 10:
+            meeting = self.meetings.get(key=meeting_uuid)
+        else:
+            meeting = self.meetings.get(uuid=meeting_uuid)
         return { meeting.key: meeting.to_object(file) }
 
     def to_object(self):
