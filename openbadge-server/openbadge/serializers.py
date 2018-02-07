@@ -9,7 +9,7 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ('id', 'project', 'name', 'email', 'badge', 'last_seen_ts', 'last_audio_ts',
+        fields = ('id', 'project', 'name', 'email', 'badge','badge_id', 'id_project', 'last_seen_ts', 'last_audio_ts',
                   'last_audio_ts_fract', 'last_proximity_ts', 'last_voltage', 'key')
         read_only_fields = ('project', 'id', 'key')
 

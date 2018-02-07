@@ -44,7 +44,8 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key', 'name', 'email', 'badge', 
+    fields = ('key', 'name', 'email', 'badge',
+              'badge_id','id_project',
               'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
     readonly_fields = ('key', 'last_seen', 'last_audio')
@@ -79,7 +80,7 @@ class HubInline(admin.TabularInline, GetLocalTimeMixin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'id', 'number_of_members', 'number_of_meetings', 'total_meeting_time')
+    list_display = ('name', 'key', 'project_id', 'number_of_members', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
     inlines = (MemberInline, HubInline, MeetingInLine)
     actions_on_top = True

@@ -6,6 +6,7 @@ import random
 import json as simplejson
 import string
 import time
+import uuid
 
 
 from decimal import Decimal
@@ -28,10 +29,10 @@ class BaseModel(models.Model):
     Base model from which all other models should inherit. It has a unique key and other nice fields, like a unique id.
     If you override this class, you should probably add more unique identifiers, like a uuid or hash or something.
     """
-    id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key = True)
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)
+    date_updated = models.DateTimeField(auto_now=True)  
 
     def generate_key(self, length=10):
         if not self.key:
@@ -115,6 +116,7 @@ class Project(BaseModel):
     """
 
     name = models.CharField(max_length=64)
+    project_id = models.IntegerField(default=0)
     """Human readable identifier for this project (Apple, Google, etc.)"""
 
     def __unicode__(self):
@@ -134,13 +136,15 @@ class Project(BaseModel):
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
-            'project_id': self.id,
+            'project_id': self.project_id,
             'key': self.key,
             'name': self.name,
             'badge_map': {
                 member.badge: {
                     "name": member.name,
-                    "key": member.key
+                    "key": member.key,
+                    "badge_id": member.badge_id,
+                    "id_project": member.id_project
                 } for member in self.members.all()
             },
             'members': {
@@ -180,7 +184,9 @@ class Hub(BaseModel):
                 'badge_map': {
                     member.badge: {
                         "name": member.name,
-                        "key": member.key
+                        "key": member.key,
+                        "badge_id": member.badge_id,
+                        "id_project": member.id_project
                     } for member in self.project.members.all()
                         if int(member.date_updated.strftime("%s")) > last_update
                 },
@@ -218,6 +224,8 @@ class Member(BaseModel):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
+    badge_id = models.IntegerField(default=0)
+    id_project = models.IntegerField(default=0)
     """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
