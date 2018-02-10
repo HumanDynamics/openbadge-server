@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from time import time
 from pytz import timezone 
 import pytz
 import simplejson
@@ -7,6 +8,7 @@ from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
+from django.utils.html import format_html
 from .models import OpenBadgeUser, Meeting, Member, Project, Hub
 
 
@@ -44,16 +46,38 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
+    warning_color = 'ff0000' #hexadecimal for the color of warning messages, currently bright red
     fields = ('key', 'name', 'email', 'badge', 
-              'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
+              'last_seen', 'voltage', 'last_audio', 'last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'last_seen', 'last_audio')
-    
+    readonly_fields = ('key', 'last_seen', 'last_audio', 'voltage')
+
+    #if difference between now and last seen is more than 6 hours formats in color specified by warning_color
     def last_seen(self, obj):
-        return self.get_local_time(obj.last_seen_ts)
+        local_time = self.get_local_time(obj.last_seen_ts)
+        if (time() - float(obj.last_seen_ts)) > 21600:
+
+            return format_html(
+                '<span style="color: #{};">{}</span>', # html formatting in the color specified by self.warning_color
+                self.warning_color,
+                local_time
+            )
+        else:
+            return local_time
 
     def last_audio(self, obj):
         return self.get_local_time(obj.last_audio_ts)
+
+    #if obj.last_voltage < 2.6, formats in color specified by warning_color
+    def voltage(self, obj):
+        if obj.last_voltage < 2.6:
+            return format_html(
+                '<span style="color : #{};">{}</span>',
+                self.warning_color,
+                obj.last_voltage
+            )
+        else:
+            return obj.last_voltage
 
 class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
     model = Meeting
