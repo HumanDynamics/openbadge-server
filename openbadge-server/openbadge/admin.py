@@ -45,8 +45,8 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
     fields = ('key', 'name', 'email', 'badge',
-              'badge_id','id_project',
-              'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
+              'member_id','observed_id','active','comments',
+              'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
     readonly_fields = ('key', 'last_seen', 'last_audio')
     
@@ -55,6 +55,9 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 
     def last_audio(self, obj):
         return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)
 
 class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
     model = Meeting

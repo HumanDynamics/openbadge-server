@@ -116,8 +116,9 @@ class Project(BaseModel):
     """
 
     name = models.CharField(max_length=64)
-    project_id = models.IntegerField(default=0)
     """Human readable identifier for this project (Apple, Google, etc.)"""
+    project_id = models.IntegerField(default=0)
+    
 
     def __unicode__(self):
         return unicode(self.name)
@@ -143,8 +144,9 @@ class Project(BaseModel):
                 member.badge: {
                     "name": member.name,
                     "key": member.key,
-                    "badge_id": member.badge_id,
-                    "id_project": member.id_project
+                    "member_id": member.member_id,
+                    "observed_id": member.observed_id,
+                    "active": member.active
                 } for member in self.members.all()
             },
             'members': {
@@ -185,8 +187,9 @@ class Hub(BaseModel):
                     member.badge: {
                         "name": member.name,
                         "key": member.key,
-                        "badge_id": member.badge_id,
-                        "id_project": member.id_project
+                        "member_id": member.member_id,
+                        "observed_id": member.observed_id,
+                        "active":member.active
                     } for member in self.project.members.all()
                         if int(member.date_updated.strftime("%s")) > last_update
                 },
@@ -219,14 +222,16 @@ class Hub(BaseModel):
 
 
 class Member(BaseModel):
-    """Definition of a Member, who belongs to a Project, and owns a badge"""
 
+    """Definition of a Member, who belongs to a Project, and owns a badge"""
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    badge_id = models.IntegerField(default=0)
-    id_project = models.IntegerField(default=0)
-    """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
+    member_id = models.PositiveSmallIntegerField(default=0)
+    observed_id = models.PositiveSmallIntegerField(default=0)
+    active = models.BooleanField(default=True)
+    comments = models.CharField(max_length=128)
+
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
@@ -257,7 +262,7 @@ class Member(BaseModel):
         return cls.datetime_to_epoch(timezone.datetime.now_utc())
 
     def to_dict(self):
-        return dict(id=self.id,
+        return dict(id=self.project_id,
                     name=self.name,
                     badge=self.badge
                     )
