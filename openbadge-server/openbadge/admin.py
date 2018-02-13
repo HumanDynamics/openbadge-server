@@ -44,8 +44,9 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key', 'name', 'email', 'badge', 
-              'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
+    fields = ('key', 'name', 'email', 'badge',
+              'member_id','observed_id','active','comments',
+              'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
     readonly_fields = ('key', 'last_seen', 'last_audio')
     
@@ -54,6 +55,9 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 
     def last_audio(self, obj):
         return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)
 
 class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
     model = Meeting
@@ -79,7 +83,7 @@ class HubInline(admin.TabularInline, GetLocalTimeMixin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'id', 'number_of_members', 'number_of_meetings', 'total_meeting_time')
+    list_display = ('name', 'key', 'project_id', 'number_of_members', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
     inlines = (MemberInline, HubInline, MeetingInLine)
     actions_on_top = True
