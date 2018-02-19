@@ -46,6 +46,28 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Beacon',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('key', models.CharField(db_index=True, unique=True, max_length=10, blank=True)),
+                ('date_created', models.DateTimeField(auto_now_add=True)),
+                ('date_updated', models.DateTimeField(auto_now=True)),
+                ('name', models.CharField(max_length=64)),
+                ('beacon', models.CharField(unique=True, max_length=64)),
+                ('beacon_id', models.PositiveSmallIntegerField(default=0)),
+                ('active', models.BooleanField(default=True)),
+                ('comments', models.CharField(max_length=128, null=True)),
+                ('last_audio_ts', models.DecimalField(default=openbadge.models._now_as_epoch, max_digits=20, decimal_places=3)),
+                ('last_audio_ts_fract', models.DecimalField(default=Decimal('0'), max_digits=20, decimal_places=3)),
+                ('last_proximity_ts', models.DecimalField(default=openbadge.models._now_as_epoch, max_digits=20, decimal_places=3)),
+                ('last_voltage', models.DecimalField(default=Decimal('0'), max_digits=5, decimal_places=3)),
+                ('last_seen_ts', models.DecimalField(default=Decimal('0'), max_digits=20, decimal_places=3)),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
             name='DataFile',
             fields=[
                 ('id', models.AutoField(serialize=False, primary_key=True)),
@@ -114,7 +136,7 @@ class Migration(migrations.Migration):
                 ('member_id', models.PositiveSmallIntegerField(default=0)),
                 ('observed_id', models.PositiveSmallIntegerField(default=0)),
                 ('active', models.BooleanField(default=True)),
-                ('comments', models.CharField(max_length=128)),
+                ('comments', models.CharField(max_length=128, null=True)),
                 ('last_audio_ts', models.DecimalField(default=openbadge.models._now_as_epoch, max_digits=20, decimal_places=3)),
                 ('last_audio_ts_fract', models.DecimalField(default=Decimal('0'), max_digits=20, decimal_places=3)),
                 ('last_proximity_ts', models.DecimalField(default=openbadge.models._now_as_epoch, max_digits=20, decimal_places=3)),
@@ -163,5 +185,10 @@ class Migration(migrations.Migration):
             model_name='datafile',
             name='project',
             field=models.ForeignKey(related_name='data', to='openbadge.Project', null=True),
+        ),
+        migrations.AddField(
+            model_name='beacon',
+            name='project',
+            field=models.ForeignKey(related_name='beacons', to='openbadge.Project'),
         ),
     ]
