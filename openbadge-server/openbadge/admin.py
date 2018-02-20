@@ -46,9 +46,9 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     extra = 3
     fields = ('key', 'name', 'email', 'badge',
               'member_id','observed_id','active','comments',
-              'last_seen', 'last_voltage', 'last_audio','last_audio_ts',
+              'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'last_seen', 'last_audio')
+    readonly_fields = ('key', 'last_seen', 'last_audio','last_proximity')
     
     
     def last_seen(self, obj):
@@ -62,8 +62,6 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 
     def last_voltage(self, obj):
         return obj.last_voltage
-
-    last_voltage.admin_order_field = 'last_voltage'
 
 
 

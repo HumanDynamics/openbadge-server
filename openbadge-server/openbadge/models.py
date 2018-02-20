@@ -117,7 +117,7 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
-    project_id = models.IntegerField(default=0)
+    #project_id = models.IntegerField(default=0)
     
 
     def __unicode__(self):
@@ -137,7 +137,7 @@ class Project(BaseModel):
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
-            'project_id': self.project,
+            'project_id': self.id,
             'key': self.key,
             'name': self.name,
             'badge_map': {
@@ -278,7 +278,7 @@ class Member(BaseModel):
         return cls.datetime_to_epoch(timezone.datetime.now_utc())
 
     def to_dict(self):
-        return dict(id=self.project_id,
+        return dict(id=self.id,
                     name=self.name,
                     badge=self.badge
                     )
@@ -302,7 +302,7 @@ class Beacon(BaseModel):
     project = models.ForeignKey(Project, related_name="beacons")
 
     def to_dict(self):
-        return dict(id=self.project_id,
+        return dict(id=self.id,
                     name=self.name,
                     beacon=self.beacon
                     )
