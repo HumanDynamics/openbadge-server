@@ -48,7 +48,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
               'member_id','observed_id','active','comments',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'last_seen', 'last_audio','last_proximity')
+    readonly_fields = ('key', 'observed_id', 'last_seen', 'last_audio','last_proximity')
     
     
     def last_seen(self, obj):
@@ -68,10 +68,10 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     model = Beacon
     extra = 3
-    fields = ('key', 'name', 'beacon',
-              'beacon_id','active','comments',
-              'last_seen', 'last_voltage')
-    readonly_fields = ('key', 'last_seen')
+    fields = ('key', 'name', 'badge',
+              'beacon_id' ,'active','comments',
+              'last_seen', 'last_voltage'), 
+    readonly_fields = ('key', 'last_seen', 'last_voltage')
     
     
     def last_seen(self, obj):
@@ -110,7 +110,7 @@ class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
     list_display = ('name', 'key', 'project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
-    inlines = (MemberInline, HubInline, MeetingInLine, BeaconInline)
+    inlines = (MemberInline, BeaconInline, HubInline, MeetingInLine)
     actions_on_top = True
 
     def get_queryset(self, request):

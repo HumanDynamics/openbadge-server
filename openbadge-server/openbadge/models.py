@@ -18,6 +18,7 @@ from django.core.files.storage import FileSystemStorage
 from django.db import models
 from jsonfield import JSONField
 from math import floor
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -117,7 +118,7 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
-    #project_id = models.IntegerField(default=0)
+    project_id = models.IntegerField(default=0)
     
 
     def __unicode__(self):
@@ -145,8 +146,8 @@ class Project(BaseModel):
                     "name": member.name,
                     "key": member.key,
                     "member_id": member.member_id,
-                    "project_id": member.project_id,
-                    "observed_id": member.observed_id,
+                    #"project_id": member.project_id,
+                    #"observed_id": member.observed_id,
                     "active": member.active
                 } for member in self.members.all()
             },
@@ -155,11 +156,11 @@ class Project(BaseModel):
             },
 
             'beacon_map': {
-                beacon.beacon: {
+                beacon.badge: {
                     "name": beacon.name,
                     "key": beacon.key,
-                    "member_id": beacon.beacon_id,
-                    "project_id": self.project_id,
+                    "beacon_id": beacon.beacon_id,
+                    #"project_id": self.project_id,
                     "active": beacon.active
                 } for beacon in self.beacons.all()
             },
@@ -243,7 +244,7 @@ class Member(BaseModel):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    member_id = models.PositiveSmallIntegerField(default=0)
+    member_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(15999), MinValueValidator(1)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=128, null=True)
@@ -290,8 +291,8 @@ class Member(BaseModel):
 class Beacon(BaseModel):
     """docstring for Beacon"""
     name = models.CharField(max_length=64)
-    beacon = models.CharField(max_length=64, unique=True)
-    beacon_id = models.PositiveSmallIntegerField(default=0)
+    badge = models.CharField(max_length=64, unique=True)
+    beacon_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(32000), MinValueValidator(16000)])
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=128,null = True)
 
@@ -304,7 +305,7 @@ class Beacon(BaseModel):
     def to_dict(self):
         return dict(id=self.id,
                     name=self.name,
-                    beacon=self.beacon
+                    badge=self.badge
                     )
 
     def __unicode__(self):

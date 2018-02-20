@@ -43,7 +43,7 @@ class BeaconSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Beacon
-        fields = ('id', 'project', 'name', 'beacon', 'beacon_id', 'active', 'comments', 'last_seen_ts', 'last_voltage', 'key')
+        fields = ('id', 'project', 'name', 'badge', 'beacon_id', 'active', 'comments', 'last_seen_ts', 'last_voltage', 'key')
         read_only_fields = ('project', 'id', 'key')
 
     def update(self, instance, validated_data):
