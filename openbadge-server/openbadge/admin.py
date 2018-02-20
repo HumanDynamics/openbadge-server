@@ -63,6 +63,8 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     def last_voltage(self, obj):
         return obj.last_voltage
 
+    last_voltage.admin_order_field = 'last_voltage'
+
 
 
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
@@ -70,19 +72,12 @@ class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     extra = 3
     fields = ('key', 'name', 'beacon',
               'beacon_id','active','comments',
-              'last_seen', 'last_voltage', 'last_audio','last_audio_ts',
-              'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'last_seen', 'last_audio')
+              'last_seen', 'last_voltage')
+    readonly_fields = ('key', 'last_seen')
     
     
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
-
-    def last_audio(self, obj):
-        return self.get_local_time(obj.last_audio_ts)
-
-    def last_proximity(self, obj):
-        return self.get_local_time(obj.last_proximity_ts)
 
 
     def last_voltage(self, obj):

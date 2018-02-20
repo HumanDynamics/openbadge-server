@@ -137,7 +137,7 @@ class Project(BaseModel):
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
-            'project_id': self.project_id,
+            'project_id': self.project,
             'key': self.key,
             'name': self.name,
             'badge_map': {
@@ -145,6 +145,7 @@ class Project(BaseModel):
                     "name": member.name,
                     "key": member.key,
                     "member_id": member.member_id,
+                    "project_id": member.project_id,
                     "observed_id": member.observed_id,
                     "active": member.active
                 } for member in self.members.all()
@@ -158,6 +159,7 @@ class Project(BaseModel):
                     "name": beacon.name,
                     "key": beacon.key,
                     "member_id": beacon.beacon_id,
+                    "project_id": self.project_id,
                     "active": beacon.active
                 } for beacon in self.beacons.all()
             },
@@ -200,6 +202,7 @@ class Hub(BaseModel):
                         "name": member.name,
                         "key": member.key,
                         "member_id": member.member_id,
+                        "project_id": member.project_id,
                         "observed_id": member.observed_id,
                         "active":member.active
                     } for member in self.project.members.all()
@@ -293,9 +296,6 @@ class Beacon(BaseModel):
     comments = models.CharField(max_length=128,null = True)
 
 
-    last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
-    last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
-    last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 

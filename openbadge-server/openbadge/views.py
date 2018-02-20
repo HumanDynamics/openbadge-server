@@ -111,9 +111,9 @@ class BeaconViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         """ 
-        Get the badge specified by the provided key
+        Get the beacon specified by the provided key
 
-        Also update the last time the badge was seen
+        Also update the last time the beacon was seen
         """
         beacon = self.get_object()
         serializer = self.get_serializer(beacon)
@@ -121,7 +121,7 @@ class BeaconViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """
-        Creates a new member under the call hub project
+        Creates a new beacon under the call hub project
         """
         hub_uuid = request.META.get("HTTP_X_HUB_UUID")
         hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
@@ -137,6 +137,7 @@ class BeaconViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
 
 class HubViewSet(viewsets.ModelViewSet):
     queryset = Hub.objects.all()
