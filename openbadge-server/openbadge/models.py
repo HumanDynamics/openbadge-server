@@ -146,8 +146,7 @@ class Project(BaseModel):
                     "name": member.name,
                     "key": member.key,
                     "member_id": member.member_id,
-                    #"project_id": member.project_id,
-                    #"observed_id": member.observed_id,
+                    "observed_id": member.observed_id,
                     "active": member.active
                 } for member in self.members.all()
             },
@@ -160,7 +159,6 @@ class Project(BaseModel):
                     "name": beacon.name,
                     "key": beacon.key,
                     "beacon_id": beacon.beacon_id,
-                    #"project_id": self.project_id,
                     "active": beacon.active
                 } for beacon in self.beacons.all()
             },
@@ -203,7 +201,6 @@ class Hub(BaseModel):
                         "name": member.name,
                         "key": member.key,
                         "member_id": member.member_id,
-                        "project_id": member.project_id,
                         "observed_id": member.observed_id,
                         "active":member.active
                     } for member in self.project.members.all()
@@ -238,6 +235,10 @@ class Hub(BaseModel):
         return unicode(self.name)
 
 
+
+
+
+
 class Member(BaseModel):
 
     """Definition of a Member, who belongs to a Project, and owns a badge"""
@@ -247,7 +248,7 @@ class Member(BaseModel):
     member_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(15999), MinValueValidator(1)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
-    comments = models.CharField(max_length=128, null=True)
+    comments = models.CharField(max_length=240, blank=True, default='Add comments')
 
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
@@ -257,6 +258,7 @@ class Member(BaseModel):
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
+
 
     @classmethod
     def datetime_to_epoch(cls, d):
@@ -288,13 +290,18 @@ class Member(BaseModel):
         return unicode(self.name)
 
 
+
+
+
+
 class Beacon(BaseModel):
     """docstring for Beacon"""
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
     beacon_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(32000), MinValueValidator(16000)])
+    observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
-    comments = models.CharField(max_length=128,null = True)
+    comments = models.CharField(max_length=240, blank = True ,default='Add comments')
 
 
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))

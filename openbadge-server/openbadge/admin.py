@@ -69,9 +69,9 @@ class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     model = Beacon
     extra = 3
     fields = ('key', 'name', 'badge',
-              'beacon_id' ,'active','comments',
-              'last_seen', 'last_voltage'), 
-    readonly_fields = ('key', 'last_seen', 'last_voltage')
+              'beacon_id' ,'observed_id' ,'active','comments',
+              'last_seen', 'last_voltage') 
+    readonly_fields = ('key','observed_id', 'last_seen', 'last_voltage')
     
     
     def last_seen(self, obj):
