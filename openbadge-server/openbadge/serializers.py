@@ -43,15 +43,22 @@ class BeaconSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Beacon
-        fields = ('id', 'project', 'name', 'badge', 'beacon_id', 'observed_id','active', 'comments', 'last_seen_ts', 'last_voltage', 'key')
+        fields = ('id', 'project', 'name', 'badge', 'beacon_id', 'observed_id','active', 'comments',
+         'last_seen_ts', 'last_proximity_ts','last_voltage', 'key')
         read_only_fields = ('project', 'id', 'key')
 
     def update(self, instance, validated_data):
+
+        # if we have an older proximity_ts, update it
+        if validated_data.get('last_proximity_ts') > instance.last_proximity_ts:
+            instance.last_proximity_ts = validated_data.get('last_proximity_ts', instance.last_proximity_ts)
 
         # if we have an older last_seen_ts, update it and voltage
         if validated_data.get('last_seen_ts') > instance.last_seen_ts:
             instance.last_seen_ts = validated_data.get('last_seen_ts', instance.last_seen_ts)
             instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
+
+        instance.observed_id = validated_data.get('observed_id', instance.observed_id)
 
         instance.save()
         return instance

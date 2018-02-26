@@ -303,7 +303,7 @@ class Beacon(BaseModel):
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank = True ,default='Add comments')
 
-
+    last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
