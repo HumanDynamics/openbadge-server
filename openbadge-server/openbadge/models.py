@@ -119,7 +119,6 @@ class Project(BaseModel):
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
     project_id = models.IntegerField(default=0)
-    
 
     def __unicode__(self):
         return unicode(self.name)
@@ -138,8 +137,8 @@ class Project(BaseModel):
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
-            'project_id': self.id,
-            'key': self.key,
+            'project_id': self.project_id,
+            'key': self.key,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
             'name': self.name,
             'badge_map': {
                 member.badge: {
@@ -147,6 +146,7 @@ class Project(BaseModel):
                     "key": member.key,
                     "member_id": member.member_id,
                     "observed_id": member.observed_id,
+                    #"project_id": self.project_id,
                     "active": member.active
                 } for member in self.members.all()
             },
@@ -259,6 +259,8 @@ class Member(BaseModel):
 
     project = models.ForeignKey(Project, related_name="members")
 
+    def get_project_id(self):
+        return self.project.project_id
 
     @classmethod
     def datetime_to_epoch(cls, d):
@@ -307,6 +309,9 @@ class Beacon(BaseModel):
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="beacons")
+
+    def get_project_id(self):
+        return self.project.project_id
 
     def to_dict(self):
         return dict(id=self.id,

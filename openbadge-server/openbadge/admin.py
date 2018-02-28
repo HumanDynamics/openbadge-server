@@ -106,7 +106,7 @@ class HubInline(admin.TabularInline, GetLocalTimeMixin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
+    list_display = ('name', 'key', 'id', 'project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
     inlines = (MemberInline, BeaconInline, HubInline, MeetingInLine)
     actions_on_top = True

@@ -77,7 +77,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
         # request.data is from the POST object. Adding the project id
         data = request.data.dict()
-        data['project'] = project.project_id
+        data['project'] = project.id
 
         serializer = MemberSerializer(data=data)
         if serializer.is_valid():
