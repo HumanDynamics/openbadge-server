@@ -70,7 +70,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     model = Beacon
     extra = 3
-    fields = ('key','id', 'name', 'badge','beacon_id',
+    fields = ('key','id', 'name', 'badge',
               'observed_id' ,'active','comments',
               'last_seen', 'last_voltage') 
     readonly_fields = ('key', 'id','observed_id', 'last_seen', 'last_voltage')

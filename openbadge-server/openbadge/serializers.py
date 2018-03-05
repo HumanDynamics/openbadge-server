@@ -43,7 +43,7 @@ class BeaconSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Beacon
-        fields = ('id', 'advertisment_project_id', 'beacon_id','name', 'badge', 'observed_id','active', 'comments',
+        fields = ('id', 'advertisment_project_id','name', 'badge', 'observed_id','active', 'comments',
          'last_seen_ts','last_voltage', 'key')
         read_only_fields = ('advertisment_project_id', 'id', 'key')
 
