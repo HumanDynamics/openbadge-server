@@ -27,6 +27,8 @@ class GetLocalTimeMixin(object):
                 .astimezone(timezone(settings.TIME_ZONE))\
                 .strftime('%Y-%m-%d %H:%M:%S %Z')
 
+
+
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
     list_display = auth_admin.UserAdmin.list_display
@@ -44,11 +46,11 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key', 'name', 'email', 'badge',
-              'member_id','observed_id','active','comments',
+    fields = ('key','id', 'name', 'email', 'badge',
+              'observed_id','active','comments',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'observed_id', 'last_seen', 'last_audio','last_proximity')
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity')
     
     
     def last_seen(self, obj):
@@ -68,10 +70,10 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     model = Beacon
     extra = 3
-    fields = ('key', 'name', 'badge',
-              'beacon_id' ,'observed_id' ,'active','comments',
+    fields = ('key','id', 'name', 'badge','beacon_id',
+              'observed_id' ,'active','comments',
               'last_seen', 'last_voltage') 
-    readonly_fields = ('key','observed_id', 'last_seen', 'last_voltage')
+    readonly_fields = ('key', 'id','observed_id', 'last_seen', 'last_voltage')
     
     
     def last_seen(self, obj):
@@ -106,7 +108,7 @@ class HubInline(admin.TabularInline, GetLocalTimeMixin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'id', 'project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
+    list_display = ('name', 'key', 'id', 'advertisment_project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
     inlines = (MemberInline, BeaconInline, HubInline, MeetingInLine)
     actions_on_top = True

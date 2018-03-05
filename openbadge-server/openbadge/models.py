@@ -118,7 +118,8 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
-    project_id = models.IntegerField(default=0)
+    #id = models.AutoField(primary_key = True)
+    advertisment_project_id = models.IntegerField(default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
 
     def __unicode__(self):
         return unicode(self.name)
@@ -137,7 +138,7 @@ class Project(BaseModel):
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
-            'project_id': self.project_id,
+            'project_id': self.advertisment_project_id,
             'key': self.key,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
             'name': self.name,
             'badge_map': {
@@ -189,6 +190,8 @@ class Hub(BaseModel):
     
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
+
+    #id = models.AutoField(primary_key = True)
 
     def get_object(self, last_update = None):
         if last_update:
@@ -245,7 +248,8 @@ class Member(BaseModel):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    member_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(15999), MinValueValidator(1)])
+    #id = models.AutoField(primary_key = True)
+    #member_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(15999), MinValueValidator(1)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank=True, default='Add comments')
@@ -260,7 +264,7 @@ class Member(BaseModel):
     project = models.ForeignKey(Project, related_name="members")
 
     def get_project_id(self):
-        return self.project.project_id
+        return self.project.advertisment_project_id
 
     @classmethod
     def datetime_to_epoch(cls, d):
@@ -292,6 +296,19 @@ class Member(BaseModel):
         return unicode(self.name)
 
 
+'''
+def increment_id():
+
+    last_id = Beacon.objects.all.order_by('beacon_id').last()
+
+    if not last_id:
+        return 16000
+    beacon_id = last_id.beacon_id
+    new_id = beacon_id + 1
+    return new_id
+
+'''
+
 
 
 
@@ -300,7 +317,7 @@ class Beacon(BaseModel):
     """docstring for Beacon"""
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    beacon_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(32000), MinValueValidator(16000)])
+    #beacon_id = models.CharField(max_length = 5, default = generate_id())
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank = True ,default='Add comments')
@@ -310,8 +327,11 @@ class Beacon(BaseModel):
 
     project = models.ForeignKey(Project, related_name="beacons")
 
+
+
+
     def get_project_id(self):
-        return self.project.project_id
+        return self.project.advertisment_project_id
 
     def to_dict(self):
         return dict(id=self.id,

@@ -129,7 +129,7 @@ class BeaconViewSet(viewsets.ModelViewSet):
 
         # request.data is from the POST object. Adding the project id
         data = request.data.dict()
-        data['project'] = project.project_id
+        data['project'] = project.id
 
         serializer = BeaconSerializer(data=data)
         if serializer.is_valid():
@@ -137,6 +137,9 @@ class BeaconViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
+
             
 
 class HubViewSet(viewsets.ModelViewSet):
