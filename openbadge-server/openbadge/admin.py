@@ -46,7 +46,7 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key','id', 'name', 'email', 'badge',
+    fields = ('key','internal_id', 'name', 'email', 'badge',
               'observed_id','active','comments',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts')
@@ -70,7 +70,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     model = Beacon
     extra = 3
-    fields = ('key','id', 'name', 'badge',
+    fields = ('key','internal_id', 'name', 'badge',
               'observed_id' ,'active','comments',
               'last_seen', 'last_voltage') 
     readonly_fields = ('key', 'id','observed_id', 'last_seen', 'last_voltage')

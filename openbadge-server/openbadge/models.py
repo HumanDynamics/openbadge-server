@@ -51,6 +51,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
+
 class UserBackend(object):
     def authenticate(self, email=None, uuid=None):
         try:
@@ -124,6 +125,7 @@ class Project(BaseModel):
     def __unicode__(self):
         return unicode(self.name)
 
+
     def get_meetings(self, file):
         return {
             'meetings': {
@@ -145,9 +147,8 @@ class Project(BaseModel):
                 member.badge: {
                     "name": member.name,
                     "key": member.key,
-                    "member_id": member.member_id,
+                    "internal_id": member.internal_id,
                     "observed_id": member.observed_id,
-                    #"project_id": self.project_id,
                     "active": member.active
                 } for member in self.members.all()
             },
@@ -159,7 +160,7 @@ class Project(BaseModel):
                 beacon.badge: {
                     "name": beacon.name,
                     "key": beacon.key,
-                    "beacon_id": beacon.beacon_id,
+                    "internal_id": beacon.internal_id,
                     "active": beacon.active
                 } for beacon in self.beacons.all()
             },
@@ -167,6 +168,7 @@ class Project(BaseModel):
                 beacon.name: beacon.to_dict() for beacon in self.beacons.all()
             }
         }
+
 
 
 class Hub(BaseModel):
@@ -203,7 +205,7 @@ class Hub(BaseModel):
                     member.badge: {
                         "name": member.name,
                         "key": member.key,
-                        "member_id": member.member_id,
+                        "internal_id": member.internal_id,
                         "observed_id": member.observed_id,
                         "active":member.active
                     } for member in self.project.members.all()
@@ -239,20 +241,16 @@ class Hub(BaseModel):
 
 
 
-
-
-
 class Member(BaseModel):
 
     """Definition of a Member, who belongs to a Project, and owns a badge"""
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    #id = models.AutoField(primary_key = True)
-    #member_id = models.PositiveSmallIntegerField(default=0, unique=True,validators=[MaxValueValidator(15999), MinValueValidator(1)])
+    internal_id = models.PositiveSmallIntegerField(unique=True, blank=True, validators=[MaxValueValidator(15999), MinValueValidator(1)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
-    comments = models.CharField(max_length=240, blank=True, default='Add comments')
+    comments = models.CharField(max_length=240, blank=True, default='')
 
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
@@ -265,6 +263,21 @@ class Member(BaseModel):
 
     def get_project_id(self):
         return self.project.advertisment_project_id
+
+
+    def generate_id(self):
+        if not self.internal_id:
+            last_member = Member.objects.all().order_by('internal_id').last()
+            if not last_member:
+                self.internal_id = 1
+            else:
+                self.internal_id = last_member.internal_id + 1
+
+
+    def save(self, *args, **kwargs):
+        self.generate_id()
+        super(Member, self).save(*args, **kwargs)
+
 
     @classmethod
     def datetime_to_epoch(cls, d):
@@ -296,36 +309,33 @@ class Member(BaseModel):
         return unicode(self.name)
 
 
-'''
-def increment_id():
-
-    last_id = Beacon.objects.all.order_by('beacon_id').last()
-
-    if not last_id:
-        return 16000
-    beacon_id = last_id.beacon_id
-    new_id = beacon_id + 1
-    return new_id
-
-'''
-
-
-
-
 
 class Beacon(BaseModel):
     """docstring for Beacon"""
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    #beacon_id = models.CharField(max_length = 5, default = generate_id())
+    internal_id = models.PositiveSmallIntegerField(unique=True, blank=True, validators=[MaxValueValidator(32000), MinValueValidator(16000)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
-    comments = models.CharField(max_length=240, blank = True ,default='Add comments')
+    comments = models.CharField(max_length=240, blank = True ,default='')
 
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="beacons")
+
+    def generate_id(self):
+        if not self.internal_id:
+            last_beacon = Beacon.objects.all().order_by('internal_id').last()
+            if not last_beacon:
+                self.internal_id = 16000
+            else:
+                self.internal_id = last_beacon.internal_id + 1
+
+
+    def save(self, *args, **kwargs):
+        self.generate_id()
+        super(Beacon, self).save(*args, **kwargs)
 
 
 
