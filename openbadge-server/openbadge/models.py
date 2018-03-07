@@ -51,6 +51,32 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class BaseModelMinimal(models.Model):
+    """
+    Base model from which all other models should inherit. It has a unique key and other nice fields, like a unique id.
+    If you override this class, you should probably add more unique identifiers, like a uuid or hash or something.
+    """
+    key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)  
+
+    def generate_key(self, length=10):
+        if not self.key:
+            for _ in range(10):
+                key = key_generator(length)
+                if not type(self).objects.filter(key=key).count():
+                    self.key = key
+                    break
+
+    def save(self, *args, **kwargs):
+        self.generate_key()
+        super(BaseModelMinimal, self).save(*args, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
+
 
 class UserBackend(object):
     def authenticate(self, email=None, uuid=None):
@@ -120,7 +146,7 @@ class Project(BaseModel):
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
     #id = models.AutoField(primary_key = True)
-    advertisment_project_id = models.IntegerField(default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
+    advertisment_project_id = models.IntegerField(unique=True, default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
 
     def __unicode__(self):
         return unicode(self.name)
@@ -147,7 +173,7 @@ class Project(BaseModel):
                 member.badge: {
                     "name": member.name,
                     "key": member.key,
-                    "internal_id": member.internal_id,
+                    "id": member.id,
                     "observed_id": member.observed_id,
                     "active": member.active
                 } for member in self.members.all()
@@ -160,7 +186,7 @@ class Project(BaseModel):
                 beacon.badge: {
                     "name": beacon.name,
                     "key": beacon.key,
-                    "internal_id": beacon.internal_id,
+                    "id": beacon.id,
                     "active": beacon.active
                 } for beacon in self.beacons.all()
             },
@@ -205,7 +231,7 @@ class Hub(BaseModel):
                     member.badge: {
                         "name": member.name,
                         "key": member.key,
-                        "internal_id": member.internal_id,
+                        "id": member.id,
                         "observed_id": member.observed_id,
                         "active":member.active
                     } for member in self.project.members.all()
@@ -241,13 +267,13 @@ class Hub(BaseModel):
 
 
 
-class Member(BaseModel):
+class Member(BaseModelMinimal):
 
     """Definition of a Member, who belongs to a Project, and owns a badge"""
+    id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(15999), MinValueValidator(1)])
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    internal_id = models.PositiveSmallIntegerField(unique=True, blank=True, validators=[MaxValueValidator(15999), MinValueValidator(1)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank=True, default='')
@@ -266,12 +292,12 @@ class Member(BaseModel):
 
 
     def generate_id(self):
-        if not self.internal_id:
-            last_member = Member.objects.all().order_by('internal_id').last()
+        if not self.id:
+            last_member = Member.objects.all().order_by('id').last()
             if not last_member:
-                self.internal_id = 1
+                self.id = 1
             else:
-                self.internal_id = last_member.internal_id + 1
+                self.id = last_member.id + 1
 
 
     def save(self, *args, **kwargs):
@@ -310,11 +336,11 @@ class Member(BaseModel):
 
 
 
-class Beacon(BaseModel):
+class Beacon(BaseModelMinimal):
     """docstring for Beacon"""
+    id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(32000), MinValueValidator(16000)])
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    internal_id = models.PositiveSmallIntegerField(unique=True, blank=True, validators=[MaxValueValidator(32000), MinValueValidator(16000)])
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank = True ,default='')
@@ -325,12 +351,12 @@ class Beacon(BaseModel):
     project = models.ForeignKey(Project, related_name="beacons")
 
     def generate_id(self):
-        if not self.internal_id:
-            last_beacon = Beacon.objects.all().order_by('internal_id').last()
+        if not self.id:
+            last_beacon = Beacon.objects.all().order_by('id').last()
             if not last_beacon:
-                self.internal_id = 16000
+                self.id = 16000
             else:
-                self.internal_id = last_beacon.internal_id + 1
+                self.id = last_beacon.id + 1
 
 
     def save(self, *args, **kwargs):

@@ -9,7 +9,7 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ('id', 'advertisment_project_id', 'name', 'email', 'badge', 'internal_id', 'observed_id', 'active', 'comments','last_seen_ts', 'last_audio_ts',
+        fields = ('id', 'advertisment_project_id', 'name', 'email', 'badge', 'observed_id', 'active', 'comments','last_seen_ts', 'last_audio_ts',
                   'last_audio_ts_fract', 'last_proximity_ts', 'last_voltage', 'key')
         read_only_fields = ('id','advertisment_project_id', 'key')
 
@@ -43,7 +43,7 @@ class BeaconSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Beacon
-        fields = ('id', 'advertisment_project_id','name', 'badge', 'internal_id', 'observed_id','active', 'comments',
+        fields = ('id', 'advertisment_project_id','name', 'badge', 'observed_id','active', 'comments',
          'last_seen_ts','last_voltage', 'key')
         read_only_fields = ('advertisment_project_id', 'id', 'key')
 
