@@ -314,7 +314,7 @@ class Meeting(BaseModel):
         for line in f.readlines():
             try:
                 chunk = simplejson.loads(line)
-                if chunk["type"] == "received":
+                if "received" in chunk["type"]:
                     chunks.append(chunk)
             except Exception as e:
                 #TODO this means we have some broken data or something,
