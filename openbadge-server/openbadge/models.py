@@ -349,8 +349,8 @@ class Meeting(BaseModel):
                 meta["members"].append(line["data"]["member_key"])
             try:
                 line = simplejson.loads(f.readline())
+                if not line: break
             except ValueError as e:
-                # this happens when we read a file with no actual data
                 break
 
         #grab some additional metadata from the object
