@@ -170,7 +170,7 @@ class Hub(BaseModel):
 
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """The last time the hub was seen by the server (in epoch time)"""
-    
+
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
 
@@ -309,16 +309,17 @@ class Meeting(BaseModel):
         f = self.log_file
 
         f.readline()  # the first line will be info about the meeting
-        
+
 
         for line in f.readlines():
             try:
                 chunk = simplejson.loads(line)
-                chunks.append(chunk)
-            except Exception:
+                if chunk["type"] == "received":
+                    chunks.append(chunk)
+            except Exception as e:
                 #TODO this means we have some broken data or something,
                 # do we want to log an error or do something about it
-                pass
+                print e
 
         f.seek(0)
         return chunks
@@ -327,22 +328,29 @@ class Meeting(BaseModel):
         """return the metadata for this meeting object"""
 
         f = self.log_file
+        # due to a bug in version df64c0a of openbadge-hub,
+        # files are occasionally written out of order
+        # (i.e. the "meeting started" event is not the first line in the file)
+        # we have to make sure we're loading the right line
         meta = simplejson.loads(f.readline())
-        line_type = meta["type"]
+        while meta["type"] != "meeting started":
+            meta = simplejson.loads(f.readline())
+
         meta["members"] = []
 
-        # seek to beginning in case something weird happened when writing file
-        # on the app (odd behavior has been seen)
+        # seek to beginning in case it was written out of order
         f.seek(0)
-        # the following few lines are members joining
+        # the following few lines should be members joining
         line = simplejson.loads(f.readline())
-        #TODO meetings with no data break this
         while "received" not in line["type"] and "ended" not in line["type"]:
+            # make sure we're getting a member change event
+            # ANYTHING IS POSSIBLE
             if "member" in line["type"] and line["data"]["change"] == "join":
                 meta["members"].append(line["data"]["member_key"])
             try:
                 line = simplejson.loads(f.readline())
             except ValueError as e:
+                # this happens when we read a file with no actual data
                 break
 
         #grab some additional metadata from the object
@@ -421,4 +429,4 @@ class DataFile(BaseModel):
             }
         else:
             return { "metadata": meta }
-    
+
