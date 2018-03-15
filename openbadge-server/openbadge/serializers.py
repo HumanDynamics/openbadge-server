@@ -31,6 +31,11 @@ class MemberSerializer(serializers.ModelSerializer):
             instance.last_seen_ts = validated_data.get('last_seen_ts', instance.last_seen_ts)
             instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
 
+
+        # if we have an older last_contacted_ts, update it
+        if validated_data.get('last_contacted_ts') > instance.last_contacted_ts:
+            instance.last_contacted_ts = validated_data.get('last_contacted_ts', instance.last_contacted_ts)
+
         instance.observed_id = validated_data.get('observed_id', instance.observed_id)
 
         instance.save()
