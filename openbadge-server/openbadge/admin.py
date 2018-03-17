@@ -17,6 +17,7 @@ def register(model):
 
     return inner
 
+
 class GetLocalTimeMixin(object):
 
     def get_local_time(self, timestamp):
@@ -49,8 +50,9 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     fields = ('key','id', 'name', 'email', 'badge',
               'observed_id','active','comments',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
-              'last_audio_ts_fract', 'last_proximity_ts','last_contacted_ts','last_contact')
-    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity','last_contacted_ts','last_contact')
+              'last_audio_ts_fract', 'last_proximity_ts','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
+    #ordering = ('-last_voltage',)
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
     
     
     def last_seen(self, obj):
@@ -67,6 +69,9 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 
     def last_contact(self, obj):
         return self.get_local_time(obj.last_contacted_ts)
+
+    def last_unsync(self, obj):
+        return self.get_local_time(obj.last_unsync_ts)
 
 
 

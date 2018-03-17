@@ -10,7 +10,7 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ('id', 'advertisment_project_id', 'name', 'email', 'badge', 'observed_id', 'active', 'comments','last_seen_ts', 'last_audio_ts',
-                  'last_audio_ts_fract', 'last_proximity_ts', 'last_voltage', 'key')
+                  'last_audio_ts_fract', 'last_proximity_ts', 'last_contacted_ts', 'last_unsync_ts', 'last_voltage', 'key')
         read_only_fields = ('id','advertisment_project_id', 'key')
 
     def update(self, instance, validated_data):
@@ -35,6 +35,9 @@ class MemberSerializer(serializers.ModelSerializer):
         # if we have an older last_contacted_ts, update it
         if validated_data.get('last_contacted_ts') > instance.last_contacted_ts:
             instance.last_contacted_ts = validated_data.get('last_contacted_ts', instance.last_contacted_ts)
+
+        if validated_data.get('last_unsync_ts') > instance.last_contacted_ts:
+            instance.last_contacted_ts = validated_data.get('last_unsync_ts', instance.last_unsync_ts)
 
         instance.observed_id = validated_data.get('observed_id', instance.observed_id)
 

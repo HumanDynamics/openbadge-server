@@ -283,6 +283,7 @@ class Member(BaseModelMinimal):
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_contacted_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
+    last_unsync_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
@@ -335,6 +336,9 @@ class Member(BaseModelMinimal):
     def __unicode__(self):
         return unicode(self.name)
 
+    class Meta:
+           ordering = ['-active','-last_voltage']
+
 
 
 class Beacon(BaseModelMinimal):
@@ -378,6 +382,8 @@ class Beacon(BaseModelMinimal):
 
     def __unicode__(self):
         return unicode(self.name)
+
+
         
 
 
