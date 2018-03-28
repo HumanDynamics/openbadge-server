@@ -6,6 +6,7 @@ import random
 import json as simplejson
 import string
 import time
+import uuid
 
 
 from decimal import Decimal
@@ -17,6 +18,7 @@ from django.core.files.storage import FileSystemStorage
 from django.db import models
 from jsonfield import JSONField
 from math import floor
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 def key_generator(size=10, chars=string.ascii_uppercase + string.digits):
@@ -28,10 +30,10 @@ class BaseModel(models.Model):
     Base model from which all other models should inherit. It has a unique key and other nice fields, like a unique id.
     If you override this class, you should probably add more unique identifiers, like a uuid or hash or something.
     """
-    id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key = True)
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)
+    date_updated = models.DateTimeField(auto_now=True)  
 
     def generate_key(self, length=10):
         if not self.key:
@@ -47,6 +49,33 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class BaseModelMinimal(models.Model):
+    """
+    Base model from which all other models should inherit. It has a unique key and other nice fields, like a unique id.
+    If you override this class, you should probably add more unique identifiers, like a uuid or hash or something.
+    """
+    key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)  
+
+    def generate_key(self, length=10):
+        if not self.key:
+            for _ in range(10):
+                key = key_generator(length)
+                if not type(self).objects.filter(key=key).count():
+                    self.key = key
+                    break
+
+    def save(self, *args, **kwargs):
+        self.generate_key()
+        super(BaseModelMinimal, self).save(*args, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
 
 
 class UserBackend(object):
@@ -116,9 +145,12 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
+    #id = models.AutoField(primary_key = True)
+    advertisment_project_id = models.IntegerField(unique=True, default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
 
     def __unicode__(self):
         return unicode(self.name)
+
 
     def get_meetings(self, file):
         return {
@@ -134,19 +166,35 @@ class Project(BaseModel):
     def to_object(self):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
-            'project_id': self.id,
-            'key': self.key,
+            'project_id': self.advertisment_project_id,
+            'key': self.key,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
             'name': self.name,
             'badge_map': {
                 member.badge: {
                     "name": member.name,
-                    "key": member.key
+                    "key": member.key,
+                    "id": member.id,
+                    "observed_id": member.observed_id,
+                    "active": member.active
                 } for member in self.members.all()
             },
             'members': {
                 member.name: member.to_dict() for member in self.members.all()
+            },
+
+            'beacon_map': {
+                beacon.badge: {
+                    "name": beacon.name,
+                    "key": beacon.key,
+                    "id": beacon.id,
+                    "active": beacon.active
+                } for beacon in self.beacons.all()
+            },
+            'beacons': {
+                beacon.name: beacon.to_dict() for beacon in self.beacons.all()
             }
         }
+
 
 
 class Hub(BaseModel):
@@ -171,6 +219,8 @@ class Hub(BaseModel):
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
 
+    #id = models.AutoField(primary_key = True)
+
     def get_object(self, last_update = None):
         if last_update:
             return {
@@ -180,7 +230,10 @@ class Hub(BaseModel):
                 'badge_map': {
                     member.badge: {
                         "name": member.name,
-                        "key": member.key
+                        "key": member.key,
+                        "id": member.id,
+                        "observed_id": member.observed_id,
+                        "active":member.active
                     } for member in self.project.members.all()
                         if int(member.date_updated.strftime("%s")) > last_update
                 },
@@ -188,6 +241,7 @@ class Hub(BaseModel):
                     member.name: member.to_dict() for member in self.project.members.all()
                             if int(member.date_updated.strftime("%s")) > last_update},
                 }
+
         else:
             return {
                 "name": self.name,
@@ -212,13 +266,18 @@ class Hub(BaseModel):
         return unicode(self.name)
 
 
-class Member(BaseModel):
-    """Definition of a Member, who belongs to a Project, and owns a badge"""
 
+class Member(BaseModelMinimal):
+
+    """Definition of a Member, who belongs to a Project, and owns a badge"""
+    id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(15999), MinValueValidator(1)])
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    """Some sort of hub-readable ID for the badge, similar to a MAC, but accessible from iPhone"""
+    observed_id = models.PositiveSmallIntegerField(default=0)
+    active = models.BooleanField(default=True)
+    comments = models.CharField(max_length=240, blank=True, default='')
+
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
@@ -227,6 +286,24 @@ class Member(BaseModel):
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
+
+    def get_project_id(self):
+        return self.project.advertisment_project_id
+
+
+    def generate_id(self):
+        if not self.id:
+            last_member = Member.objects.all().order_by('id').last()
+            if not last_member:
+                self.id = 1
+            else:
+                self.id = last_member.id + 1
+
+
+    def save(self, *args, **kwargs):
+        self.generate_id()
+        super(Member, self).save(*args, **kwargs)
+
 
     @classmethod
     def datetime_to_epoch(cls, d):
@@ -256,6 +333,51 @@ class Member(BaseModel):
 
     def __unicode__(self):
         return unicode(self.name)
+
+
+
+class Beacon(BaseModelMinimal):
+    """docstring for Beacon"""
+    id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(32000), MinValueValidator(16000)])
+    name = models.CharField(max_length=64)
+    badge = models.CharField(max_length=64, unique=True)
+    observed_id = models.PositiveSmallIntegerField(default=0)
+    active = models.BooleanField(default=True)
+    comments = models.CharField(max_length=240, blank = True ,default='')
+
+    last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
+    last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+
+    project = models.ForeignKey(Project, related_name="beacons")
+
+    def generate_id(self):
+        if not self.id:
+            last_beacon = Beacon.objects.all().order_by('id').last()
+            if not last_beacon:
+                self.id = 16000
+            else:
+                self.id = last_beacon.id + 1
+
+
+    def save(self, *args, **kwargs):
+        self.generate_id()
+        super(Beacon, self).save(*args, **kwargs)
+
+
+
+
+    def get_project_id(self):
+        return self.project.advertisment_project_id
+
+    def to_dict(self):
+        return dict(id=self.id,
+                    name=self.name,
+                    badge=self.badge
+                    )
+
+    def __unicode__(self):
+        return unicode(self.name)
+        
 
 
 class Meeting(BaseModel):

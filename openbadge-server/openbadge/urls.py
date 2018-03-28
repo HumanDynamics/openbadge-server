@@ -14,6 +14,21 @@ badges_details = views.MemberViewSet.as_view({
     #'post': 'create',
 })
 
+
+beacons_list = views.BeaconViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+
+
+beacons_details = views.BeaconViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    #'post': 'create',
+})
+
+
 hubs_list = views.HubViewSet.as_view({
     'get': 'list',
     # 'post': 'create',
@@ -38,10 +53,14 @@ urlpatterns = [
     url(r'^(?P<project_key>\w+)/meetings/(?P<meeting_key>[\w-]*)$', views.get_meeting, name='get_meeting'),
     url(r'^(?P<project_key>\w+)/hubs$', views.hubs, name='hubs'),
     url(r'^(?P<project_key>\w+)/members', views.members, name='members'),
+    url(r'^(?P<project_key>\w+)/beacons', views.members, name='beacons'),
     url(r'^(?P<project_key>\w+)/datafiles', views.datafiles, name='datafiles'),
 
     url(r'^badges/$', badges_list, name='badge-list'),
     url(r'badges/(?P<key>\w+)', badges_details, name='badge-details'),
+
+    url(r'^beacons/$', beacons_list, name='beacon-list'),
+    url(r'beacons/(?P<key>\w+)', beacons_details, name='beacon-details'),
 
     url(r'^hubs/$', hubs_list, name='hub-list'),
     #url(r'hubs/(?P<name>\w+)', hubs_details, name='hub-details'),
