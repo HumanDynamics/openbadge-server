@@ -383,6 +383,9 @@ class Beacon(BaseModelMinimal):
     def __unicode__(self):
         return unicode(self.name)
 
+    class Meta:
+           ordering = ['-last_voltage']
+
 
         
 
