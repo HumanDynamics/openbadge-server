@@ -51,7 +51,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
               'observed_id','active','comments',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
               'last_audio_ts_fract', 'last_proximity_ts','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
-    #ordering = ('-last_voltage',)
+    
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
     
     
@@ -156,6 +156,14 @@ class ProjectAdmin(admin.ModelAdmin):
             return timedelta(seconds = int(sum(
                 [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time])))
         return "NONE"
+
+
+
+@register(Member)
+class MemberAdmin(admin.ModelAdmin):
+    readonly_fields = ("key",)
+    list_display = ('id', 'name','observed_id','active','last_audio_ts','last_proximity_ts','last_voltage','last_seen_ts')
+    actions_on_top = True
 
 
 @register(Meeting)

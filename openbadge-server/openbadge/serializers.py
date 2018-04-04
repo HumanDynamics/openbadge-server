@@ -36,7 +36,7 @@ class MemberSerializer(serializers.ModelSerializer):
         if validated_data.get('last_contacted_ts') > instance.last_contacted_ts:
             instance.last_contacted_ts = validated_data.get('last_contacted_ts', instance.last_contacted_ts)
 
-        if validated_data.get('last_unsync_ts') > instance.last_contacted_ts:
+        if validated_data.get('last_unsync_ts') > instance.last_unsync_ts:
             instance.last_contacted_ts = validated_data.get('last_unsync_ts', instance.last_unsync_ts)
 
         instance.observed_id = validated_data.get('observed_id', instance.observed_id)

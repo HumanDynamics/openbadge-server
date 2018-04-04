@@ -219,7 +219,6 @@ class Hub(BaseModel):
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
 
-    #id = models.AutoField(primary_key = True)
 
     def get_object(self, last_update = None):
         if last_update:
@@ -336,8 +335,7 @@ class Member(BaseModelMinimal):
     def __unicode__(self):
         return unicode(self.name)
 
-    class Meta:
-           ordering = ['-active','-last_voltage']
+           
 
 
 
@@ -382,9 +380,7 @@ class Beacon(BaseModelMinimal):
 
     def __unicode__(self):
         return unicode(self.name)
-
-    class Meta:
-           ordering = ['-last_voltage']
+           
 
 
         
