@@ -160,10 +160,23 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 @register(Member)
-class MemberAdmin(admin.ModelAdmin):
+class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
     readonly_fields = ("key",)
-    list_display = ('id', 'name','observed_id','active','last_audio_ts','last_proximity_ts','last_voltage','last_seen_ts','last_contacted_ts' , 'last_seen_ts')
+    list_display = ('id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted')
     actions_on_top = True
+
+    def last_audio(self, obj):
+        return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)    
+
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
+    def last_contacted(self, obj):
+        return self.get_local_time(obj.last_contacted_ts)    
+
 
 
 @register(Meeting)
