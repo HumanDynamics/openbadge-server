@@ -162,7 +162,7 @@ class ProjectAdmin(admin.ModelAdmin):
 @register(Member)
 class MemberAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('id', 'name','observed_id','active','last_audio_ts','last_proximity_ts','last_voltage','last_seen_ts')
+    list_display = ('id', 'name','observed_id','active','last_audio_ts','last_proximity_ts','last_voltage','last_seen_ts','last_contacted_ts' , 'last_seen_ts')
     actions_on_top = True
 
 
