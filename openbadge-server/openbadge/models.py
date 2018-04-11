@@ -287,7 +287,7 @@ class Member(BaseModelMinimal):
 
     project = models.ForeignKey(Project, related_name="members")
 
-    def get_project_id(self):
+    def get_advertisment_project_id(self):
         return self.project.advertisment_project_id
 
 
@@ -368,7 +368,7 @@ class Beacon(BaseModelMinimal):
 
 
 
-    def get_project_id(self):
+    def get_advertisment_project_id(self):
         return self.project.advertisment_project_id
 
     def to_dict(self):

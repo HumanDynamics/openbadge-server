@@ -3,15 +3,19 @@ import time
 
 from .models import Member, Project, Hub, Beacon
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MemberSerializer(serializers.ModelSerializer):
-    advertisment_project_id = serializers.ReadOnlyField(source='get_project_id')
+    advertisment_project_id = serializers.ReadOnlyField(source='get_advertisment_project_id')
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
 
     class Meta:
         model = Member
-        fields = ('id', 'advertisment_project_id', 'name', 'email', 'badge', 'observed_id', 'active', 'comments','last_seen_ts', 'last_audio_ts',
+        fields = ('id', 'project', 'advertisment_project_id', 'name', 'email', 'badge', 'observed_id', 'active', 'comments','last_seen_ts', 'last_audio_ts',
                   'last_audio_ts_fract', 'last_proximity_ts', 'last_contacted_ts', 'last_unsync_ts', 'last_voltage', 'key')
-        read_only_fields = ('id','advertisment_project_id', 'key')
+        read_only_fields = ('id','project','advertisment_project_id', 'key')
 
     def update(self, instance, validated_data):
 
@@ -47,13 +51,14 @@ class MemberSerializer(serializers.ModelSerializer):
 
 
 class BeaconSerializer(serializers.ModelSerializer):
-    advertisment_project_id = serializers.ReadOnlyField(source='get_project_id')
+    advertisment_project_id = serializers.ReadOnlyField(source='get_advertisment_project_id')
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
     
     class Meta:
         model = Beacon
-        fields = ('id', 'advertisment_project_id','name', 'badge', 'observed_id','active', 'comments',
+        fields = ('id','project', 'advertisment_project_id','name', 'badge', 'observed_id','active', 'comments',
          'last_seen_ts','last_voltage', 'key')
-        read_only_fields = ('advertisment_project_id', 'id', 'key')
+        read_only_fields = ('advertisment_project_id', 'id','project', 'key')
 
     def update(self, instance, validated_data):
         # if we have an older last_seen_ts, update it and voltage
@@ -72,7 +77,7 @@ class HubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hub
-        fields = ('id', 'advertisment_project_id', 'name', 'last_seen_ts',
+        fields = ('id', 'project', 'name', 'last_seen_ts',
                   'god', 'uuid', 'ip_address', 'key')
-        read_only_fields = ('id', 'advertisment_project_id', 'name',
+        read_only_fields = ('id', 'project', 'name',
                             'heartbeat', 'key', 'god', 'uuid')
