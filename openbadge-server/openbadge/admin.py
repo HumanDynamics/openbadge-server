@@ -162,7 +162,8 @@ class ProjectAdmin(admin.ModelAdmin):
 @register(Member)
 class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio_ts','last_proximity_ts','last_contacted_ts','last_unsync_ts',)
-    list_display = ('id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
+    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
+    list_filter = ('project',)
     actions_on_top = True
 
     def last_audio(self, obj):
