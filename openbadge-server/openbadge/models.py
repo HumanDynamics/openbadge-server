@@ -145,7 +145,6 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
-    #id = models.AutoField(primary_key = True)
     advertisment_project_id = models.IntegerField(unique=True, default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
 
     def __unicode__(self):
