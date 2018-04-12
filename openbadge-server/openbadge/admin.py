@@ -8,6 +8,11 @@ from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
 from .models import OpenBadgeUser, Meeting, Member, Project, Hub ,Beacon
+from django import forms
+from django.conf.urls import url
+from import_export.admin import ImportExportModelAdmin
+from import_export import resources
+from rest_framework import serializers
 
 
 def register(model):
@@ -42,6 +47,7 @@ class OpenBadgeUserAdmin(auth_admin.UserAdmin):
 class SerializedFieldWidget(AdminTextareaWidget):
     def render(self, name, value, attrs=None):
         return super(SerializedFieldWidget, self).render(name, simplejson.dumps(value, indent=4), attrs)
+
 
 
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
@@ -182,6 +188,36 @@ class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
         return self.get_local_time(obj.last_unsync_ts)
 
 
+
+class MemberImportExport(Member):
+    class Meta:
+        proxy = True
+
+@register(MemberImportExport)
+class MemberImportExportAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio_ts','last_proximity_ts','last_contacted_ts','last_unsync_ts',)
+    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
+    list_filter = ('project',)
+    actions_on_top = True
+
+    def last_audio(self, obj):
+        return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)    
+
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
+    def last_contacted(self, obj):
+        return self.get_local_time(obj.last_contacted_ts)
+
+    def last_unsync(self, obj):
+        return self.get_local_time(obj.last_unsync_ts)
+
+
+
+
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
     readonly_fields = ("key",)
@@ -216,3 +252,11 @@ class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
         return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))
 
     duration.admin_order_field = 'duration'
+
+
+
+class MemberResource(resources.ModelResource):
+    class Meta:
+        model = Member
+        fields = ('name', 'email', 'badge',)
+
