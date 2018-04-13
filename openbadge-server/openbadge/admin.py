@@ -8,11 +8,8 @@ from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
 from .models import OpenBadgeUser, Meeting, Member, Project, Hub ,Beacon
-from django import forms
-from django.conf.urls import url
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources
-from rest_framework import serializers
 
 
 def register(model):
