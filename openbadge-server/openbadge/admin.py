@@ -188,6 +188,16 @@ class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
         return self.get_local_time(obj.last_unsync_ts)
 
 
+@register(Beacon)
+class BeaconAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen',)
+    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active', 'last_voltage','last_seen_ts', 'last_seen')
+    list_filter = ('project',)
+    actions_on_top = True
+    
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
 
 @register(Meeting)
 class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
