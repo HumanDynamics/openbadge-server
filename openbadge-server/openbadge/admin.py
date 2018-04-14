@@ -8,6 +8,11 @@ from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
 from .models import OpenBadgeUser, Meeting, Member, Project, Hub ,Beacon
+import csv
+from django.http import HttpResponse
+from django.conf.urls import url
+from django import forms
+from django.shortcuts import render, redirect
 
 
 def register(model):
@@ -28,6 +33,26 @@ class GetLocalTimeMixin(object):
                 .astimezone(timezone(settings.TIME_ZONE))\
                 .strftime('%Y-%m-%d %H:%M:%S %Z')
 
+
+
+class ExportCsvMixin:
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
+        writer = csv.writer(response)
+        writer.writerow(field_names)
+        for obj in queryset:
+            row = writer.writerow([getattr(obj, field) for field in field_names])
+
+        return response
+
+        export_as_csv.short_description = "Export Selected"
+
+
+class CsvImportForm(forms.Form):
+    csv_file = forms.FileField()
 
 
 @register(OpenBadgeUser)
@@ -160,11 +185,15 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 @register(Member)
-class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
+class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin ,ExportCsvMixin):
+    
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio_ts','last_proximity_ts','last_contacted_ts','last_unsync_ts',)
     list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
     list_filter = ('project',)
+    actions = ['export_as_csv']
     actions_on_top = True
+    change_list_template = "admin/member_changelist.html"
+    
 
     def last_audio(self, obj):
         return self.get_local_time(obj.last_audio_ts)
@@ -180,6 +209,35 @@ class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
 
     def last_unsync(self, obj):
         return self.get_local_time(obj.last_unsync_ts)
+
+    def get_urls(self):
+        urls = super(MemberAdmin,self).get_urls()
+        my_urls = [
+            url('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            reader = csv.reader(csv_file)
+            # Create Hero objects from passed in data
+            # ...
+            for row in reader:
+                name = row[0]
+                email=row[1]
+                badge = row[2]
+
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
+
+
 
 
 @register(Meeting)
