@@ -11,9 +11,10 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 from __future__ import absolute_import, unicode_literals
 
 import environ
-
+import os
 ROOT_DIR = environ.Path(__file__) - 3  # (openbadge-server/config/settings/common.py - 3 = openbadge-server/)
 APPS_DIR = ROOT_DIR.path('openbadge-server')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 env = environ.Env()
 environ.Env.read_env(ROOT_DIR(".env"))
@@ -189,3 +190,22 @@ GOD_KEY = env("GOD_KEY")
 DJANGO_SECURE_SSL_REDIRECT=False
 # django-allauth
 DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+#Template configuration for admin page
+TEMPLATES = [
+    {
+        'BACKEND':'django.template.backends.django.DjangoTemplates',
+        'DIRS' : [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                "django.contrib.auth.context_processors.auth"
+            ]
+
+        }
+    }
+
+
+]
+
+
