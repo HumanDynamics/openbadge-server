@@ -334,8 +334,6 @@ class Member(BaseModelMinimal):
     def __unicode__(self):
         return unicode(self.name)
 
-           
-
 
 
 class Beacon(BaseModelMinimal):

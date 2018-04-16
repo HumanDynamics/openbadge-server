@@ -8,6 +8,8 @@ from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
 from .models import OpenBadgeUser, Meeting, Member, Project, Hub ,Beacon
+from import_export.admin import ImportExportModelAdmin
+from import_export import resources
 
 
 def register(model):
@@ -42,6 +44,7 @@ class OpenBadgeUserAdmin(auth_admin.UserAdmin):
 class SerializedFieldWidget(AdminTextareaWidget):
     def render(self, name, value, attrs=None):
         return super(SerializedFieldWidget, self).render(name, simplejson.dumps(value, indent=4), attrs)
+
 
 
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
@@ -160,7 +163,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 @register(Member)
-class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
+class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio_ts','last_proximity_ts','last_contacted_ts','last_unsync_ts',)
     list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
     list_filter = ('project',)
@@ -180,6 +183,17 @@ class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
 
     def last_unsync(self, obj):
         return self.get_local_time(obj.last_unsync_ts)
+
+
+@register(Beacon)
+class BeaconAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen',)
+    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active', 'last_voltage','last_seen_ts', 'last_seen')
+    list_filter = ('project',)
+    actions_on_top = True
+    
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
 
 
 @register(Meeting)
@@ -216,3 +230,11 @@ class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
         return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))
 
     duration.admin_order_field = 'duration'
+
+
+
+class MemberResource(resources.ModelResource):
+    class Meta:
+        model = Member
+        fields = ('name', 'email', 'badge',)
+

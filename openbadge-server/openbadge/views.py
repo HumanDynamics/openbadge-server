@@ -20,6 +20,7 @@ from .models import Meeting, Project, Hub, DataFile, Beacon  # Chunk  # ActionDa
 from .models import Member
 from .serializers import MemberSerializer, HubSerializer, BeaconSerializer
 from .permissions import AppkeyRequired, HubUuidRequired
+from tablib import Dataset
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -85,7 +86,6 @@ class MemberViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 
@@ -505,6 +505,7 @@ def members(request, project_key):
 @api_view(['PUT'])
 def put_members(request, project_key):
     return JsonResponse({"status": "Not Implemented"})
+
 
 
 @is_god

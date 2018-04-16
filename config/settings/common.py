@@ -12,6 +12,7 @@ from __future__ import absolute_import, unicode_literals
 
 import environ
 
+IMPORT_EXPORT_USE_TRANSACTIONS = True
 ROOT_DIR = environ.Path(__file__) - 3  # (openbadge-server/config/settings/common.py - 3 = openbadge-server/)
 APPS_DIR = ROOT_DIR.path('openbadge-server')
 
@@ -26,6 +27,7 @@ THIRD_PARTY_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_expiring_authtoken',
+    'import_export',
 )
 DJANGO_APPS = (
     'django.contrib.admin',
