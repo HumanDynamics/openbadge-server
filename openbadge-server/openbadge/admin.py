@@ -17,6 +17,7 @@ def register(model):
 
     return inner
 
+
 class GetLocalTimeMixin(object):
 
     def get_local_time(self, timestamp):
@@ -49,8 +50,9 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     fields = ('key','id', 'name', 'email', 'badge',
               'observed_id','active','comments',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
-              'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity')
+              'last_audio_ts_fract', 'last_proximity_ts','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
+    
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity','last_contact','last_unsync')
     
     
     def last_seen(self, obj):
@@ -64,6 +66,12 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
 
     def last_voltage(self, obj):
         return obj.last_voltage
+
+    def last_contact(self, obj):
+        return self.get_local_time(obj.last_contacted_ts)
+
+    def last_unsync(self, obj):
+        return self.get_local_time(obj.last_unsync_ts)
 
 
 
@@ -148,6 +156,30 @@ class ProjectAdmin(admin.ModelAdmin):
             return timedelta(seconds = int(sum(
                 [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time])))
         return "NONE"
+
+
+
+@register(Member)
+class MemberAdmin(admin.ModelAdmin, GetLocalTimeMixin):
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio_ts','last_proximity_ts','last_contacted_ts','last_unsync_ts',)
+    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
+    list_filter = ('project',)
+    actions_on_top = True
+
+    def last_audio(self, obj):
+        return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)    
+
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
+    def last_contacted(self, obj):
+        return self.get_local_time(obj.last_contacted_ts)
+
+    def last_unsync(self, obj):
+        return self.get_local_time(obj.last_unsync_ts)
 
 
 @register(Meeting)

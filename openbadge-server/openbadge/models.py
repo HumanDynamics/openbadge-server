@@ -145,7 +145,6 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
-    #id = models.AutoField(primary_key = True)
     advertisment_project_id = models.IntegerField(unique=True, default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
 
     def __unicode__(self):
@@ -219,7 +218,6 @@ class Hub(BaseModel):
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
 
-    #id = models.AutoField(primary_key = True)
 
     def get_object(self, last_update = None):
         if last_update:
@@ -282,12 +280,14 @@ class Member(BaseModelMinimal):
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
+    last_contacted_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_unsync_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
 
-    def get_project_id(self):
+    def get_advertisment_project_id(self):
         return self.project.advertisment_project_id
 
 
@@ -334,6 +334,8 @@ class Member(BaseModelMinimal):
     def __unicode__(self):
         return unicode(self.name)
 
+           
+
 
 
 class Beacon(BaseModelMinimal):
@@ -366,7 +368,7 @@ class Beacon(BaseModelMinimal):
 
 
 
-    def get_project_id(self):
+    def get_advertisment_project_id(self):
         return self.project.advertisment_project_id
 
     def to_dict(self):
@@ -377,6 +379,9 @@ class Beacon(BaseModelMinimal):
 
     def __unicode__(self):
         return unicode(self.name)
+           
+
+
         
 
 
