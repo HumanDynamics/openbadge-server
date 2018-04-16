@@ -7,6 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class MemberSerializer(serializers.ModelSerializer):
     advertisment_project_id = serializers.ReadOnlyField(source='get_advertisment_project_id')
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
@@ -47,7 +48,6 @@ class MemberSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
 
 
 class BeaconSerializer(serializers.ModelSerializer):

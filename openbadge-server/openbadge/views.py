@@ -88,7 +88,6 @@ class MemberViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class BeaconViewSet(viewsets.ModelViewSet):
     #queryset = Member.objects.all()
     serializer_class = BeaconSerializer
@@ -138,17 +137,12 @@ class BeaconViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
-
-            
 
 class HubViewSet(viewsets.ModelViewSet):
     queryset = Hub.objects.all()
     serializer_class = HubSerializer
     permission_classes = [AppkeyRequired]
     lookup_field = 'name'
-
-
 
 
 @app_view
@@ -284,8 +278,8 @@ def put_meeting(request, project_key):
 
     meeting.save()
 
-
     return JsonResponse({'detail': 'meeting created', "meeting_key": meeting.key})
+
 
 @app_view
 @api_view(['GET'])
@@ -342,7 +336,6 @@ def post_meeting(request, project_key):
 
     print "to", meeting
 
-
     if update_time and update_index:
         meeting.last_update_timestamp = update_time      # simplejson.loads(chunks[-1])['last_log_time']
         meeting.last_update_index = update_index   # simplejson.loads(chunks[-1])['last_log_serial']
@@ -354,6 +347,7 @@ def post_meeting(request, project_key):
 ###########################
 # Data Log Level Endpoints #
 ###########################
+
 
 @is_own_project
 @require_hub_uuid

@@ -31,7 +31,6 @@ class GetLocalTimeMixin(object):
                 .strftime('%Y-%m-%d %H:%M:%S %Z')
 
 
-
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
     list_display = auth_admin.UserAdmin.list_display
@@ -46,7 +45,6 @@ class SerializedFieldWidget(AdminTextareaWidget):
         return super(SerializedFieldWidget, self).render(name, simplejson.dumps(value, indent=4), attrs)
 
 
-
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
@@ -56,8 +54,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
               'last_audio_ts_fract', 'last_proximity_ts','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
     
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity','last_contact','last_unsync')
-    
-    
+
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
 
@@ -77,7 +74,6 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
         return self.get_local_time(obj.last_unsync_ts)
 
 
-
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
     model = Beacon
     extra = 3
@@ -85,14 +81,12 @@ class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
               'observed_id' ,'active','comments',
               'last_seen', 'last_voltage') 
     readonly_fields = ('key', 'id','observed_id', 'last_seen', 'last_voltage')
-    
-    
+
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
 
     def last_voltage(self, obj):
         return obj.last_voltage
-
 
 
 class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
@@ -159,7 +153,6 @@ class ProjectAdmin(admin.ModelAdmin):
             return timedelta(seconds = int(sum(
                 [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time])))
         return "NONE"
-
 
 
 @register(Member)
@@ -230,7 +223,6 @@ class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
         return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))
 
     duration.admin_order_field = 'duration'
-
 
 
 class MemberResource(resources.ModelResource):

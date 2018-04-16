@@ -76,8 +76,6 @@ class BaseModelMinimal(models.Model):
         abstract = True
 
 
-
-
 class UserBackend(object):
     def authenticate(self, email=None, uuid=None):
         try:
@@ -138,6 +136,7 @@ class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
 def _to_timestamp(dt):
     return (dt - datetime.datetime(1970, 1, 1).replace(tzinfo=pytz.UTC)).total_seconds()
 
+
 class Project(BaseModel):
     """
     Definition of the Project, which is an `organization`-level collection of hubs, badges, and meetings
@@ -195,7 +194,6 @@ class Project(BaseModel):
         }
 
 
-
 class Hub(BaseModel):
     """Definition of a Hub, which is owned by a Project and has am externally generated uuid"""
 
@@ -217,7 +215,6 @@ class Hub(BaseModel):
     
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
-
 
     def get_object(self, last_update = None):
         if last_update:
@@ -264,7 +261,6 @@ class Hub(BaseModel):
         return unicode(self.name)
 
 
-
 class Member(BaseModelMinimal):
 
     """Definition of a Member, who belongs to a Project, and owns a badge"""
@@ -290,7 +286,6 @@ class Member(BaseModelMinimal):
     def get_advertisment_project_id(self):
         return self.project.advertisment_project_id
 
-
     def generate_id(self):
         if not self.id:
             last_member = Member.objects.all().order_by('id').last()
@@ -299,11 +294,9 @@ class Member(BaseModelMinimal):
             else:
                 self.id = last_member.id + 1
 
-
     def save(self, *args, **kwargs):
         self.generate_id()
         super(Member, self).save(*args, **kwargs)
-
 
     @classmethod
     def datetime_to_epoch(cls, d):
@@ -335,7 +328,6 @@ class Member(BaseModelMinimal):
         return unicode(self.name)
 
 
-
 class Beacon(BaseModelMinimal):
     """docstring for Beacon"""
     id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(32000), MinValueValidator(16000)])
@@ -358,13 +350,9 @@ class Beacon(BaseModelMinimal):
             else:
                 self.id = last_beacon.id + 1
 
-
     def save(self, *args, **kwargs):
         self.generate_id()
         super(Beacon, self).save(*args, **kwargs)
-
-
-
 
     def get_advertisment_project_id(self):
         return self.project.advertisment_project_id
@@ -377,10 +365,6 @@ class Beacon(BaseModelMinimal):
 
     def __unicode__(self):
         return unicode(self.name)
-           
-
-
-        
 
 
 class Meeting(BaseModel):
@@ -431,7 +415,6 @@ class Meeting(BaseModel):
         f = self.log_file
 
         f.readline()  # the first line will be info about the meeting
-        
 
         for line in f.readlines():
             try:
@@ -491,6 +474,7 @@ class Meeting(BaseModel):
 
         return { "metadata": meta }
 
+
 class DataFile(BaseModel):
     """
     Manage a single data file - data is provided by the Python Hubs
@@ -529,7 +513,6 @@ class DataFile(BaseModel):
             'log_timestamp': self.last_update_timestamp,
             'hub': self.hub.name
         }
-
 
     def to_object(self, file):
         """Get a representation of this object for use with HTTP responses"""
