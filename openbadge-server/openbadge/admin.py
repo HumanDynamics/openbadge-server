@@ -66,9 +66,6 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     def last_proximity(self, obj):
         return self.get_local_time(obj.last_proximity_ts)
 
-    def last_voltage(self, obj):
-        return obj.last_voltage
-
     def last_contacted(self, obj):
         return self.get_local_time(obj.last_contacted_ts)
 
@@ -86,9 +83,6 @@ class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
 
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
-
-    def last_voltage(self, obj):
-        return obj.last_voltage
 
 
 class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
