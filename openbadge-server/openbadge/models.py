@@ -265,7 +265,7 @@ class Member(BaseModelMinimal):
 
     """Definition of a Member, who belongs to a Project, and owns a badge"""
     id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(15999), MinValueValidator(1)])
-    email = models.EmailField(unique=True)
+    email = models.EmailField(null=True, blank=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
     observed_id = models.PositiveSmallIntegerField(default=0)

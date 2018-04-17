@@ -48,12 +48,14 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key','id', 'name', 'email', 'badge',
-              'observed_id','active','comments',
-              'last_seen', 'last_voltage', 'last_audio', 'last_proximity','last_audio_ts',
-              'last_audio_ts_fract', 'last_proximity_ts','last_contacted_ts','last_contact','last_unsync_ts','last_unsync')
+    fields = ('key','id', 'name', 'badge', 'observed_id',
+              'last_seen', 'last_voltage', 'last_audio', 'last_proximity', 'last_unsync', 'last_contacted',
+              'active', 'comments',
+              'last_audio_ts', 'last_audio_ts_fract', 'last_proximity_ts', 'last_unsync_ts', 'last_contacted_ts',
+              'email')
     
-    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio','last_proximity','last_contact','last_unsync')
+    readonly_fields = ('key', 'id', 'observed_id', 'last_voltage', 'last_seen', 'last_audio','last_proximity',
+                       'last_contacted','last_unsync')
 
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
@@ -67,7 +69,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     def last_voltage(self, obj):
         return obj.last_voltage
 
-    def last_contact(self, obj):
+    def last_contacted(self, obj):
         return self.get_local_time(obj.last_contacted_ts)
 
     def last_unsync(self, obj):
@@ -157,8 +159,13 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @register(Member)
 class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
-    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio_ts','last_proximity_ts','last_contacted_ts','last_unsync_ts',)
-    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active','last_audio_ts','last_audio','last_proximity_ts','last_proximity', 'last_voltage','last_seen_ts', 'last_seen', 'last_contacted_ts' , 'last_contacted' ,'last_unsync_ts','last_unsync')
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio', 'last_proximity',
+                       'last_contacted', 'last_unsync',)
+    list_display = ('key', 'id', 'name', 'badge', 'observed_id',
+              'last_seen', 'last_voltage', 'last_audio', 'last_proximity', 'last_unsync', 'last_contacted',
+              'active', 'comments',
+              'last_audio_ts', 'last_audio_ts_fract', 'last_proximity_ts', 'last_unsync_ts', 'last_contacted_ts',
+              'email',)
     list_filter = ('project',)
     actions_on_top = True
 
