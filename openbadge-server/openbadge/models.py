@@ -346,7 +346,7 @@ class Beacon(BaseModelMinimal):
         if not self.id:
             last_beacon = Beacon.objects.all().order_by('id').last()
             if not last_beacon:
-                self.id = 16000
+                self.id = 16001
             else:
                 self.id = last_beacon.id + 1
 

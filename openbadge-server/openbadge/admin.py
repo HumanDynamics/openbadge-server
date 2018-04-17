@@ -161,7 +161,7 @@ class ProjectAdmin(admin.ModelAdmin):
 class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio', 'last_proximity',
                        'last_contacted', 'last_unsync',)
-    list_display = ('key', 'id', 'name', 'badge', 'observed_id',
+    list_display = ('key','project' , 'id', 'name', 'badge', 'observed_id',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity', 'last_unsync', 'last_contacted',
               'active', 'comments',
               'last_audio_ts', 'last_audio_ts_fract', 'last_proximity_ts', 'last_unsync_ts', 'last_contacted_ts',
@@ -230,10 +230,3 @@ class MeetingAdmin(admin.ModelAdmin, GetLocalTimeMixin):
         return timedelta(seconds=int(inst.last_update_timestamp - inst.start_time))
 
     duration.admin_order_field = 'duration'
-
-
-class MemberResource(resources.ModelResource):
-    class Meta:
-        model = Member
-        fields = ('name', 'email', 'badge',)
-
