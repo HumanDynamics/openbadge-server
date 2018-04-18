@@ -137,6 +137,14 @@ def _to_timestamp(dt):
     return (dt - datetime.datetime(1970, 1, 1).replace(tzinfo=pytz.UTC)).total_seconds()
 
 
+def _generate_advertisement_project_id():
+    last_project = Project.objects.all().order_by('advertisement_project_id').last()
+    if (not last_project) or (not last_project.advertisement_project_id):
+        return 1
+    else:
+        return last_project.advertisement_project_id + 1
+
+
 class Project(BaseModel):
     """
     Definition of the Project, which is an `organization`-level collection of hubs, badges, and meetings
@@ -144,11 +152,10 @@ class Project(BaseModel):
 
     name = models.CharField(max_length=64)
     """Human readable identifier for this project (Apple, Google, etc.)"""
-    advertisement_project_id = models.IntegerField(unique=True, default=1,validators=[MaxValueValidator(254), MinValueValidator(1)])
+    advertisement_project_id = models.IntegerField(unique=True, default=_generate_advertisement_project_id, validators=[MaxValueValidator(254), MinValueValidator(1)])
 
     def __unicode__(self):
         return unicode(self.name)
-
 
     def get_meetings(self, file):
         return {
@@ -271,7 +278,6 @@ class Member(BaseModelMinimal):
     observed_id = models.PositiveSmallIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank=True, default='')
-
 
     last_audio_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
