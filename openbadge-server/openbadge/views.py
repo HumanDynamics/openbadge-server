@@ -15,11 +15,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .decorators import app_view, is_god, is_own_project, require_hub_uuid
-from .models import Meeting, Project, Hub, DataFile  # Chunk  # ActionDataChunk, SamplesDataChunk
+from .models import Meeting, Project, Hub, DataFile, Beacon  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
-from .serializers import MemberSerializer, HubSerializer
+from .serializers import MemberSerializer, HubSerializer, BeaconSerializer
 from .permissions import AppkeyRequired, HubUuidRequired
+from tablib import Dataset
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -87,13 +88,61 @@ class MemberViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class BeaconViewSet(viewsets.ModelViewSet):
+    #queryset = Member.objects.all()
+    serializer_class = BeaconSerializer
+    permission_classes = [AppkeyRequired, HubUuidRequired]
+    lookup_field = 'key'
+
+    def get_queryset(self):
+        """
+        Filters the beacons list based on the hub's project
+        :return:
+        """
+
+        # hub information is validated in the permission class
+        hub_uuid = self.request.META.get("HTTP_X_HUB_UUID")
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+        project = hub.project
+
+        # Return only badges from the relevant project
+        return Beacon.objects.filter(project=project)
+
+    def retrieve(self, request, *args, **kwargs):
+        """ 
+        Get the beacon specified by the provided key
+
+        Also update the last time the beacon was seen
+        """
+        beacon = self.get_object()
+        serializer = self.get_serializer(beacon)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a new beacon under the call hub project
+        """
+        hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+        project = hub.project
+
+        # request.data is from the POST object. Adding the project id
+        data = request.data.dict()
+        data['project'] = project.id
+
+        serializer = BeaconSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()  # will call .create()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class HubViewSet(viewsets.ModelViewSet):
     queryset = Hub.objects.all()
     serializer_class = HubSerializer
     permission_classes = [AppkeyRequired]
     lookup_field = 'name'
-
-
 
 
 @app_view
@@ -229,8 +278,8 @@ def put_meeting(request, project_key):
 
     meeting.save()
 
-
     return JsonResponse({'detail': 'meeting created', "meeting_key": meeting.key})
+
 
 @app_view
 @api_view(['GET'])
@@ -287,7 +336,6 @@ def post_meeting(request, project_key):
 
     print "to", meeting
 
-
     if update_time and update_index:
         meeting.last_update_timestamp = update_time      # simplejson.loads(chunks[-1])['last_log_time']
         meeting.last_update_index = update_index   # simplejson.loads(chunks[-1])['last_log_serial']
@@ -299,6 +347,7 @@ def post_meeting(request, project_key):
 ###########################
 # Data Log Level Endpoints #
 ###########################
+
 
 @is_own_project
 @require_hub_uuid
@@ -452,6 +501,7 @@ def put_members(request, project_key):
     return JsonResponse({"status": "Not Implemented"})
 
 
+
 @is_god
 @api_view(['GET'])
 def get_members(request, project_key):
@@ -460,6 +510,42 @@ def get_members(request, project_key):
 
 @api_view(['POST'])
 def post_members(request, project_key):
+
+    return JsonResponse({"status": "Not Implemented"})
+
+
+#########################
+# Beacon Level Endpoints #
+#########################
+
+@is_own_project
+@require_hub_uuid
+@app_view
+@api_view(['PUT', 'GET', 'POST'])
+def beacons(request, project_key):
+    if request.method == 'PUT':
+        return put_beacons(request, project_key)
+    elif request.method == 'GET':
+        return get_beacons(request, project_key)
+    elif request.method == 'POST':
+        return post_beacons(request, project_key)
+    return HttpResponseNotFound()
+
+
+@is_god
+@api_view(['PUT'])
+def put_beacons(request, project_key):
+    return JsonResponse({"status": "Not Implemented"})
+
+
+@is_god
+@api_view(['GET'])
+def get_beacons(request, project_key):
+    return JsonResponse({"status": "Not Implemented"})
+
+
+@api_view(['POST'])
+def post_beacons(request, project_key):
 
     return JsonResponse({"status": "Not Implemented"})
 
