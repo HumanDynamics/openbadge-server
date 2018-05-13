@@ -30,7 +30,7 @@ CACHES = {
 STATIC_ROOT = '/www/static'
 
 # Collected data directory:
-DATA_DIR="/data/"
+DATA_DIR="/media/data/"
 MEETINGS_DIR="data"
 
 

@@ -33,7 +33,7 @@ class BaseModel(models.Model):
     id = models.AutoField(primary_key = True)
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)  
+    date_updated = models.DateTimeField(auto_now=True)
 
     def generate_key(self, length=10):
         if not self.key:
@@ -58,7 +58,7 @@ class BaseModelMinimal(models.Model):
     """
     key = models.CharField(max_length=10, unique=True, db_index=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)  
+    date_updated = models.DateTimeField(auto_now=True)
 
     def generate_key(self, length=10):
         if not self.key:
@@ -126,7 +126,7 @@ class OverwriteStorage(FileSystemStorage):
 
 ##########################################################################################
 def _now_as_epoch():
-    return round(Decimal(time.time()), 0) 
+    return round(Decimal(time.time()), 0)
 
 @fix_email
 class OpenBadgeUser(auth_models.AbstractUser, BaseModel):
@@ -172,7 +172,7 @@ class Project(BaseModel):
         """for use in HTTP responses, gets the id, name, members, and a map form badge_ids to member names"""
         return {
             'project_id': self.advertisement_project_id,
-            'key': self.key,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+            'key': self.key,
             'name': self.name,
             'badge_map': {
                 member.badge: {
@@ -219,7 +219,7 @@ class Hub(BaseModel):
 
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """The last time the hub was seen by the server (in epoch time)"""
-    
+
     last_hub_time_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """ The clock time of the hub at the time of the last API request """
 
@@ -487,23 +487,25 @@ class DataFile(BaseModel):
     """
 
     uuid = models.CharField(max_length=64, db_index=True, unique=True)
-    """this will be a concatenation of the hub uuid and data type"""
+    """this will be a concatenation of the hub uuid, data type, and date"""
 
     data_type = models.CharField(max_length=64)
     """Is this an audio or proximity data log?"""
 
-    # at this point we don't even really care about this, maybe worth storing though
-    last_update_timestamp = models.DecimalField(
+    date = models.DateField(auto_now=False)
+    """The date this file contains data for"""
+
+    last_chunk = models.DecimalField(
         decimal_places=3,
         max_digits= 20,
         null=True,
         blank=True)
-    """Log_timestamp of the last chunk received"""
+    """Timestamp of the last chunk written to file"""
 
     filepath = models.CharField(max_length=65, unique=True, blank=True)
     """Local reference to log file"""
 
-    hub = models.ForeignKey(Hub, related_name="data")
+    hub = models.ForeignKey(Hub, null=True, related_name="data")
     """The Hub this DataFile belongs to"""
 
     project = models.ForeignKey(Project, null=True, related_name="data")
@@ -515,18 +517,25 @@ class DataFile(BaseModel):
     def get_meta(self):
         """creates a json object of the metadata for this DataFile"""
         return {
-            'last_update_index': self.last_update_index,
-            'log_timestamp': self.last_update_timestamp,
-            'hub': self.hub.name
+            'date': self.date,
+            'data_type': self.data_type,
+            'hub': self.hub.name,
+            'project': self.project.name,
+            'uuid': self.uuid,
+            'last_chunk_timestamp': self.last_chunk
         }
 
     def to_object(self, file):
         """Get a representation of this object for use with HTTP responses"""
-        if file:
-            return {
-                "chunks": self.get_chunks(),
-                "metadata": self.get_meta()
-            }
-        else:
-            return { "metadata": meta }
-    
+        meta = self.get_meta()
+        return { "metadata": meta }
+
+    def save(self, *args, **kwargs):
+        """
+        filepath is generated based on uuid
+        """
+        if not self.filepath:
+            filename = self.uuid + ".txt"
+            self.filepath = settings.DATA_DIR + filename
+        super(DataFile, self).save(*args, **kwargs)
+
