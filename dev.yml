@@ -28,7 +28,8 @@ services:
       - postgres
     volumes:
       - .:/app
-      - ../data:/data
+      - ../media:/media
+      - ../media/data:/media/data
     ports:
       - "8000:8000"
     links:

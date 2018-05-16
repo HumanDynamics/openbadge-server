@@ -27,10 +27,6 @@ RUN mkdir /www \
     && mkdir /www/static \
     && chown django /www/static
 
-RUN mkdir /data \
-    && chown django /data
-
-
 WORKDIR /app
 
 

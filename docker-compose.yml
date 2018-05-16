@@ -37,7 +37,7 @@ services:
       - redis
     volumes:
       - hub_media:/media/
-      - hub_data:/data/
+      - hub_data:/media/data/
       - /www/static
     command: /gunicorn.sh
 
