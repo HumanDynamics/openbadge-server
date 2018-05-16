@@ -9,7 +9,7 @@ from django.utils.timezone import utc
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('openbadge', '0004_ids_and_beacons'),
+        ('openbadge', '0005_auto_20180511_2151'),
     ]
 
     operations = [
