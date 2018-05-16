@@ -275,7 +275,7 @@ class Member(BaseModelMinimal):
     email = models.EmailField(null=True, blank=True)
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    observed_id = models.PositiveSmallIntegerField(default=0)
+    observed_id = models.PositiveIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank=True, default='')
 
@@ -339,7 +339,7 @@ class Beacon(BaseModelMinimal):
     id = models.PositiveSmallIntegerField(primary_key=True, editable=False, unique=True, blank=True, validators=[MaxValueValidator(32000), MinValueValidator(16000)])
     name = models.CharField(max_length=64)
     badge = models.CharField(max_length=64, unique=True)
-    observed_id = models.PositiveSmallIntegerField(default=0)
+    observed_id = models.PositiveIntegerField(default=0)
     active = models.BooleanField(default=True)
     comments = models.CharField(max_length=240, blank = True ,default='')
 
