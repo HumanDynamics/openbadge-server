@@ -26,14 +26,10 @@ services:
     command: /start-dev.sh
     depends_on:
       - postgres
-    environment: 
-      - PYTHONPATH=/app/openbadge-server
-      - DJANGO_SETTINGS_MODULE=config.settings.local
-    env_file:
-      - .env
     volumes:
       - .:/app
-      - ../data:/data
+      - ../media:/media
+      - ../media/data:/media/data
     ports:
       - "8000:8000"
     links:

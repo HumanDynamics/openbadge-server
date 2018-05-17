@@ -41,6 +41,15 @@ Finally, run the following command to start the server:
 
 In order to check whether the server is working, login to the admin console: http://localhost:8000/admin
 
+## Testing
+
+WIP
+
+For testing, make sure postgres is running and run `python manage.py test --settings=config.settings.test`
+NOTE: Make sure the source directory (openbadge-server) is in your PYTHONPATH
+
+Plans include enabling testing via docker
+
 ### Using a virtual machine for development
 You can also create a local Virtual Machine and provision it - https://docs.docker.com/machine/get-started/
 

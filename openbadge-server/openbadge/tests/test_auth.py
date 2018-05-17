@@ -20,7 +20,7 @@ URLS = [
     "/project"
 """
 
-class TestPermissions(TestCase)
+class TestPermissions(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
