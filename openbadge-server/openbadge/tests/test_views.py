@@ -15,7 +15,6 @@ APP_KEY = settings.APP_KEY
 PROJECT_NAME = 'test-project'
 INPUT_FILE = "openbadge-server/openbadge/tests/testdata/{}_{}_entry.txt"
 HUB_NAME_PREFIX = "test_pls_delete_{}"
-DATA_FILE_LOCATION = settings.DATA_DIR + "{}_{}_{}.txt"
 
 
 def _hub_name(hub_name):
@@ -26,29 +25,44 @@ def _hub_name(hub_name):
 
 class TestDatafile(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestDatafile, cls).setUpClass()
+
+        cls.request_factory = RequestFactory()
+        cls.project = models.Project.objects.create(name=PROJECT_NAME)
+        cls.DATA_FILE_DIRECTORY = "/".join((settings.DATA_DIR.rstrip('/'),
+                                            cls.project.key))
+        cls.DATA_FILE_LOCATION = "/".join((cls.DATA_FILE_DIRECTORY, "{}_{}_{}.txt"))
+        cls.hubs = [_hub_name("one"), _hub_name("two")]
+        for hub in cls.hubs:
+            models.Hub.objects.create(name=hub, uuid=hub, project=cls.project)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.delete_logs()
+        cls.delete_dirs()
+        super(TestDatafile, cls).tearDownClass()
+
     def setUp(self):
-
-        if not os.path.exists(settings.DATA_DIR):
-            os.mkdir(settings.DATA_DIR)
-            # keep track of whether we created the data dir
-            # and thus whether or not we should delete it at the end
-            self.should_delete_data_dir = True
-        else:
-            self.should_delete_data_dir = False
-
-        self.request_factory = RequestFactory()
-        self.project = models.Project.objects.create(name=PROJECT_NAME)
-        self.hubs = [_hub_name("one"), _hub_name("two")]
-        for hub in self.hubs:
-            models.Hub.objects.create(name=hub, uuid=hub, project=self.project)
-        # just in case
         self.delete_logs()
 
-    def tearDown(self):
-        self.delete_logs()
-        if self.should_delete_data_dir:
-            os.rmdir(settings.DATA_DIR)
+    @classmethod
+    def delete_logs(self):
+        """
+        For cleanup - deletes all data logs created
+        associated with testing
+        """
+        print("Clearing test data files")
+        for f in glob.glob(self.DATA_FILE_LOCATION.format(HUB_NAME_PREFIX.format("*"), "*", "*")):
+            os.remove(f)
 
+    @classmethod
+    def delete_dirs(cls):
+        for f in os.listdir(settings.DATA_DIR):
+            os.rmdir(settings.DATA_DIR + f)
+
+    @classmethod
     def load_chunks(self, filename):
         """
         Loads a given hub data file into a json object
@@ -90,15 +104,6 @@ class TestDatafile(TestCase):
 
         return list(dates)
 
-    def delete_logs(self):
-        """
-        For cleanup - deletes all data logs created
-        associated with testing
-        """
-        print("Clearing test data files")
-        for f in glob.glob(DATA_FILE_LOCATION.format(HUB_NAME_PREFIX.format("*"), "*", "*")):
-            os.remove(f)
-
     def create_post_request(self, hub, data_type, chunks):
         """
         Create and return a post request with
@@ -128,11 +133,14 @@ class TestDatafile(TestCase):
         logs = {}
 
         for date in chunk_dates:
-            log_location = DATA_FILE_LOCATION.format(hub_uuid, data_type, date)
+            log_location = self.DATA_FILE_LOCATION.format(hub_uuid, data_type, date)
             self.assertFalse(os.path.exists(log_location))
             logs[date] = log_location
 
-        num_existing_files = len(os.listdir(settings.DATA_DIR))
+        if not os.path.exists(self.DATA_FILE_DIRECTORY):
+            num_existing_files = 0
+        else:
+            num_existing_files = len(os.listdir(self.DATA_FILE_DIRECTORY))
 
         request = self.create_post_request(hub_uuid, data_type, chunks_to_write)
         resp = views.post_datafile(request, self.project.key)
@@ -141,7 +149,7 @@ class TestDatafile(TestCase):
         self.assertEqual(int(resp_json["chunks_written"]),
                          int(resp_json["chunks_received"]))
 
-        num_files_created = len(os.listdir(settings.DATA_DIR)) - num_existing_files
+        num_files_created = len(os.listdir(self.DATA_FILE_DIRECTORY)) - num_existing_files
         self.assertEqual(len(chunk_dates), num_files_created)
         # since chunks are sorted before written to file,
         # we sort our expected_chunks and group them by date
@@ -180,7 +188,7 @@ class TestDatafile(TestCase):
         # gather the number of existing chunks in each log file
         # so we can be sure we wrote the correct amount to each file
         for date in chunk_dates:
-            log_location = DATA_FILE_LOCATION.format(hub_uuid, data_type, date)
+            log_location = self.DATA_FILE_LOCATION.format(hub_uuid, data_type, date)
             self.assertTrue(os.path.exists(log_location))
             num_existing_chunks[date] = len(self.load_chunks(log_location))
             logs[date] = log_location
@@ -209,34 +217,32 @@ class TestDatafile(TestCase):
         """
         Ensure files are actually created and contain appropriate data
         """
-        self.delete_logs()
         # we just want the first hub in the list
         hub_uuid = self.hubs[0]
         self.assertTrue(models.Hub.objects.get(uuid=hub_uuid) is not None)
 
         # test that it works for both audio and proximity
-        # with both one line and multiple
+        entry_type = 'multi'
         for data_type in ["audio", "proximity"]:
-            for entry_type in ["single", "multi"]:
-
                 self.create_and_add_data(
                     hub_uuid,
                     data_type,
                     INPUT_FILE.format(entry_type, data_type)
                 )
-                self.delete_logs()
 
     def test_post_datafiles_append(self):
         """
         Ensures data is successfully appended to existing files without data loss
         """
+        # NOTE this is dependent on the ability to write duplicate data
+        # if we change this in the future we will need to update the test
         data_type = "audio"
         hub_uuid = self.hubs[0]
-        self.delete_logs()
         self.create_and_add_data(
             hub_uuid,
             data_type,
             INPUT_FILE.format("spandate", data_type))
+
         self.append_data(
             hub_uuid,
             data_type,
@@ -247,7 +253,6 @@ class TestDatafile(TestCase):
         Make sure each hub gets a new file and data is added appropriately
         """
         # make sure there's no existing test logs
-        self.delete_logs()
         data_types = ["audio", "proximity"]
         entry_type = "single"
         datafiles = []
@@ -266,8 +271,6 @@ class TestDatafile(TestCase):
         Make sure data is sorted into the appropriate files
         when spanning multiple dates
         """
-
-        self.delete_logs()
         input_file = INPUT_FILE.format("spandate", "audio")
         datafiles = self.create_and_add_data(self.hubs[0], "audio", input_file)
         for datafile in datafiles:

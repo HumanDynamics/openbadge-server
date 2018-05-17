@@ -502,7 +502,7 @@ class DataFile(BaseModel):
         blank=True)
     """Timestamp of the last chunk written to file"""
 
-    filepath = models.CharField(max_length=65, unique=True, blank=True)
+    filepath = models.CharField(max_length=128, unique=True, blank=True)
     """Local reference to log file"""
 
     hub = models.ForeignKey(Hub, null=True, related_name="data")
@@ -528,7 +528,7 @@ class DataFile(BaseModel):
     def to_object(self, file):
         """Get a representation of this object for use with HTTP responses"""
         meta = self.get_meta()
-        return { "metadata": meta }
+        return {"metadata": meta}
 
     def save(self, *args, **kwargs):
         """
@@ -536,6 +536,11 @@ class DataFile(BaseModel):
         """
         if not self.filepath:
             filename = self.uuid + ".txt"
-            self.filepath = settings.DATA_DIR + filename
-        super(DataFile, self).save(*args, **kwargs)
+            directory = "/".join((settings.DATA_DIR.rstrip('/'),
+                                  self.project.key))
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
+            self.filepath = "/".join((directory, filename))
+
+        super(DataFile, self).save(*args, **kwargs)
