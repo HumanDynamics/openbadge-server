@@ -57,7 +57,7 @@ DEBUG_TOOLBAR_CONFIG = {
 # TESTING
 # ------------------------------------------------------------------------------
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-DATA_DIR="/data/"
+DATA_DIR="/media/data/"
 MEETINGS_DIR="../meetings/"
 
 

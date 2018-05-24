@@ -12,7 +12,6 @@ from .common import *  # noqa
 # ------------------------------------------------------------------------------
 # Turn debug off so tests run faster
 DEBUG = False
-TEMPLATES[0]['OPTIONS']['debug'] = False
 
 
 # Mail settings
@@ -46,12 +45,4 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.MD5PasswordHasher',
 )
 
-# TEMPLATE LOADERS
-# ------------------------------------------------------------------------------
-# Keep templates in memory so tests run faster
-TEMPLATES[0]['OPTIONS']['loaders'] = [
-    ('django.template.loaders.cached.Loader', [
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    ]),
-]
+DATA_DIR = 'testout/'

@@ -3,7 +3,9 @@ import time
 import sys
 import os
 import simplejson
+from itertools import groupby
 
+from datetime import datetime
 from dateutil.parser import parse as parse_date
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
@@ -15,11 +17,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .decorators import app_view, is_god, is_own_project, require_hub_uuid
-from .models import Meeting, Project, Hub, DataFile  # Chunk  # ActionDataChunk, SamplesDataChunk
+from .models import Meeting, Project, Hub, DataFile, Beacon  # Chunk  # ActionDataChunk, SamplesDataChunk
 
 from .models import Member
-from .serializers import MemberSerializer, HubSerializer
+from .serializers import MemberSerializer, HubSerializer, BeaconSerializer
 from .permissions import AppkeyRequired, HubUuidRequired
+from tablib import Dataset
 
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -58,7 +61,7 @@ class MemberViewSet(viewsets.ModelViewSet):
         return Member.objects.filter(project=project)
 
     def retrieve(self, request, *args, **kwargs):
-        """ 
+        """
         Get the badge specified by the provided key
 
         Also update the last time the badge was seen
@@ -87,13 +90,61 @@ class MemberViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class BeaconViewSet(viewsets.ModelViewSet):
+    #queryset = Member.objects.all()
+    serializer_class = BeaconSerializer
+    permission_classes = [AppkeyRequired, HubUuidRequired]
+    lookup_field = 'key'
+
+    def get_queryset(self):
+        """
+        Filters the beacons list based on the hub's project
+        :return:
+        """
+
+        # hub information is validated in the permission class
+        hub_uuid = self.request.META.get("HTTP_X_HUB_UUID")
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+        project = hub.project
+
+        # Return only badges from the relevant project
+        return Beacon.objects.filter(project=project)
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Get the beacon specified by the provided key
+
+        Also update the last time the beacon was seen
+        """
+        beacon = self.get_object()
+        serializer = self.get_serializer(beacon)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a new beacon under the call hub project
+        """
+        hub_uuid = request.META.get("HTTP_X_HUB_UUID")
+        hub = Hub.objects.prefetch_related("project").get(uuid=hub_uuid)
+        project = hub.project
+
+        # request.data is from the POST object. Adding the project id
+        data = request.data.dict()
+        data['project'] = project.id
+
+        serializer = BeaconSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()  # will call .create()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class HubViewSet(viewsets.ModelViewSet):
     queryset = Hub.objects.all()
     serializer_class = HubSerializer
     permission_classes = [AppkeyRequired]
     lookup_field = 'name'
-
-
 
 
 @app_view
@@ -237,8 +288,8 @@ def put_meeting(request, project_key):
 
     meeting.save()
 
-
     return JsonResponse({'detail': 'meeting created', "meeting_key": meeting.key})
+
 
 @app_view
 @api_view(['GET'])
@@ -295,7 +346,6 @@ def post_meeting(request, project_key):
 
     print "to", meeting
 
-
     if update_time and update_index:
         meeting.last_update_timestamp = update_time      # simplejson.loads(chunks[-1])['last_log_time']
         meeting.last_update_index = update_index   # simplejson.loads(chunks[-1])['last_log_serial']
@@ -305,8 +355,9 @@ def post_meeting(request, project_key):
     return JsonResponse({"status": "success", "meeting_key": meeting.key})
 
 ###########################
-# Data Log Level Endpoints #
+# DataFile Level Endpoints #
 ###########################
+
 
 @is_own_project
 @require_hub_uuid
@@ -320,7 +371,29 @@ def datafiles(request, project_key):
 
 @api_view(['POST'])
 def post_datafile(request, project_key):
-    
+    """
+    Accept data records posted by raspberry pi hubs
+
+    Data will be stored in DataFiles, with each file containing
+    the data of a single type (proximity | audio), for a single hub,
+    on a single day.
+
+    Data may be posted from any date, but must end up in the appropriate
+    file for the date it originated on
+
+    A "chunk" is a single data entry (as a json object) collected from the badges
+    We consider these a unit of data, representing:
+     - approx. five seconds of vocal activity data
+     - a proximity ping
+    Depending on the type of the incoming data.
+    """
+    # this will probably be slow for very large inputs
+    # however the maximum size a file that is pending upload on the hub
+    # can be is currently 15MB. This works out to ~26k entries.
+    # (approx 35 hours of total audio data)
+    # its unlikely for any hub to go very long without uploading
+    # not too worried about it right now
+
     # using this header for consistency with meeting api
     hub_uuid = request.META.get("HTTP_X_HUB_UUID")
     hub = Hub.objects.get(uuid=hub_uuid)
@@ -331,48 +404,72 @@ def post_datafile(request, project_key):
             "details": "No data provided!",
             "chunks_written": 0,
             "chunks_received": 0
-        })
+        }, status_code=400)
 
     chunks = request.data.get("chunks")
-    # I don't like this but it works for now
+
     # sometimes we don't get json objects from the request object
     # (with tests, but I don't know if it happens anywhere else?)
+    # we need it in json instead of a list of strings so we can sort/operate on it
     if not isinstance(chunks, dict) and not isinstance(chunks, list):
         chunks = simplejson.loads(chunks)
 
-    data_type = request.data.get("data_type")
-    chunks_received = len(chunks)
-    datafile_uuid = hub.uuid + "_" + data_type
+    # we sort the incoming data to be able to properly group the data
+    chunks = sorted(chunks, key=lambda chunk: chunk["data"]["timestamp"])
 
-    try:
-        datafile = DataFile.objects.get(uuid=datafile_uuid)
-        if datafile.hub.uuid != hub_uuid:
-            # a hub cannot post data to another hub's file
-            return HttpResponseUnauthorized()
-    except DataFile.DoesNotExist:
-        datafile = DataFile()
-        datafile.uuid = datafile_uuid
-        datafile.data_type = data_type
-        datafile.hub = Hub.objects.get(uuid=hub_uuid)
-        datafile.project = Project.objects.get(key=project_key)
-        # check if file destination exists, create if not
-        folder = "".join((settings.DATA_DIR, hub.project.key))
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        datafile.filepath = "{}/{}.txt".format(folder, datafile_uuid)
-    
+    # now group by date for bulk writing to appropriate file
+    grouped_chunks = {}
+    for key, group in groupby(
+            chunks,
+            lambda chunk: datetime.fromtimestamp(chunk["data"]["timestamp"]).date().strftime('%Y-%m-%d')):
+        grouped_chunks[key] = list(group)
+    # grouped_chunks is now in the format { <date>: [ <chunk1>, <chunk2>, ...], ... }
+
+    data_type = request.data.get("data_type")
+
+    # not sure if nested or separate helper func is better
+    # its more convenient to have it here (don't need to pass params)
+    # but its ~slightly~ faster to have it outside
+    # potentially dont need this at all, just wanted to clean the loop up a bit
+    def get_or_create_datafile(datafile_uuid, date):
+        datafile, _ = DataFile.objects.get_or_create(
+            uuid=datafile_uuid,
+            defaults={
+                'data_type': data_type,
+                'hub': hub,
+                'date': date,
+                'project': Project.objects.get(key=project_key),
+            })
+
+        return datafile
+
     # we keep track of chunks written and received as a
     # very basic way to ensure data integrity
+    chunks_received = len(chunks)
     chunks_written = 0
-    with open(datafile.filepath, 'a') as f:
-        for chunk in chunks:
-            # storing this for the sake of if right now, 
-            # maybe useful in the future?
-            datafile.update_time = chunk['log_timestamp']
-            f.write(simplejson.dumps(chunk) + "\n")
-            chunks_written += 1
 
-    datafile.save()
+    # we're now ready to write the data to file
+    for date, chunks_to_write in grouped_chunks.items():
+        datafile_uuid = hub.uuid + "_" + data_type + "_" + date
+        # we want the last chunk for record keeping & data consistency
+        last_chunk = chunks_to_write[-1]["data"]["timestamp"]
+        datafile = get_or_create_datafile(datafile_uuid, date)
+        with open(datafile.filepath, 'a') as f:
+            try:
+                f.writelines(simplejson.dumps(chunk) + "\n" for chunk in chunks_to_write)
+                chunks_written += len(chunks_to_write)
+                datafile.last_chunk = last_chunk
+                datafile.save()
+            except IOError as e:
+                # if we fail, stop trying and tell somebody
+                # TODO we need logging
+                print("Uh oh! Write error : " + str(e))
+                return JsonResponse({
+                        "status": "failed",
+                        "chunks_written": chunks_written,
+                        "chunks_received": chunks_received
+                    },
+                    status_code=500)
 
     return JsonResponse({
         "status": "success",
@@ -460,6 +557,7 @@ def put_members(request, project_key):
     return JsonResponse({"status": "Not Implemented"})
 
 
+
 @is_god
 @api_view(['GET'])
 def get_members(request, project_key):
@@ -468,6 +566,42 @@ def get_members(request, project_key):
 
 @api_view(['POST'])
 def post_members(request, project_key):
+
+    return JsonResponse({"status": "Not Implemented"})
+
+
+#########################
+# Beacon Level Endpoints #
+#########################
+
+@is_own_project
+@require_hub_uuid
+@app_view
+@api_view(['PUT', 'GET', 'POST'])
+def beacons(request, project_key):
+    if request.method == 'PUT':
+        return put_beacons(request, project_key)
+    elif request.method == 'GET':
+        return get_beacons(request, project_key)
+    elif request.method == 'POST':
+        return post_beacons(request, project_key)
+    return HttpResponseNotFound()
+
+
+@is_god
+@api_view(['PUT'])
+def put_beacons(request, project_key):
+    return JsonResponse({"status": "Not Implemented"})
+
+
+@is_god
+@api_view(['GET'])
+def get_beacons(request, project_key):
+    return JsonResponse({"status": "Not Implemented"})
+
+
+@api_view(['POST'])
+def post_beacons(request, project_key):
 
     return JsonResponse({"status": "Not Implemented"})
 

@@ -14,7 +14,10 @@ jsonfield==1.0.3
 django-environ==0.4.1
 
 # Python-PostgreSQL Database Adapter
-psycopg2==2.6.2
+psycopg2==2.7
 
 # Unicode slugification
 awesome-slugify==1.6.5
+
+# Import and export using the admin tool
+django-import-export==1.0.0

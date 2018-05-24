@@ -7,7 +7,9 @@ from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import ugettext_lazy as _
-from .models import OpenBadgeUser, Meeting, Member, Project, Hub
+from .models import OpenBadgeUser, Meeting, Member, Project, Hub ,Beacon
+from import_export.admin import ImportExportModelAdmin
+from import_export import resources
 
 
 def register(model):
@@ -16,6 +18,7 @@ def register(model):
         return admin_class
 
     return inner
+
 
 class GetLocalTimeMixin(object):
 
@@ -26,6 +29,7 @@ class GetLocalTimeMixin(object):
             return pytz.utc.localize(datetime.utcfromtimestamp(timestamp))\
                 .astimezone(timezone(settings.TIME_ZONE))\
                 .strftime('%Y-%m-%d %H:%M:%S %Z')
+
 
 @register(OpenBadgeUser)
 class OpenBadgeUserAdmin(auth_admin.UserAdmin):
@@ -44,16 +48,42 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key', 'name', 'email', 'badge', 
-              'last_seen', 'last_voltage', 'last_audio', 'last_audio_ts',
-              'last_audio_ts_fract', 'last_proximity_ts')
-    readonly_fields = ('key', 'last_seen', 'last_audio')
+    fields = ('key','id', 'name', 'badge', 'observed_id',
+              'last_seen', 'last_voltage', 'last_audio', 'last_proximity', 'last_unsync', 'last_contacted',
+              'active', 'comments',
+              'last_audio_ts', 'last_audio_ts_fract', 'last_proximity_ts', 'last_unsync_ts', 'last_contacted_ts',
+              'email')
     
+    readonly_fields = ('key', 'id', 'observed_id', 'last_voltage', 'last_seen', 'last_audio','last_proximity',
+                       'last_contacted','last_unsync')
+
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
 
     def last_audio(self, obj):
         return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)
+
+    def last_contacted(self, obj):
+        return self.get_local_time(obj.last_contacted_ts)
+
+    def last_unsync(self, obj):
+        return self.get_local_time(obj.last_unsync_ts)
+
+
+class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
+    model = Beacon
+    extra = 3
+    fields = ('key','id', 'name', 'badge',
+              'observed_id' ,'active','comments',
+              'last_seen', 'last_voltage') 
+    readonly_fields = ('key', 'id','observed_id', 'last_seen', 'last_voltage')
+
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
 
 class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
     model = Meeting
@@ -79,13 +109,13 @@ class HubInline(admin.TabularInline, GetLocalTimeMixin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'id', 'number_of_members', 'number_of_meetings', 'total_meeting_time')
+    list_display = ('name', 'key', 'id', 'advertisement_project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
-    inlines = (MemberInline, HubInline, MeetingInLine)
+    inlines = (MemberInline, BeaconInline, HubInline, MeetingInLine)
     actions_on_top = True
 
     def get_queryset(self, request):
-        return Project.objects.prefetch_related("members", "hubs")
+        return Project.objects.prefetch_related("members", "hubs" ,"beacons")
 
     # def members_list(self, inst):
     #     return ", ".join([member.name for member in inst.members.all()])
@@ -94,6 +124,10 @@ class ProjectAdmin(admin.ModelAdmin):
     @staticmethod
     def number_of_members(inst):
         return len(inst.members.all())
+
+    @staticmethod    
+    def number_of_beacons(inst):
+        return len(inst.beacons.all())
 
     @staticmethod
     def number_of_meetings(inst):
@@ -115,6 +149,46 @@ class ProjectAdmin(admin.ModelAdmin):
             return timedelta(seconds = int(sum(
                 [time_diff(meeting) for meeting in inst.meetings.all() if meeting.end_time])))
         return "NONE"
+
+
+@register(Member)
+class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio', 'last_proximity',
+                       'last_contacted', 'last_unsync',)
+    list_display = (
+        'key','project' , 'id', 'name', 'badge', 'observed_id', 'last_voltage',
+        'last_seen', 'last_seen_ts', 'last_audio', 'last_audio_ts', 'last_audio_ts_fract',
+        'last_proximity', 'last_proximity_ts', 'last_unsync', 'last_unsync_ts', 'last_contacted', 'last_contacted_ts',
+        'active', 'comments', 'email',)
+    list_filter = ('project',)
+    actions_on_top = True
+
+    def last_audio(self, obj):
+        return self.get_local_time(obj.last_audio_ts)
+
+    def last_proximity(self, obj):
+        return self.get_local_time(obj.last_proximity_ts)    
+
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
+
+    def last_contacted(self, obj):
+        return self.get_local_time(obj.last_contacted_ts)
+
+    def last_unsync(self, obj):
+        return self.get_local_time(obj.last_unsync_ts)
+
+
+@register(Beacon)
+class BeaconAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
+    readonly_fields = ('key', 'id', 'observed_id', 'last_seen',)
+    list_display = ('key','project', 'id', 'name', 'badge', 'observed_id','active', 'last_voltage',
+                    'last_seen', 'last_seen_ts')
+    list_filter = ('project',)
+    actions_on_top = True
+    
+    def last_seen(self, obj):
+        return self.get_local_time(obj.last_seen_ts)
 
 
 @register(Meeting)

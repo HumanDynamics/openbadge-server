@@ -1,17 +1,22 @@
 from rest_framework import serializers
 import time
 
-from .models import Member, Project, Hub
+from .models import Member, Project, Hub, Beacon
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MemberSerializer(serializers.ModelSerializer):
+    advertisement_project_id = serializers.ReadOnlyField(source='get_advertisement_project_id')
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
 
     class Meta:
         model = Member
-        fields = ('id', 'project', 'name', 'email', 'badge', 'last_seen_ts', 'last_audio_ts',
-                  'last_audio_ts_fract', 'last_proximity_ts', 'last_voltage', 'key')
-        read_only_fields = ('project', 'id', 'key')
+        fields = ('id', 'project', 'advertisement_project_id', 'name', 'email', 'badge', 'observed_id', 'active', 'comments','last_seen_ts', 'last_audio_ts',
+                  'last_audio_ts_fract', 'last_proximity_ts', 'last_contacted_ts', 'last_unsync_ts', 'last_voltage', 'key')
+        read_only_fields = ('id','project','advertisement_project_id', 'key')
 
     def update(self, instance, validated_data):
 
@@ -30,6 +35,38 @@ class MemberSerializer(serializers.ModelSerializer):
         if validated_data.get('last_seen_ts') > instance.last_seen_ts:
             instance.last_seen_ts = validated_data.get('last_seen_ts', instance.last_seen_ts)
             instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
+
+
+        # if we have an older last_contacted_ts, update it
+        if validated_data.get('last_contacted_ts') > instance.last_contacted_ts:
+            instance.last_contacted_ts = validated_data.get('last_contacted_ts', instance.last_contacted_ts)
+
+        if validated_data.get('last_unsync_ts') > instance.last_unsync_ts:
+            instance.last_unsync_ts = validated_data.get('last_unsync_ts', instance.last_unsync_ts)
+
+        instance.observed_id = validated_data.get('observed_id', instance.observed_id)
+
+        instance.save()
+        return instance
+
+
+class BeaconSerializer(serializers.ModelSerializer):
+    advertisement_project_id = serializers.ReadOnlyField(source='get_advertisement_project_id')
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    
+    class Meta:
+        model = Beacon
+        fields = ('id','project', 'advertisement_project_id','name', 'badge', 'observed_id','active', 'comments',
+         'last_seen_ts','last_voltage', 'key')
+        read_only_fields = ('advertisement_project_id', 'id','project', 'key')
+
+    def update(self, instance, validated_data):
+        # if we have an older last_seen_ts, update it and voltage
+        if validated_data.get('last_seen_ts') > instance.last_seen_ts:
+            instance.last_seen_ts = validated_data.get('last_seen_ts', instance.last_seen_ts)
+            instance.last_voltage = validated_data.get('last_voltage', instance.last_voltage)
+
+        instance.observed_id = validated_data.get('observed_id', instance.observed_id)
 
         instance.save()
         return instance
