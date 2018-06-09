@@ -48,7 +48,7 @@ class SerializedFieldWidget(AdminTextareaWidget):
 class MemberInline(admin.TabularInline, GetLocalTimeMixin):
     model = Member
     extra = 3
-    fields = ('key','id', 'name', 'badge', 'observed_id',
+    fields = ('key', 'id', 'name', 'badge', 'observed_id',
               'last_seen', 'last_voltage', 'last_audio', 'last_proximity', 'last_unsync', 'last_contacted',
               'active', 'comments',
               'last_audio_ts', 'last_audio_ts_fract', 'last_proximity_ts', 'last_unsync_ts', 'last_contacted_ts',
@@ -93,7 +93,8 @@ class MeetingInLine(admin.TabularInline, GetLocalTimeMixin):
 class HubInline(admin.TabularInline, GetLocalTimeMixin):
     model = Hub
 
-    fields = ("name", "god", "uuid", "last_seen", "last_hub_time", "time_difference_in_seconds", "ip_address", "key")
+    fields = ("name", "god", "uuid", "last_seen", "last_hub_time", "time_difference_in_seconds", "ip_address",
+              "all_ip_addresses", "key")
     readonly_fields = ("key", 'last_seen', "last_hub_time", "time_difference_in_seconds")
 
     def last_seen(self, obj):
@@ -109,7 +110,8 @@ class HubInline(admin.TabularInline, GetLocalTimeMixin):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("key",)
-    list_display = ('name', 'key', 'id', 'advertisement_project_id', 'number_of_members', 'number_of_beacons', 'number_of_meetings', 'total_meeting_time')
+    list_display = ('name', 'key', 'id', 'advertisement_project_id', 'number_of_members', 'number_of_beacons',
+                    'number_of_meetings', 'total_meeting_time')
     list_filter = ('name',)
     inlines = (MemberInline, BeaconInline, HubInline, MeetingInLine)
     actions_on_top = True

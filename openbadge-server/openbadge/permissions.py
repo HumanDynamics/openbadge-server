@@ -26,7 +26,7 @@ class HubUuidRequired(permissions.BasePermission):
         try:
             hub = Hub.objects.get(uuid=hub_uuid)
         except Hub.DoesNotExist:
-           return False
+            return False
 
         hub.last_seen_ts = int(time.time())
         if hub_time is not None:
@@ -38,6 +38,10 @@ class HubUuidRequired(permissions.BasePermission):
             hub.ip_address = x_forwarded
         elif remote_addr is not None:
             hub.ip_address = remote_addr
+
+        hub_all_ips = request.META.get("HTTP_X_ALL_IPS")
+        if hub_all_ips is not None:
+            hub.all_ip_addresses = hub_all_ips
 
         hub.save()
 

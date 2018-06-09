@@ -217,6 +217,9 @@ class Hub(BaseModel):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     """IP address of the hub (if relevant)"""
 
+    all_ip_addresses = models.CharField(max_length=512, blank=True, null=True)
+    """All IP addresses of the hub (if relevant)"""
+
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     """The last time the hub was seen by the server (in epoch time)"""
 
