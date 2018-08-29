@@ -1,7 +1,7 @@
 from rest_framework import serializers
 import time
 
-from .models import Member, Project, Hub, Beacon
+from .models import Member, Project, Hub, Beacon, Unsync
 
 import logging
 
@@ -19,6 +19,8 @@ class MemberSerializer(serializers.ModelSerializer):
         read_only_fields = ('id','project','advertisement_project_id', 'key')
 
     def update(self, instance, validated_data):
+        # instance is the current Member stored in the DB,
+        # validated_data is the incoming data
 
         # if we have an older audio_ts, update it
         if validated_data.get('last_audio_ts') > instance.last_audio_ts:
@@ -41,8 +43,14 @@ class MemberSerializer(serializers.ModelSerializer):
         if validated_data.get('last_contacted_ts') > instance.last_contacted_ts:
             instance.last_contacted_ts = validated_data.get('last_contacted_ts', instance.last_contacted_ts)
 
-        if validated_data.get('last_unsync_ts') > instance.last_unsync_ts:
-            instance.last_unsync_ts = validated_data.get('last_unsync_ts', instance.last_unsync_ts)
+        # need to record all unsyncs
+        # if this is not performant we can maintain both the last unsync 
+        # in the member object as well as a separate table of unsync history
+        if validated_data.get('last_unsync_ts') > instance.last_unsync_ts():
+            # TODO add back field
+            Unsync.objects.create(
+                    member=instance, 
+                    unsync_ts=validated_data.get('last_unsync_ts', instance.last_unsync_ts()))
 
         instance.observed_id = validated_data.get('observed_id', instance.observed_id)
 

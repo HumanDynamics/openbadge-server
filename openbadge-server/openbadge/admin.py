@@ -55,7 +55,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
               'email')
     
     readonly_fields = ('key', 'id', 'observed_id', 'last_voltage', 'last_seen', 'last_audio','last_proximity',
-                       'last_contacted','last_unsync')
+                       'last_contacted','last_unsync', 'last_unsync_ts')
 
     def last_seen(self, obj):
         return self.get_local_time(obj.last_seen_ts)
@@ -70,7 +70,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
         return self.get_local_time(obj.last_contacted_ts)
 
     def last_unsync(self, obj):
-        return self.get_local_time(obj.last_unsync_ts)
+        return self.get_local_time(obj.last_unsync_ts())
 
 
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
@@ -156,7 +156,7 @@ class ProjectAdmin(admin.ModelAdmin):
 @register(Member)
 class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
     readonly_fields = ('key', 'id', 'observed_id', 'last_seen', 'last_audio', 'last_proximity',
-                       'last_contacted', 'last_unsync',)
+                       'last_contacted', 'last_unsync', 'last_unsync_ts')
     list_display = (
         'key','project' , 'id', 'name', 'badge', 'observed_id', 'last_voltage',
         'last_seen', 'last_seen_ts', 'last_audio', 'last_audio_ts', 'last_audio_ts_fract',
@@ -178,7 +178,7 @@ class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
         return self.get_local_time(obj.last_contacted_ts)
 
     def last_unsync(self, obj):
-        return self.get_local_time(obj.last_unsync_ts)
+        return self.get_local_time(obj.last_unsync_ts())
 
 
 @register(Beacon)

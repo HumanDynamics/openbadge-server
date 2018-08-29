@@ -286,11 +286,17 @@ class Member(BaseModelMinimal):
     last_audio_ts_fract = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_proximity_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch)
     last_contacted_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
-    last_unsync_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
+
+    def last_unsync_ts(self):
+        # TODO add back the field
+        if self.unsyncs.count() > 0:
+            return self.unsyncs.latest('unsync_ts').unsync_ts
+        else:
+            return 0
 
     def get_advertisement_project_id(self):
         return self.project.advertisement_project_id
@@ -316,7 +322,7 @@ class Member(BaseModelMinimal):
         """
         epoch_seconds = (d - datetime.datetime(1970, 1, 1)).total_seconds()
         long_epoch_seconds = long(floor(epoch_seconds))
-        ts_fract = d.microsecond / 1000;
+        ts_fract = d.microsecond / 1000
         return (long_epoch_seconds, ts_fract)
 
     @classmethod
@@ -374,6 +380,18 @@ class Beacon(BaseModelMinimal):
 
     def __unicode__(self):
         return unicode(self.name)
+
+
+class Unsync(BaseModel):
+    """
+    Represents a single time in which a badge became unsynced / restarted
+
+    Many-to-one relationship w/ a Member
+    """
+
+
+    member = models.ForeignKey(Member, related_name='unsyncs')
+    unsync_ts = models.DecimalField(max_digits=20, decimal_places=3, default=_now_as_epoch, db_index=True)
 
 
 class Meeting(BaseModel):

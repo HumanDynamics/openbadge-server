@@ -27,6 +27,7 @@ THIRD_PARTY_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_expiring_authtoken',
+    'controlcenter',
     'import_export',
 )
 DJANGO_APPS = (
@@ -46,6 +47,10 @@ LOCAL_APPS = (
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = THIRD_PARTY_APPS + DJANGO_APPS + LOCAL_APPS
+
+CONTROLCENTER_DASHBOARDS = (
+    ('dash', 'openbadge.dashboard.BadgeDashboard'),
+)
 
 # MIDDLEWARE CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -191,3 +196,8 @@ GOD_KEY = env("GOD_KEY")
 DJANGO_SECURE_SSL_REDIRECT=False
 # django-allauth
 DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+LOW_VOLTAGE=2.9
+UNSYNC_CUTOFF=2
+NUM_UNSYNCS=1
+LAST_SEEN_CUTOFF=2
