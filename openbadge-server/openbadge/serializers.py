@@ -46,11 +46,14 @@ class MemberSerializer(serializers.ModelSerializer):
         # need to record all unsyncs
         # if this is not performant we can maintain both the last unsync 
         # in the member object as well as a separate table of unsync history
-        if validated_data.get('last_unsync_ts') > instance.last_unsync_ts():
-            # TODO add back field
+        if validated_data.get('last_unsync_ts') > instance.last_unsync_ts:
+            # create an unsync obj to keep a history of all unsyncs
             Unsync.objects.create(
                     member=instance, 
-                    unsync_ts=validated_data.get('last_unsync_ts', instance.last_unsync_ts()))
+                    unsync_ts=validated_data.get('last_unsync_ts', instance.last_unsync_ts))
+
+            # save the latest ts in the member obj
+            instance.last_unsync_ts = validated_data.get('last_unsync_ts', instance.last_unsync_ts)
 
         instance.observed_id = validated_data.get('observed_id', instance.observed_id)
 

@@ -8,7 +8,7 @@ from controlcenter.views import controlcenter
 urlpatterns = [
     url(r'^grappelli/', include('grappelli.urls')),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/dashboard/', include(controlcenter.urls)),
+    url(r'^dashboard/', include(controlcenter.urls)),
 
     url(r'', include('openbadge.urls',namespace='openbadge')),
 

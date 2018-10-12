@@ -70,7 +70,7 @@ class MemberInline(admin.TabularInline, GetLocalTimeMixin):
         return self.get_local_time(obj.last_contacted_ts)
 
     def last_unsync(self, obj):
-        return self.get_local_time(obj.last_unsync_ts())
+        return self.get_local_time(obj.last_unsync_ts)
 
 
 class BeaconInline(admin.TabularInline, GetLocalTimeMixin):
@@ -178,7 +178,7 @@ class MemberAdmin(ImportExportModelAdmin, GetLocalTimeMixin):
         return self.get_local_time(obj.last_contacted_ts)
 
     def last_unsync(self, obj):
-        return self.get_local_time(obj.last_unsync_ts())
+        return self.get_local_time(obj.last_unsync_ts)
 
 
 @register(Beacon)

@@ -25,10 +25,6 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RemoveField(
-            model_name='member',
-            name='last_unsync_ts',
-        ),
         migrations.AddField(
             model_name='unsync',
             name='member',

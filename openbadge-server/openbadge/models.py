@@ -288,15 +288,10 @@ class Member(BaseModelMinimal):
     last_contacted_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
     last_voltage = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal(0))
     last_seen_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
+    last_unsync_ts = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal(0))
 
     project = models.ForeignKey(Project, related_name="members")
 
-    def last_unsync_ts(self):
-        # TODO add back the field
-        if self.unsyncs.count() > 0:
-            return self.unsyncs.latest('unsync_ts').unsync_ts
-        else:
-            return 0
 
     def get_advertisement_project_id(self):
         return self.project.advertisement_project_id
