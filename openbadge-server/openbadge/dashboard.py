@@ -43,8 +43,8 @@ class ManyResetMembers(widgets.ItemList):
     cutoff_ts = cutoff_to_ts(settings.UNSYNC_CUTOFF_HOURS)
     # get all unsyncs since cutoff
     queryset = (model.objects
-            .values('member__id', 'member__key', 'member__name', 'member__last_voltage')
             .filter(unsync_ts__gt=cutoff_ts)
+            .values('member__id', 'member__key', 'member__name', 'member__last_voltage')
             .annotate(num_unsyncs=Count('member__id'))
             .filter(num_unsyncs__gte=settings.NUM_UNSYNCS)
             .order_by('-num_unsyncs'))
