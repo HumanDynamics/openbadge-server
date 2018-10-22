@@ -86,7 +86,6 @@ class MembersNotSeenShort(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
     # cutoff is in hours
-    one_week = cutoff_to_ts(24 * 7)
     cutoff_ts = cutoff_to_ts(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
     queryset = model.objects.filter(last_seen_ts__lt=cutoff_ts).filter(active=True).order_by('last_seen_ts')
     list_display = ('id', 'key', 'last_seen_ts', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
