@@ -3,6 +3,7 @@ from .models import Member, Unsync, Hub, Beacon
 from django.conf import settings
 from django.db.models import Count
 import time
+import datetime
 
 
 def hours_to_secs(hrs):
@@ -18,10 +19,18 @@ def cutoff_to_ts(cutoff):
     # cutoff is in hours
     return time.time() - hours_to_secs(cutoff)
 
-class LowVoltageMembers(widgets.ItemList):
+
+class BaseItemList(widgets.ItemList):
+
+    def last_seen_date(self, obj):
+        return datetime.datetime.fromtimestamp(obj.last_seen_ts).strftime('%Y-%m-%d %H:%M:%S')
+
+    last_seen_date.short_description = "Last Seen"
+
+class LowVoltageMembers(BaseItemList):
 
     model = Member
-    list_display = ('id', 'key', 'last_seen_ts', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'last_voltage', 'last_unsync_ts')
     width = widgets.LARGE
     sortable = True
     limit_to = None
@@ -34,7 +43,7 @@ class LowVoltageMembers(widgets.ItemList):
                 .order_by('last_voltage'))
 
 
-class ManyResetMembers(widgets.ItemList):
+class ManyResetMembers(BaseItemList):
     model = Unsync
     title = "MEMBERS WITH MULTIPLE RESETS WITHIN {} HOURS".format(settings.UNSYNC_CUTOFF_HOURS)
     width = widgets.LARGE
@@ -56,7 +65,7 @@ class ManyResetMembers(widgets.ItemList):
     list_display = ('member__id', 'member__key', 'member__name', 'num_unsyncs', 'member__last_voltage')
 
 
-class ThingNotSeen(widgets.ItemList):
+class ThingNotSeen(BaseItemList):
     limit_to = None
     width = widgets.LARGE
     sortable = True
@@ -74,12 +83,11 @@ class ThingNotSeen(widgets.ItemList):
         return cutoff_to_ts(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
 
     minutes_since_last_seen.short_description = "minutes since last seen"
-    minutes_since_last_seen.allow_tags = True
 
 class HubsNotSeen(ThingNotSeen):
     model = Hub
     title = "HUBS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'last_seen_ts', 'minutes_since_last_seen')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen')
 
     def get_queryset(self):
         return self.model.objects.filter(last_seen_ts__lt=self.cutoff_short())
@@ -88,7 +96,7 @@ class HubsNotSeen(ThingNotSeen):
 class BeaconsNotSeen(ThingNotSeen):
     model = Beacon
     title = "BEACONS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'last_seen_ts', 'last_voltage', 'minutes_since_last_seen')
+    list_display = ('id', 'key', 'last_seen_date', 'last_voltage', 'minutes_since_last_seen')
 
     def get_queryset(self):
         return (self.model.objects
@@ -100,7 +108,7 @@ class BeaconsNotSeen(ThingNotSeen):
 class MembersNotSeenShort(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'last_seen_ts', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
 
     def get_queryset(self):
         return (self.model.objects
@@ -112,7 +120,7 @@ class MembersNotSeenShort(ThingNotSeen):
 class MembersNotSeenLong(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_LONG_HOURS)
-    list_display = ('id', 'key', 'last_seen_ts', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
 
     def get_queryset(self):
         return (self.model.objects
@@ -124,7 +132,7 @@ class MembersNotSeenLong(ThingNotSeen):
 class MembersAll(ThingNotSeen):
     model = Member
     title = "ALL MEMBERS"
-    list_display = ('id', 'key', 'last_seen_ts', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
 
     def get_queryset(self):
         return self.model.objects.filter(active=True)
