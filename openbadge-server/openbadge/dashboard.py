@@ -49,7 +49,7 @@ class BaseItemList(widgets.ItemList):
 class LowVoltageMembers(BaseItemList):
 
     model = Member
-    list_display = ('id', 'key', 'name', 'last_seen_date', 'last_voltage', 'last_unsync_date')
+    list_display = ('id', 'name', 'last_seen_date', 'last_voltage', 'last_unsync_date')
     width = widgets.LARGE
     sortable = True
     limit_to = None
@@ -66,10 +66,6 @@ class ManyResetMembers(BaseItemList):
     model = Unsync
     title = "MEMBERS WITH MULTIPLE RESETS WITHIN {} HOURS".format(settings.UNSYNC_CUTOFF_HOURS)
     width = widgets.LARGE
-    # members have many unsyncs that are related to them
-    # unsyncs have a timestamp and the member that unsynced
-    # we need all members with > x number of unsyncs since y
-    # width = widgets.FULL
     sortable = True
 
     # get all unsyncs since cutoff
@@ -106,7 +102,7 @@ class ThingNotSeen(BaseItemList):
 class HubsNotSeen(ThingNotSeen):
     model = Hub
     title = "HUBS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'name', 'last_seen_date', 'minutes_since_last_seen')
+    list_display = ('id', 'name', 'last_seen_date', 'minutes_since_last_seen')
 
     def get_queryset(self):
         return self.model.objects.filter(last_seen_ts__lt=self.cutoff_short())
@@ -115,7 +111,7 @@ class HubsNotSeen(ThingNotSeen):
 class BeaconsNotSeen(ThingNotSeen):
     model = Beacon
     title = "BEACONS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'name', 'last_seen_date', 'last_voltage', 'minutes_since_last_seen')
+    list_display = ('id', 'name', 'last_seen_date', 'last_voltage', 'minutes_since_last_seen')
 
     def get_queryset(self):
         return (self.model.objects
@@ -127,7 +123,7 @@ class BeaconsNotSeen(ThingNotSeen):
 class MembersNotSeenShort(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'name', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
+    list_display = ('id', 'name', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
 
     def get_queryset(self):
         return (self.model.objects
@@ -139,7 +135,7 @@ class MembersNotSeenShort(ThingNotSeen):
 class MembersNotSeenLong(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_LONG_HOURS)
-    list_display = ('id', 'key', 'name', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
+    list_display = ('id', 'name', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
 
     def get_queryset(self):
         return (self.model.objects
@@ -151,7 +147,7 @@ class MembersNotSeenLong(ThingNotSeen):
 class MembersAll(ThingNotSeen):
     model = Member
     title = "ALL MEMBERS"
-    list_display = ('id', 'key', 'name', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
+    list_display = ('id', 'name', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
 
     def get_queryset(self):
         return self.model.objects.filter(active=True)
