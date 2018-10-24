@@ -3,10 +3,12 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from settings import common as settings
+from controlcenter.views import controlcenter
 
 urlpatterns = [
     url(r'^grappelli/', include('grappelli.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^dashboard/', include(controlcenter.urls)),
 
     url(r'', include('openbadge.urls',namespace='openbadge')),
 

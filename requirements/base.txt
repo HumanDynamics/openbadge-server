@@ -9,6 +9,8 @@ djangorestframework-expiring-authtoken==0.1.1
 pytz==2015.7
 python-dateutil==2.5.3
 jsonfield==1.0.3
+django-controlcenter===0.2.6
+
 
 # Configuration
 django-environ==0.4.1
