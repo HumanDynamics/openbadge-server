@@ -2,8 +2,10 @@ from controlcenter import Dashboard, widgets
 from .models import Member, Unsync, Hub, Beacon
 from django.conf import settings
 from django.db.models import Count
+from datetime import datetime
 import time
-import datetime
+import pytz
+from pytz import timezone
 
 
 def hours_to_secs(hrs):
@@ -23,14 +25,29 @@ def cutoff_to_ts(cutoff):
 class BaseItemList(widgets.ItemList):
 
     def last_seen_date(self, obj):
-        return datetime.datetime.fromtimestamp(obj.last_seen_ts).strftime('%Y-%m-%d %H:%M:%S')
+        if (obj.last_seen_ts is not None and obj.last_seen_ts != 0):
+            return (pytz.utc.localize(datetime.utcfromtimestamp(int(obj.last_seen_ts)))
+                        .astimezone(timezone(settings.TIME_ZONE))
+                        .strftime('%Y-%m-%d %H:%M:%S %Z'))
+        else:
+            return "Not yet seen"
 
     last_seen_date.short_description = "Last Seen"
+
+    def last_unsync_date(self, obj):
+        if (obj.last_unsync_ts is not None and obj.last_unsync_ts != 0):
+            return (pytz.utc.localize(datetime.utcfromtimestamp(int(obj.last_unsync_ts)))
+                        .astimezone(timezone(settings.TIME_ZONE))
+                        .strftime('%Y-%m-%d %H:%M:%S %Z'))
+        else:
+            return "No Unsyncs Recorded"
+
+    last_unsync_date.short_description = "Last Unsync"
 
 class LowVoltageMembers(BaseItemList):
 
     model = Member
-    list_display = ('id', 'key', 'last_seen_date', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'last_voltage', 'last_unsync_date')
     width = widgets.LARGE
     sortable = True
     limit_to = None
@@ -72,7 +89,7 @@ class ThingNotSeen(BaseItemList):
 
     def minutes_since_last_seen(self, obj):
         if (obj.last_seen_ts and obj.last_seen_ts != 0):
-            return secs_to_minutes(time.time() - round(obj.last_seen_ts, 1))
+            return secs_to_minutes(time.time() - int(obj.last_seen_ts))
         else:
             return "Not yet seen"
 
@@ -108,7 +125,7 @@ class BeaconsNotSeen(ThingNotSeen):
 class MembersNotSeenShort(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_SHORT_HOURS)
-    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
 
     def get_queryset(self):
         return (self.model.objects
@@ -120,7 +137,7 @@ class MembersNotSeenShort(ThingNotSeen):
 class MembersNotSeenLong(ThingNotSeen):
     model = Member
     title = "MEMBERS NOT SEEN IN {} HOURS".format(settings.LAST_SEEN_CUTOFF_LONG_HOURS)
-    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
 
     def get_queryset(self):
         return (self.model.objects
@@ -132,7 +149,7 @@ class MembersNotSeenLong(ThingNotSeen):
 class MembersAll(ThingNotSeen):
     model = Member
     title = "ALL MEMBERS"
-    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_ts')
+    list_display = ('id', 'key', 'last_seen_date', 'minutes_since_last_seen', 'last_voltage', 'last_unsync_date')
 
     def get_queryset(self):
         return self.model.objects.filter(active=True)
