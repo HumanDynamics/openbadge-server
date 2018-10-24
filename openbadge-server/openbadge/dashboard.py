@@ -21,14 +21,18 @@ def cutoff_to_ts(cutoff):
     # cutoff is in hours
     return time.time() - hours_to_secs(cutoff)
 
+def timestamp_to_date(ts):
+    return (pytz.utc.localize(datetime.utcfromtimestamp(ts))
+                .astimezone(timezone(settings.TIME_ZONE))
+                .strftime('%Y-%m-%d %H:%M:%S %Z'))
+
+
 
 class BaseItemList(widgets.ItemList):
 
     def last_seen_date(self, obj):
         if (obj.last_seen_ts is not None and obj.last_seen_ts != 0):
-            return (pytz.utc.localize(datetime.utcfromtimestamp(int(obj.last_seen_ts)))
-                        .astimezone(timezone(settings.TIME_ZONE))
-                        .strftime('%Y-%m-%d %H:%M:%S %Z'))
+            return timestamp_to_date(int(obj.last_seen_ts))
         else:
             return "Not yet seen"
 
@@ -36,9 +40,7 @@ class BaseItemList(widgets.ItemList):
 
     def last_unsync_date(self, obj):
         if (obj.last_unsync_ts is not None and obj.last_unsync_ts != 0):
-            return (pytz.utc.localize(datetime.utcfromtimestamp(int(obj.last_unsync_ts)))
-                        .astimezone(timezone(settings.TIME_ZONE))
-                        .strftime('%Y-%m-%d %H:%M:%S %Z'))
+            return timestamp_to_date(int(obj.last_unsync_ts))
         else:
             return "No Unsyncs Recorded"
 
