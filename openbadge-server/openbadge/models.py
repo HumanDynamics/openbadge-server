@@ -468,6 +468,7 @@ class Meeting(BaseModel):
 
         meta["members"] = []
 
+        log_version = meta["data"]["log_version"]
         # seek to beginning in case it was written out of order
         f.seek(0)
         # the following few lines should be members joining
@@ -475,15 +476,16 @@ class Meeting(BaseModel):
         while "received" not in line["type"] and "ended" not in line["type"]:
             # make sure we're getting a member change event
             # ANYTHING IS POSSIBLE
-            # in log version 2.0 the type is "member changed" and you need to check
-            # the `change` property
-            log_v20_join = line["type"] == "member changed" and line["data"]["change"] == "join"
-
-            # in log version 2.1 the type is just "member joined" and it has no `change` property
-            log_v21_join = line["type"] == "member joined"
-
-            if log_v20_join or log_v21_join:
+            if log_version == "2.0" and line["type"] == "member changed" and line["data"]["change"] == "join":
+                # in log version 2.0 the type is "member changed"
+                # and you need to check the `change` property
                 meta["members"].append(line["data"]["member_key"])
+            elif log_version == "2.1" and line["type"] == "member joined":
+                # in log version 2.1 the type is just "member joined"
+                # and it has no `change` property
+                # also it uses `key` instead of `member_key`
+                meta["members"].append(line["data"]["key"])
+
             try:
                 line = simplejson.loads(f.readline())
                 if not line: break
