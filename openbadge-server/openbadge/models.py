@@ -475,7 +475,14 @@ class Meeting(BaseModel):
         while "received" not in line["type"] and "ended" not in line["type"]:
             # make sure we're getting a member change event
             # ANYTHING IS POSSIBLE
-            if "member" in line["type"] and line["data"]["change"] == "join":
+            # in log version 2.0 the type is "member changed" and you need to check
+            # the `change` property
+            log_v20_join = line["type"] == "member changed" and line["data"]["change"] == "join"
+
+            # in log version 2.1 the type is just "member joined" and it has no `change` property
+            log_v21_join = line["type"] == "member joined"
+
+            if log_v20_join or log_v21_join:
                 meta["members"].append(line["data"]["member_key"])
             try:
                 line = simplejson.loads(f.readline())
