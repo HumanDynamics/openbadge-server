@@ -19,7 +19,8 @@ django-environ==0.4.1
 psycopg2-binary==2.7.3.2
 
 # Unicode slugification
-awesome-slugify==1.6.5
+# Commented slugify since it breaks the build and isn't used anywhere
+# awesome-slugify==1.6.5
 
 # Import and export using the admin tool
 # Using tablib 0.12.1. Newer versions break the import-export add-on
