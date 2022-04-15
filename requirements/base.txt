@@ -16,7 +16,7 @@ django-controlcenter===0.2.6
 django-environ==0.4.1
 
 # Python-PostgreSQL Database Adapter
-psycopg2==2.7
+psycopg2-binary==2.7.3.2
 
 # Unicode slugification
 awesome-slugify==1.6.5
